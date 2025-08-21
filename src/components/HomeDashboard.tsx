@@ -4,15 +4,25 @@ import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { DailySyncCard } from '@/components/DailySyncCard';
-import { AISuggestionCard } from '@/components/AISuggestionCard';
-import { CoinStreakAnimation } from '@/components/CoinStreakAnimation';
-import { AchievementCelebration } from '@/components/AchievementCelebration';
-import { RewardModal, LevelUpModal, MilestoneModal } from '@/components/PremiumModal';
-import { MemoryJukebox } from '@/components/MemoryJukebox';
-import { StreakCelebration } from '@/components/StreakCelebration';
-import { RelationshipInsights } from '@/components/RelationshipInsights';
-import { GamificationEngine } from '@/components/GamificationEngine';
+import dynamic from 'next/dynamic';
+
+const DailySyncCard = dynamic(() => import('@/components/DailySyncCard'));
+const AISuggestionCard = dynamic(() => import('@/components/AISuggestionCard'));
+const CoinStreakAnimation = dynamic(() => import('@/components/CoinStreakAnimation'));
+const AchievementCelebration = dynamic(() => import('@/components/AchievementCelebration'));
+const RewardModal = dynamic(() =>
+  import('@/components/PremiumModal').then((m) => m.RewardModal)
+);
+const LevelUpModal = dynamic(() =>
+  import('@/components/PremiumModal').then((m) => m.LevelUpModal)
+);
+const MilestoneModal = dynamic(() =>
+  import('@/components/PremiumModal').then((m) => m.MilestoneModal)
+);
+const MemoryJukebox = dynamic(() => import('@/components/MemoryJukebox'));
+const StreakCelebration = dynamic(() => import('@/components/StreakCelebration'));
+const RelationshipInsights = dynamic(() => import('@/components/RelationshipInsights'));
+const GamificationEngine = dynamic(() => import('@/components/GamificationEngine'));
 import { 
   Sparkles, 
   Heart, 
