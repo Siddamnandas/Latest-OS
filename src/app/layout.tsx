@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import "./animations.css";
 import { Toaster } from "@/components/ui/toaster";
@@ -36,6 +37,7 @@ export const metadata: Metadata = {
     statusBarStyle: "default",
     title: "Leela OS",
   },
+  manifest: "/manifest.json",
 };
 
 export const viewport: Viewport = {
@@ -57,6 +59,15 @@ export default function RootLayout({
       >
         {children}
         <Toaster />
+        <Script id="service-worker-registration" strategy="afterInteractive">
+          {`
+            if ('serviceWorker' in navigator) {
+              window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js');
+              });
+            }
+          `}
+        </Script>
       </body>
     </html>
   );
