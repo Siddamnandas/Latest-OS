@@ -9,23 +9,31 @@ import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { AuthProvider } from "@/lib/auth-context";
 import { initSentry } from "@/lib/sentry";
+import { NextIntlClientProvider } from "next-intl";
+import enMessages from "@/messages/en.json";
+import hiMessages from "@/messages/hi.json";
+import { headers, cookies } from "next/headers";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { QueryProvider } from "@/lib/query-provider";
 
 initSentry();
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
+const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Leela OS - AI Relationship Companion",
-  description: "Transform your relationship with AI-powered coaching, fair task management, and mythological wisdom for modern Indian couples.",
-  keywords: ["Leela OS", "relationship app", "couple coaching", "parenting", "AI companion", "Indian couples"],
+  description:
+    "Transform your relationship with AI-powered coaching, fair task management, and mythological wisdom for modern Indian couples.",
+  keywords: [
+    "Leela OS",
+    "relationship app",
+    "couple coaching",
+    "parenting",
+    "AI companion",
+    "Indian couples",
+  ],
   authors: [{ name: "Leela OS Team" }],
   openGraph: {
     title: "Leela OS - AI Relationship Companion",
@@ -41,13 +49,13 @@ export const metadata: Metadata = {
   },
   appleWebApp: {
     capable: true,
-    statusBarStyle: "default",
     title: "Leela OS",
+    statusBarStyle: "default",
   },
-  manifest: "/manifest.json",
 };
 
 export const viewport: Viewport = {
+  themeColor: "#000000",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -56,39 +64,51 @@ export const viewport: Viewport = {
 
 export default async function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   const session = await getServerSession(authOptions);
-  if (!session) {
-    redirect("/api/auth/signin");
-  }
+  const cookieStore = cookies();
+  const locale = cookieStore.get('locale')?.value || 'en';
+  
+  const messages = locale === 'hi' ? hiMessages : enMessages;
+
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang={locale} className={`${geistSans.variable} ${geistMono.variable}`}>
       <head>
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-title" content="Leela OS" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="theme-color" content="#000000" />
         <link rel="manifest" href="/manifest.json" />
-        <Script id="service-worker-registration" strategy="afterInteractive">
-          {`
-            if ('serviceWorker' in navigator) {
-              window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/service-worker.js');
-              });
-            }
-          `}
-        </Script>
+        <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
       </head>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
-      >
-        <AuthProvider>{children}</AuthProvider>
-        <Toaster />
-        <Script id="service-worker-registration" strategy="afterInteractive">
+      <body className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-pink-50 dark:from-gray-900 dark:via-purple-900 dark:to-pink-900">
+        <ErrorBoundary>
+          <NextIntlClientProvider locale={locale} messages={messages}>
+            <AuthProvider session={session}>
+              <QueryProvider>
+                <div className="fixed top-4 right-4 z-50">
+                  <LanguageSwitcher />
+                </div>
+                {children}
+                <Toaster />
+              </QueryProvider>
+            </AuthProvider>
+          </NextIntlClientProvider>
+        </ErrorBoundary>
+        
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=GA_TRACKING_ID"
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
           {`
-            if ('serviceWorker' in navigator) {
-              window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/service-worker.js');
-              });
-            }
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'GA_TRACKING_ID');
           `}
         </Script>
       </body>

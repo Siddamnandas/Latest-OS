@@ -1,8 +1,9 @@
 import { Server } from 'socket.io';
+import { logger } from '@/lib/logger';
 
 export const setupSocket = (io: Server) => {
   io.on('connection', (socket) => {
-    console.log('Client connected:', socket.id);
+    logger.info({ id: socket.id }, 'Client connected');
     
     // Handle messages
     socket.on('message', (msg: { text: string; senderId: string }) => {
@@ -16,7 +17,7 @@ export const setupSocket = (io: Server) => {
 
     // Handle disconnect
     socket.on('disconnect', () => {
-      console.log('Client disconnected:', socket.id);
+      logger.info({ id: socket.id }, 'Client disconnected');
     });
 
     // Send welcome message
@@ -26,4 +27,4 @@ export const setupSocket = (io: Server) => {
       timestamp: new Date().toISOString(),
     });
   });
-};
+  };
