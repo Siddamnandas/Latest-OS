@@ -1,3 +1,5 @@
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import { NextResponse } from 'next/server';
 
 async function createIssue(message: string, screenshot?: string) {
@@ -24,6 +26,11 @@ async function createIssue(message: string, screenshot?: string) {
 }
 
 export async function POST(request: Request) {
+  const session = await getServerSession(authOptions);
+  if (session?.user?.role !== 'ADMIN') {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+
   try {
     const formData = await request.formData();
     const message = String(formData.get('message') || '');
@@ -42,5 +49,10 @@ export async function POST(request: Request) {
 }
 
 export async function GET() {
+  const session = await getServerSession(authOptions);
+  if (session?.user?.role !== 'ADMIN') {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+
   return NextResponse.json({ message: 'Feedback endpoint' });
 }
