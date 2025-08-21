@@ -16,6 +16,7 @@ import { headers, cookies } from "next/headers";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { QueryProvider } from "@/lib/query-provider";
+import { UpdateNotifier } from "@/lib/update-notifier";
 
 initSentry();
 
@@ -93,6 +94,7 @@ export default async function RootLayout({
                   <LanguageSwitcher />
                 </div>
                 {children}
+                <UpdateNotifier />
                 <Toaster />
               </QueryProvider>
             </AuthProvider>
