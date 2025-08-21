@@ -41,6 +41,7 @@ export const metadata: Metadata = {
     statusBarStyle: "default",
     title: "Leela OS",
   },
+  manifest: "/manifest.json",
 };
 
 export const viewport: Viewport = {
@@ -78,6 +79,15 @@ export default async function RootLayout({
       >
         <AuthProvider>{children}</AuthProvider>
         <Toaster />
+        <Script id="service-worker-registration" strategy="afterInteractive">
+          {`
+            if ('serviceWorker' in navigator) {
+              window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js');
+              });
+            }
+          `}
+        </Script>
       </body>
     </html>
   );

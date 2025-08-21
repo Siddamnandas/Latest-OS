@@ -1,3 +1,7 @@
+// Simple service worker for caching critical assets
+// Ensure self is properly typed
+declare const self: ServiceWorkerGlobalScope;
+
 const CACHE_NAME = 'leelaos-cache-v1';
 const URLS_TO_CACHE = ['/'];
 
@@ -15,6 +19,7 @@ self.addEventListener('activate', (event: ExtendableEvent) => {
           if (key !== CACHE_NAME) {
             return caches.delete(key);
           }
+          return Promise.resolve();
         })
       )
     )
@@ -22,9 +27,17 @@ self.addEventListener('activate', (event: ExtendableEvent) => {
 });
 
 self.addEventListener('fetch', (event: FetchEvent) => {
+  if (event.request.method !== 'GET') return;
   event.respondWith(
-    caches.match(event.request).then((response) => response || fetch(event.request))
+    caches.match(event.request).then((cached) => {
+      if (cached) {
+        return cached;
+      }
+      return fetch(event.request).then((response) => {
+        const responseClone = response.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseClone));
+        return response;
+      });
+    })
   );
 });
-
-export {};

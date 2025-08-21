@@ -1,3 +1,4 @@
+// Simple service worker for caching critical assets
 const CACHE_NAME = 'leelaos-cache-v1';
 const URLS_TO_CACHE = ['/'];
 
@@ -18,11 +19,5 @@ self.addEventListener('activate', event => {
         })
       )
     )
-  );
-});
-
-self.addEventListener('fetch', event => {
-  event.respondWith(
-    caches.match(event.request).then(response => response || fetch(event.request))
   );
 });
