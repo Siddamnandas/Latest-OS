@@ -293,6 +293,9 @@ model User {
   email         String    @unique
   password_hash String
   name          String
+  totp_enabled  Boolean   @default(false)
+  totp_secret   String?
+  totp_recovery_codes String[] @default([])
   partner_role  String    // 'partner_a' or 'partner_b'
   is_active     Boolean   @default(true)
   last_login    DateTime?
