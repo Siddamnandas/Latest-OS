@@ -152,10 +152,11 @@ export function FloatingActionButton({
                 >
                   {action.label}
                 </motion.span>
-                <motion.button
+              <motion.button
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={action.onClick}
+                  aria-label={action.label}
                   className={`${action.color} w-12 h-12 rounded-full text-white shadow-lg flex items-center justify-center`}
                 >
                   <action.icon className="w-5 h-5" />
@@ -171,6 +172,8 @@ export function FloatingActionButton({
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         onClick={() => setIsOpen(!isOpen)}
+        aria-label="Toggle actions"
+        aria-expanded={isOpen}
         className="bg-gradient-to-r from-purple-600 to-pink-600 w-16 h-16 rounded-full text-white shadow-2xl flex items-center justify-center relative overflow-hidden"
       >
         {/* Animated background effect */}

@@ -10,7 +10,11 @@ const compat = new FlatCompat({
 });
 
 const eslintConfig = [
-  ...compat.extends("next/core-web-vitals", "next/typescript"),
+  ...compat.extends(
+    "next/core-web-vitals",
+    "next/typescript",
+    "plugin:jsx-a11y/recommended"
+  ),
   {
     rules: {
       // TypeScript 相关规则
@@ -44,6 +48,12 @@ const eslintConfig = [
       "no-undef": "off",
       "no-unreachable": "off",
       "no-useless-escape": "off",
+      // Accessibility warnings
+      "jsx-a11y/label-has-associated-control": "warn",
+      "jsx-a11y/click-events-have-key-events": "warn",
+      "jsx-a11y/no-static-element-interactions": "warn",
+      "jsx-a11y/media-has-caption": "warn",
+      "jsx-a11y/anchor-has-content": "warn",
     },
   },
 ];
