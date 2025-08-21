@@ -1,5 +1,6 @@
 // server.ts - Next.js Standalone + Socket.IO
 import { setupSocket } from '@/lib/socket';
+import { logger } from '@/lib/logger';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import next from 'next';
@@ -44,15 +45,16 @@ async function createCustomServer() {
 
     // Start the server
     server.listen(currentPort, hostname, () => {
-      console.log(`> Ready on http://${hostname}:${currentPort}`);
-      console.log(`> Socket.IO server running at ws://${hostname}:${currentPort}/api/socketio`);
+      logger.info(`> Ready on http://${hostname}:${currentPort}`);
+      logger.info(`> Socket.IO server running at ws://${hostname}:${currentPort}/api/socketio`);
     });
 
   } catch (err) {
-    console.error('Server startup error:', err);
+    logger.error({ err }, 'Server startup error');
     process.exit(1);
   }
 }
 
 // Start the server
 createCustomServer();
+
