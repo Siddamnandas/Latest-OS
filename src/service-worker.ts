@@ -51,14 +51,34 @@ self.addEventListener('fetch', (event: FetchEvent) => {
 
   if (request.method !== 'GET') {
     event.respondWith(
-      fetch(request.clone()).catch(() => queueRequest(request))
+      (async () => {
+        try {
+          return await fetch(request.clone());
+        } catch (err) {
+          console.error('Network request failed, queuing', err);
+          try {
+            return await queueRequest(request);
+          } catch (queueErr) {
+            console.error('queueRequest failed', queueErr);
+            throw queueErr;
+          }
+        }
+      })()
     );
   }
 });
 
 self.addEventListener('sync', (event: SyncEvent) => {
   if (event.tag === SYNC_TAG) {
-    event.waitUntil(flushQueue());
+    event.waitUntil(
+      (async () => {
+        try {
+          await flushQueue();
+        } catch (err) {
+          console.error('flushQueue failed', err);
+        }
+      })()
+    );
   }
 });
 
@@ -128,3 +148,32 @@ async function flushQueue() {
     tx.onerror = () => reject(tx.error);
   });
 }
+
+self.addEventListener('push', (event: PushEvent) => {
+  const data = event.data?.json() || {};
+  const title = data.title || 'Leela OS Notification';
+  const options: NotificationOptions = {
+    body: data.body,
+    icon: data.icon || '/icons/icon-192x192.png',
+    data: data.data,
+  };
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+self.addEventListener('notificationclick', (event: NotificationEvent) => {
+  event.notification.close();
+  const target = event.notification.data?.url || '/';
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        if ('focus' in client) {
+          return (client as WindowClient).focus();
+        }
+      }
+      if (clients.openWindow) {
+        return clients.openWindow(target);
+      }
+      return undefined;
+    })
+  );
+});
