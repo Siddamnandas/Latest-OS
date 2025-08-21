@@ -79,5 +79,31 @@ if (typeof window !== 'undefined' && 'indexedDB' in window) {
   };
 }
 
+const THEME_KEY = 'theme';
+
+export async function getTheme(): Promise<'light' | 'dark' | null> {
+  if (typeof window !== 'undefined') {
+    const local = localStorage.getItem(THEME_KEY);
+    if (local === 'light' || local === 'dark') {
+      return local;
+    }
+  }
+  return adapter.getItem<'light' | 'dark'>(THEME_KEY);
+}
+
+export async function setTheme(theme: 'light' | 'dark'): Promise<void> {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(THEME_KEY, theme);
+  }
+  await adapter.setItem(THEME_KEY, theme);
+}
+
+export async function toggleTheme(): Promise<'light' | 'dark'> {
+  const current = await getTheme();
+  const next = current === 'dark' ? 'light' : 'dark';
+  await setTheme(next);
+  return next;
+}
+
 export default adapter;
 

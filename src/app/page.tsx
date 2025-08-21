@@ -11,6 +11,7 @@ import { KidsActivities } from '@/components/KidsActivities';
 import { ProfileSettings } from '@/components/ProfileSettings';
 import { FloatingActionButton } from '@/components/FloatingActionButton';
 import { useToast } from '@/hooks/use-toast';
+import { useTranslations } from 'next-intl';
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState('home');
@@ -18,6 +19,7 @@ export default function Home() {
   const [coins, setCoins] = useState(250);
   const [showCelebration, setShowCelebration] = useState(false);
   const { toast } = useToast();
+  const t = useTranslations('Home');
 
   // Simulate daily login bonus
   useEffect(() => {
@@ -29,8 +31,8 @@ export default function Home() {
       setCoins(prev => prev + 50);
       setShowCelebration(true);
       toast({
-        title: "Daily Bonus! 🎉",
-        description: "You earned 50 Lakshmi Coins for logging in today!",
+        title: t('dailyBonusTitle'),
+        description: t('dailyBonusDescription'),
         duration: 3000,
       });
       
