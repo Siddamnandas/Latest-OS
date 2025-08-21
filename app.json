@@ -1,0 +1,20 @@
+{
+  "expo": {
+    "name": "Latest OS",
+    "slug": "latest-os",
+    "scheme": "latestos",
+    "android": {
+      "package": "com.latest.os",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "data": [{ "scheme": "latestos" }],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ]
+    },
+    "ios": {
+      "bundleIdentifier": "com.latest.os"
+    }
+  }
+}
