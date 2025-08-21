@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useFeatureFlag } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -63,6 +64,7 @@ interface ConversationSession {
 }
 
 export function VoiceInteraction() {
+  const enabled = useFeatureFlag('voice-interaction');
   const [isListening, setIsListening] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [currentEmotion, setCurrentEmotion] = useState<EmotionalState | null>(null);
@@ -76,6 +78,7 @@ export function VoiceInteraction() {
   const synthesisRef = useRef<SpeechSynthesis | null>(null);
 
   useEffect(() => {
+    if (!enabled) return;
     // Initialize speech recognition
     if (typeof window !== 'undefined') {
       const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -113,7 +116,11 @@ export function VoiceInteraction() {
         recognitionRef.current.stop();
       }
     };
-  }, []);
+  }, [enabled]);
+
+  if (!enabled) {
+    return null;
+  }
 
   const loadMockData = () => {
     const mockSessions: ConversationSession[] = [

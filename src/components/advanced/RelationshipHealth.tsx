@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useFeatureFlag } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -81,12 +82,14 @@ interface HealthAssessment {
 }
 
 export function RelationshipHealth() {
+  const enabled = useFeatureFlag('relationship-health');
   const [assessment, setAssessment] = useState<HealthAssessment | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedTimeframe, setSelectedTimeframe] = useState<'current' | 'week' | 'month' | 'quarter'>('current');
   const [showDetails, setShowDetails] = useState(false);
 
   useEffect(() => {
+    if (!enabled) return;
     const fetchAssessment = async () => {
       setLoading(true);
       await new Promise(resolve => setTimeout(resolve, 2000));
@@ -209,7 +212,11 @@ export function RelationshipHealth() {
     };
 
     fetchAssessment();
-  }, [selectedTimeframe]);
+  }, [selectedTimeframe, enabled]);
+
+  if (!enabled) {
+    return null;
+  }
 
   const getHealthColor = (score: number) => {
     if (score >= 80) return 'text-green-600';
