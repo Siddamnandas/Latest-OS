@@ -1,0 +1,11 @@
+{
+  "Home": {
+    "dailyBonusTitle": "Daily Bonus! 🎉",
+    "dailyBonusDescription": "You earned 50 Lakshmi Coins for logging in today!"
+  },
+  "LanguageSwitcher": {
+    "label": "Language",
+    "en": "English",
+    "hi": "Hindi"
+  }
+}
