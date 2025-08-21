@@ -1,3 +1,7 @@
+import { registry } from "@/lib/openapi";
+registry.registerPath({ method: "get", path: "/api/voice-interaction", responses: { 200: { description: "Success" } } });
+registry.registerPath({ method: "post", path: "/api/voice-interaction", responses: { 200: { description: "Success" } } });
+
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";

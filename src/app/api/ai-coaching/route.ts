@@ -1,3 +1,6 @@
+import { registry } from "@/lib/openapi";
+registry.registerPath({ method: "post", path: "/api/ai-coaching", responses: { 200: { description: "Success" } } });
+
 import { NextRequest, NextResponse } from 'next/server';
 import ZAI from 'z-ai-web-dev-sdk';
 

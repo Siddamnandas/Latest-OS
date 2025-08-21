@@ -1,3 +1,6 @@
+import { registry } from "@/lib/openapi";
+registry.registerPath({ method: "post", path: "/api/notifications/push", responses: { 200: { description: "Success" } } });
+
 import { NextRequest, NextResponse } from 'next/server';
 import webpush from 'web-push';
 import { getWebSubscriptions, getExpoPushTokens } from '../subscribe/route';

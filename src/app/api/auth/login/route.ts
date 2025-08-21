@@ -1,3 +1,6 @@
+import { registry } from "@/lib/openapi";
+registry.registerPath({ method: "post", path: "/api/auth/login", responses: { 200: { description: "Success" } } });
+
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import bcrypt from 'bcryptjs';

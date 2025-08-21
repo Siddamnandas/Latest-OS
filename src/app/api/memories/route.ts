@@ -1,3 +1,7 @@
+import { registry } from "@/lib/openapi";
+registry.registerPath({ method: "get", path: "/api/memories", responses: { 200: { description: "Success" } } });
+registry.registerPath({ method: "post", path: "/api/memories", responses: { 200: { description: "Success" } } });
+
 import { NextResponse } from "next/server";
 
 export async function GET() {
