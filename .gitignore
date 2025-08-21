@@ -48,3 +48,8 @@ test
 prompt
 
 server.log
+
+# Terraform
+**/.terraform/
+**/*.tfstate
+**/*.tfstate.*

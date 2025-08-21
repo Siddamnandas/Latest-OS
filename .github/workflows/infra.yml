@@ -1,0 +1,30 @@
+name: Infra
+
+on:
+  push:
+    branches:
+      - main
+      - staging
+      - production
+    paths:
+      - 'infra/**'
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v2
+
+      - name: Deploy infrastructure
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: us-east-1
+        run: |
+          case "${GITHUB_REF_NAME}" in
+            production) ENV=prod ;;
+            staging) ENV=staging ;;
+            *) ENV=dev ;;
+          esac
+          ./infra/deploy.sh "$ENV"
