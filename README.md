@@ -72,6 +72,28 @@ npm start
 
 Open [http://localhost:3000](http://localhost:3000) to see your application running.
 
+## 🗄️ Database Setup & Migrations
+
+1. **Start PostgreSQL** using Docker:
+
+   ```bash
+   docker-compose up -d
+   ```
+
+2. **Configure the connection string** in a `.env` file:
+
+   ```bash
+   DATABASE_URL="postgresql://postgres:postgres@localhost:5432/latest_os?schema=public"
+   ```
+
+3. **Apply migrations** and generate the Prisma client:
+
+   ```bash
+   npm run db:migrate
+   ```
+
+For production deployments run `npx prisma migrate deploy` to apply migrations.
+
 ## 🤖 Powered by Z.ai
 
 This scaffold is optimized for use with [Z.ai](https://chat.z.ai) - your AI assistant for:
