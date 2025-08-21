@@ -1,18 +1,17 @@
 // Simple service worker for caching critical assets
-
 // Ensure self is properly typed
 declare const self: ServiceWorkerGlobalScope;
 
-const CACHE_NAME = "leela-os-cache-v1";
-const ASSETS_TO_CACHE = ["/", "/logo.svg", "/manifest.json"];
+const CACHE_NAME = 'leelaos-cache-v1';
+const URLS_TO_CACHE = ['/'];
 
-self.addEventListener("install", (event: ExtendableEvent) => {
+self.addEventListener('install', (event: ExtendableEvent) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS_TO_CACHE))
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(URLS_TO_CACHE))
   );
 });
 
-self.addEventListener("activate", (event: ExtendableEvent) => {
+self.addEventListener('activate', (event: ExtendableEvent) => {
   event.waitUntil(
     caches.keys().then((keys) =>
       Promise.all(
@@ -27,20 +26,16 @@ self.addEventListener("activate", (event: ExtendableEvent) => {
   );
 });
 
-self.addEventListener("fetch", (event: FetchEvent) => {
-  if (event.request.method !== "GET") return;
-
+self.addEventListener('fetch', (event: FetchEvent) => {
+  if (event.request.method !== 'GET') return;
   event.respondWith(
     caches.match(event.request).then((cached) => {
       if (cached) {
         return cached;
       }
-
       return fetch(event.request).then((response) => {
         const responseClone = response.clone();
-        caches
-          .open(CACHE_NAME)
-          .then((cache) => cache.put(event.request, responseClone));
+        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseClone));
         return response;
       });
     })
