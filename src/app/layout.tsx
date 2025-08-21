@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import type { ReactNode } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
@@ -51,3 +52,33 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
 };
+
+export default async function RootLayout({
+  children,
+}: {
+  children: ReactNode;
+}) {
+  const session = await getServerSession(authOptions);
+  if (!session) {
+    redirect("/api/auth/signin");
+  }
+
+  const themeScript = `(function(){try{var t=localStorage.getItem('theme');var m=window.matchMedia('(prefers-color-scheme: dark)').matches;if(t==='dark'||(!t&&m)){document.documentElement.classList.add('dark');}else{document.documentElement.classList.remove('dark');}}catch(e){}})();`;
+
+  return (
+    <html lang="en" suppressHydrationWarning>
+      <head />
+      <body className={`${geistSans.variable} ${geistMono.variable}`}>
+        <Script id="theme-script" strategy="beforeInteractive">
+          {themeScript}
+        </Script>
+        <AuthProvider session={session}>
+          <ErrorBoundary>
+            <QueryProvider>{children}</QueryProvider>
+            <Toaster />
+          </ErrorBoundary>
+        </AuthProvider>
+      </body>
+    </html>
+  );
+}
