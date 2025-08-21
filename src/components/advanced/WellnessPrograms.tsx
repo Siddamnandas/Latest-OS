@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useFeatureFlag } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -54,12 +55,14 @@ interface WellnessProgram {
 }
 
 export function WellnessPrograms() {
+  const enabled = useFeatureFlag('wellness-programs');
   const [programs, setPrograms] = useState<WellnessProgram[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [activeProgram, setActiveProgram] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!enabled) return;
     const fetchPrograms = async () => {
       setLoading(true);
       await new Promise(resolve => setTimeout(resolve, 1500));
@@ -181,7 +184,11 @@ export function WellnessPrograms() {
     };
 
     fetchPrograms();
-  }, []);
+  }, [enabled]);
+
+  if (!enabled) {
+    return null;
+  }
 
   const getCategoryInfo = (category: string) => {
     switch (category) {
