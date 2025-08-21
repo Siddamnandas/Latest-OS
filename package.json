@@ -42,13 +42,15 @@
     "@types/bcryptjs": "^2.4.6",
     "axios": "^1.10.0",
     "bcryptjs": "^3.0.2",
+    "bullmq": "^5.58.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
     "date-fns": "^4.1.0",
     "embla-carousel-react": "^8.6.0",
     "framer-motion": "^12.23.2",
-    "input-otp": "^1.4.2"
+    "input-otp": "^1.4.2",
+    "ioredis": "^5.7.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
@@ -63,6 +65,8 @@
     "@types/jest": "^30.0.0",
     "@types/node": "^20",
     "@types/react": "^19",
-    "@types/react-dom": "^19"
+    "@types/react-dom": "^19",
+    "eslint": "^9.33.0",
+    "eslint-config-next": "^15.5.0"
   }
 }
