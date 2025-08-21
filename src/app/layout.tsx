@@ -8,6 +8,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { AuthProvider } from "@/lib/auth-context";
+import { initSentry } from "@/lib/sentry";
 import { NextIntlClientProvider } from "next-intl";
 import enMessages from "@/messages/en.json";
 import hiMessages from "@/messages/hi.json";
@@ -15,6 +16,8 @@ import { headers, cookies } from "next/headers";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { QueryProvider } from "@/lib/query-provider";
+
+initSentry();
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
@@ -46,16 +49,17 @@ export const metadata: Metadata = {
   },
   appleWebApp: {
     capable: true,
-    statusBarStyle: "default",
     title: "Leela OS",
+    statusBarStyle: "default",
   },
 };
 
 export const viewport: Viewport = {
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "white" },
-    { media: "(prefers-color-scheme: dark)", color: "black" },
-  ],
+  themeColor: "#000000",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export default async function RootLayout({
@@ -94,6 +98,7 @@ export default async function RootLayout({
             </AuthProvider>
           </NextIntlClientProvider>
         </ErrorBoundary>
+        
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=GA_TRACKING_ID"
           strategy="afterInteractive"
