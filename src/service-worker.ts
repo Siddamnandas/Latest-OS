@@ -1,130 +1,65 @@
-// Simple service worker for caching critical assets
-// Ensure self is properly typed
-declare const self: ServiceWorkerGlobalScope;
-
-const CACHE_NAME = 'leelaos-cache-v1';
-const URLS_TO_CACHE = ['/'];
-const SYNC_TAG = 'leelaos-sync';
-const QUEUE_DB = 'leelaos-request-queue';
-const QUEUE_STORE = 'requests';
-
-self.addEventListener('install', (event: ExtendableEvent) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(URLS_TO_CACHE))
-  );
-});
-
-self.addEventListener('activate', (event: ExtendableEvent) => {
-  event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(
-        keys.map((key) => {
-          if (key !== CACHE_NAME) {
-            return caches.delete(key);
-          }
-          return Promise.resolve();
-        })
-      )
-    )
-  );
-});
-
-self.addEventListener('fetch', (event: FetchEvent) => {
-  const { request } = event;
-  if (request.method === 'GET') {
-    event.respondWith(
-      caches.match(request).then((cached) => {
-        if (cached) {
-          return cached;
-        }
-        return fetch(request).then((response) => {
-          const responseClone = response.clone();
-          caches
-            .open(CACHE_NAME)
-            .then((cache) => cache.put(request, responseClone));
-          return response;
-        });
-      })
-    );
-    return;
-  }
-
-  if (request.method !== 'GET') {
-    event.respondWith(
-      fetch(request.clone()).catch(() => queueRequest(request))
-    );
-  }
-});
-
-self.addEventListener('sync', (event: SyncEvent) => {
-  if (event.tag === SYNC_TAG) {
-    event.waitUntil(flushQueue());
-  }
-});
-
-function openQueue(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open(QUEUE_DB, 1);
-    request.onupgradeneeded = () => {
-      request.result.createObjectStore(QUEUE_STORE, { autoIncrement: true });
-    };
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error);
-  });
-}
-
-async function queueRequest(request: Request) {
-  const db = await openQueue();
-  const tx = db.transaction(QUEUE_STORE, 'readwrite');
-  const store = tx.objectStore(QUEUE_STORE);
-  const body = await request.clone().text();
-  store.add({
-    url: request.url,
-    method: request.method,
-    headers: Array.from(request.headers.entries()),
-    body,
-  });
-  await new Promise<void>((resolve, reject) => {
-    tx.oncomplete = () => resolve();
-    tx.onerror = () => reject(tx.error);
-  });
-  await self.registration.sync.register(SYNC_TAG);
-  return new Response(JSON.stringify({ queued: true }), { status: 202 });
-}
-
-async function flushQueue() {
-  const db = await openQueue();
-  const tx = db.transaction(QUEUE_STORE, 'readwrite');
-  const store = tx.objectStore(QUEUE_STORE);
-  const all = store.getAll();
-  const keys = store.getAllKeys();
-  const [requests, requestKeys] = await Promise.all([
-    new Promise<any[]>((resolve, reject) => {
-      all.onsuccess = () => resolve(all.result as any[]);
-      all.onerror = () => reject(all.error);
-    }),
-    new Promise<any[]>((resolve, reject) => {
-      keys.onsuccess = () => resolve(keys.result as any[]);
-      keys.onerror = () => reject(keys.error);
-    }),
-  ]);
-
-  for (let i = 0; i < requests.length; i++) {
-    const req = requests[i];
-    const key = requestKeys[i];
-    try {
-      await fetch(req.url, {
-        method: req.method,
-        headers: req.headers,
-        body: req.body,
-      });
-      store.delete(key);
-    } catch (err) {
-      // Leave the request in the queue if it fails
-    }
-  }
-  await new Promise<void>((resolve, reject) => {
-    tx.oncomplete = () => resolve();
-    tx.onerror = () => reject(tx.error);
-  });
-}
+42   caches
+43            .open(CACHE_NAME)
+44            .then((cache) => cache.put(request, responseClone));
+45   return response;
+46        });
+47      })
+48    );
+49   return;
+50  }
+51  
+52   if (request.method !== 'GET') {
+53   event.respondWith(
+54   fetch(request.clone()).catch(() => queueRequest(request))
+55    );
+56  }
+57});
+58  
+59self.addEventListener('sync', (event: SyncEvent) => {
+60   if (event.tag === SYNC_TAG) {
+61   event.waitUntil(flushQueue());
+62  }
+63});
+64  
+65// Listen for messages from the client to cache additional resources
+66self.addEventListener('message', (event: ExtendableEvent & { data?: any }) => {
+67   const { data } = event;
+68   if (data && data.type === 'CACHE_URLS' && Array.isArray(data.payload)) {
+69   event.waitUntil(
+70   caches.open(CACHE_NAME).then((cache) => cache.addAll(data.payload))
+71   );
+72   }
+73});
+74  
+75// Handle incoming push messages and display notifications
+76self.addEventListener('push', (event: PushEvent) => {
+77   if (!event.data) return;
+78   const data = event.data.json();
+79   const title = data.title || 'Notification';
+80   const options: NotificationOptions = {
+81   body: data.body,
+82   icon: data.icon,
+83   data: data.url ? { url: data.url } : undefined,
+84   };
+85   event.waitUntil(self.registration.showNotification(title, options));
+86});
+87  
+88// Open the notification's URL when clicked
+89self.addEventListener('notificationclick', (event: NotificationEvent) => {
+90   event.notification.close();
+91   const url = event.notification.data?.url;
+92   if (url) {
+93   event.waitUntil(clients.openWindow(url));
+94   }
+95});
+96  
+97function openQueue(): Promise<IDBDatabase> {
+98   return new Promise((resolve, reject) => {
+99   const request = indexedDB.open(QUEUE_DB, 1);
+100   request.onupgradeneeded = () => {
+101   request.result.createObjectStore(QUEUE_STORE, { autoIncrement: true });
+102   };
+103   request.onsuccess = () => resolve(request.result);
+104   request.onerror = () => reject(request.error);
+105   });
+106}
