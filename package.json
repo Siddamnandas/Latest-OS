@@ -48,6 +48,10 @@
     "date-fns": "^4.1.0",
     "embla-carousel-react": "^8.6.0",
     "framer-motion": "^12.23.2",
-    "input-otp": "^1.4.2"
+    "input-otp": "^1.4.2",
+    "stripe": "^14.25.0"
+  },
+  "devDependencies": {
+    "prisma": "^6.11.1"
   }
 }

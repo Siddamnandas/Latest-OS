@@ -167,6 +167,11 @@ export class LeelaOSAPI {
       body: JSON.stringify(data),
     });
   }
+
+  // Billing
+  async getSubscription(coupleId: string) {
+    return this.request(`/payments?couple_id=${coupleId}`);
+  }
 }
 
 // Create singleton instance

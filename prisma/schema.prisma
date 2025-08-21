@@ -21,6 +21,9 @@ model Couple {
   children        Json     @default("[]")
   premium_until   DateTime?
   encryption_key  String
+  stripe_customer_id     String? @unique
+  stripe_subscription_id String?
+  subscription_status    String? @default("inactive")
   created_at      DateTime @default(now())
   updated_at      DateTime @updatedAt
 
