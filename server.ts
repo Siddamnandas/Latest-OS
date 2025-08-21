@@ -3,6 +3,7 @@ import { setupSocket } from '@/lib/socket';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import next from 'next';
+import helmet from 'helmet';
 
 const dev = process.env.NODE_ENV !== 'production';
 const currentPort = 3000;
@@ -23,12 +24,20 @@ async function createCustomServer() {
     const handle = nextApp.getRequestHandler();
 
     // Create HTTP server that will handle both Next.js and Socket.IO
+    const helmetMiddleware = helmet({
+      contentSecurityPolicy: false,
+      crossOriginEmbedderPolicy: false
+    });
+
     const server = createServer((req, res) => {
-      // Skip socket.io requests from Next.js handler
-      if (req.url?.startsWith('/api/socketio')) {
-        return;
-      }
-      handle(req, res);
+      helmetMiddleware(req as any, res as any, () => {
+        res.setHeader('X-Custom-Header', 'Latest-OS');
+        // Skip socket.io requests from Next.js handler
+        if (req.url?.startsWith('/api/socketio')) {
+          return;
+        }
+        handle(req, res);
+      });
     });
 
     // Setup Socket.IO
