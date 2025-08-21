@@ -8,6 +8,9 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { AuthProvider } from "@/lib/auth-context";
+import { initSentry } from "@/lib/sentry";
+
+initSentry();
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
