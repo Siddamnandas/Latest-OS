@@ -1,3 +1,7 @@
+import { registry } from "@/lib/openapi";
+registry.registerPath({ method: "get", path: "/api/tasks", responses: { 200: { description: "Success" } } });
+registry.registerPath({ method: "post", path: "/api/tasks", responses: { 200: { description: "Success" } } });
+
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getServerSession } from 'next-auth';

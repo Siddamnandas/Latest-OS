@@ -1,3 +1,7 @@
+import { registry } from "@/lib/openapi";
+registry.registerPath({ method: "get", path: "/api/conversations", responses: { 200: { description: "Success" } } });
+registry.registerPath({ method: "post", path: "/api/conversations", responses: { 200: { description: "Success" } } });
+
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 

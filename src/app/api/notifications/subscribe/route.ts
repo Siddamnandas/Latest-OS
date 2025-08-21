@@ -1,3 +1,6 @@
+import { registry } from "@/lib/openapi";
+registry.registerPath({ method: "post", path: "/api/notifications/subscribe", responses: { 200: { description: "Success" } } });
+
 import { NextRequest, NextResponse } from 'next/server';
 
 // In-memory stores for demonstration purposes. In production these would
