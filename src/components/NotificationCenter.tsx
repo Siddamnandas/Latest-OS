@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { MagicButton } from '@/components/MagicButton';
 import { useToast } from '@/hooks/use-toast';
+import { useWebPush } from '@/hooks/use-web-push';
 
 interface Notification {
   id: string;
@@ -74,6 +75,7 @@ export function NotificationCenter() {
   const [activeTab, setActiveTab] = useState('notifications');
   const [filter, setFilter] = useState<'all' | 'unread' | 'high'>('all');
   const { toast } = useToast();
+  useWebPush(preferences?.pushEnabled ?? false);
 
   useEffect(() => {
     initializeNotificationData();
