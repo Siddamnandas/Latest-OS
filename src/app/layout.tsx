@@ -8,6 +8,11 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { AuthProvider } from "@/lib/auth-context";
+import { NextIntlClientProvider } from "next-intl";
+import enMessages from "@/messages/en.json";
+import hiMessages from "@/messages/hi.json";
+import { headers, cookies } from "next/headers";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -60,8 +65,21 @@ export default async function RootLayout({
   if (!session) {
     redirect("/api/auth/signin");
   }
+
+  const defaultLocale = "en";
+  const cookieStore = cookies();
+  let locale = cookieStore.get("locale")?.value;
+  if (!locale) {
+    const acceptLang = headers().get("accept-language");
+    locale = acceptLang?.split(",")[0].split("-")[0];
+  }
+  if (locale !== "en" && locale !== "hi") {
+    locale = defaultLocale;
+  }
+  const messages = locale === "hi" ? hiMessages : enMessages;
+
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang={locale} suppressHydrationWarning>
       <head>
         <link rel="manifest" href="/manifest.json" />
         <Script id="service-worker-registration" strategy="afterInteractive">
@@ -77,8 +95,13 @@ export default async function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
       >
-        <AuthProvider>{children}</AuthProvider>
-        <Toaster />
+        <NextIntlClientProvider locale={locale} messages={messages}>
+          <AuthProvider>
+            <LanguageSwitcher />
+            {children}
+          </AuthProvider>
+          <Toaster />
+        </NextIntlClientProvider>
         <Script id="service-worker-registration" strategy="afterInteractive">
           {`
             if ('serviceWorker' in navigator) {
