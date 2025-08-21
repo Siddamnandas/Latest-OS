@@ -9,21 +9,23 @@ import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { AuthProvider } from "@/lib/auth-context";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { QueryProvider } from "@/lib/query-provider";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
+const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Leela OS - AI Relationship Companion",
-  description: "Transform your relationship with AI-powered coaching, fair task management, and mythological wisdom for modern Indian couples.",
-  keywords: ["Leela OS", "relationship app", "couple coaching", "parenting", "AI companion", "Indian couples"],
+  description:
+    "Transform your relationship with AI-powered coaching, fair task management, and mythological wisdom for modern Indian couples.",
+  keywords: [
+    "Leela OS",
+    "relationship app",
+    "couple coaching",
+    "parenting",
+    "AI companion",
+    "Indian couples",
+  ],
   authors: [{ name: "Leela OS Team" }],
   openGraph: {
     title: "Leela OS - AI Relationship Companion",
@@ -48,50 +50,4 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
 };
-
-export default async function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
-  const session = await getServerSession(authOptions);
-  if (!session) {
-    redirect("/api/auth/signin");
-  }
-  return (
-    <html lang="en" suppressHydrationWarning>
-      <head>
-        <link rel="manifest" href="/manifest.json" />
-        <Script id="service-worker-registration" strategy="afterInteractive">
-          {`
-            if ('serviceWorker' in navigator) {
-              window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/service-worker.js');
-              });
-            }
-          `}
-        </Script>
-      </head>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
-      >
-        <ErrorBoundary>
-          <AuthProvider>{children}</AuthProvider>
-        </ErrorBoundary>
-        <Toaster />
-        <Script id="service-worker-registration" strategy="afterInteractive">
-          {`
-            if ('serviceWorker' in navigator) {
-              window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/service-worker.js');
-              });
-            }
-          `}
-        </Script>
-      </body>
-    </html>
-  );
-}
