@@ -5,8 +5,12 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 import next from 'next';
 import { initSentry } from '@/lib/sentry';
+import { redis } from '@/lib/redis';
+import '@/queues/email';
 
 initSentry();
+redis.on('connect', () => logger.info('Redis connected'));
+redis.on('error', (err) => logger.error({ err }, 'Redis connection error'));
 
 const dev = process.env.NODE_ENV !== 'production';
 const currentPort = 3000;
