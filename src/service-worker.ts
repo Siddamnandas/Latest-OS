@@ -41,3 +41,35 @@ self.addEventListener('fetch', (event: FetchEvent) => {
     })
   );
 });
+
+// Listen for messages from the client to cache additional resources
+self.addEventListener('message', (event: ExtendableEvent & { data?: any }) => {
+  const { data } = event;
+  if (data && data.type === 'CACHE_URLS' && Array.isArray(data.payload)) {
+    event.waitUntil(
+      caches.open(CACHE_NAME).then((cache) => cache.addAll(data.payload))
+    );
+  }
+});
+
+// Handle incoming push messages and display notifications
+self.addEventListener('push', (event: PushEvent) => {
+  if (!event.data) return;
+  const data = event.data.json();
+  const title = data.title || 'Notification';
+  const options: NotificationOptions = {
+    body: data.body,
+    icon: data.icon,
+    data: data.url ? { url: data.url } : undefined,
+  };
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+// Open the notification's URL when clicked
+self.addEventListener('notificationclick', (event: NotificationEvent) => {
+  event.notification.close();
+  const url = event.notification.data?.url;
+  if (url) {
+    event.waitUntil(clients.openWindow(url));
+  }
+});
