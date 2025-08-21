@@ -1,4 +1,7 @@
 import React from 'react';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import { redirect } from 'next/navigation';
 
 async function fetchCrashLogs() {
   const org = process.env.SENTRY_ORG;
@@ -14,6 +17,11 @@ async function fetchCrashLogs() {
 }
 
 export default async function AdminPage() {
+  const session = await getServerSession(authOptions);
+  if (session?.user?.role !== 'ADMIN') {
+    redirect('/');
+  }
+
   const events: any[] = await fetchCrashLogs();
   return (
     <div className="p-6 space-y-4">

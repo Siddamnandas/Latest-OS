@@ -21,7 +21,7 @@ export const authOptions: NextAuthOptions = {
 
         const user = await db.user.findUnique({
           where: { email: credentials.email },
-          include: { couple: true },
+          include: { couple: true, role: true },
         });
         if (!user) {
           return null;
@@ -36,6 +36,7 @@ export const authOptions: NextAuthOptions = {
           id: user.id,
           email: user.email,
           name: user.name,
+          role: user.role?.name,
           couple: user.couple,
         } as any;
       },

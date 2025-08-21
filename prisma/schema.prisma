@@ -298,13 +298,23 @@ model User {
   last_login    DateTime?
   created_at    DateTime  @default(now())
   updated_at    DateTime  @updatedAt
+  role_id       String?
 
   couple        Couple       @relation(fields: [couple_id], references: [id], onDelete: Cascade)
   conversations Conversation[]
   voice_sessions VoiceSession[]
   notifications Notification[]
+  role          Role?        @relation(fields: [role_id], references: [id])
 
   @@map("users")
+}
+
+model Role {
+  id    String @id @default(cuid())
+  name  String @unique
+  users User[]
+
+  @@map("roles")
 }
 
 // Conversation sessions for AI coaching
