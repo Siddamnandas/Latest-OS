@@ -8,17 +8,41 @@ on:
 jobs:
   lighthouse:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: testdb
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/testdb
+        NEXTAUTH_SECRET: test-secret-for-ci
+        NEXTAUTH_URL: http://localhost:3000
+        SENTRY_DSN: ""
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
+          cache: 'npm'
       - run: npm ci
+      - run: npx prisma generate
+      - run: npx prisma db push
       - run: npm run build
-      - run: npm start & npx wait-on http://localhost:3000
+      - run: npm start & npx wait-on http://localhost:3000 --timeout=60000
       - name: Run Lighthouse CI
         uses: treosh/lighthouse-ci-action@v11
         with:
           urls: http://localhost:3000
           configPath: ./lighthouserc.json
           budgetPath: ./lighthouse-budget.json
+      - name: Stop Node server
+        if: always()
+        run: pkill node
