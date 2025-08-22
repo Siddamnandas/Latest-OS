@@ -22,6 +22,7 @@ model Couple {
   stripe_subscription_id String?
   subscription_status    String?   @default("inactive")
   encryption_key         String
+  version                Int       @default(1)
   created_at             DateTime  @default(now())
   updated_at             DateTime  @updatedAt
 
@@ -73,6 +74,7 @@ model Task {
   ai_reasoning String? // JSON as String for SQLite
   due_at       DateTime?
   completed_at DateTime?
+  version      Int       @default(1)
   created_at   DateTime  @default(now())
   updated_at   DateTime  @updatedAt
 
@@ -164,6 +166,7 @@ model Memory {
   partners    String   @default("[]") // JSON as String for SQLite
   is_private  Boolean  @default(false)
   memory_type String? // 'kindness', 'storybook', 'general'
+  version     Int      @default(1)
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
 
