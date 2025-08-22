@@ -9,7 +9,7 @@ module.exports = {
     '^.+\\.(ts|tsx)$': ['ts-jest', { tsconfig: '<rootDir>/tsconfig.jest.json' }],
   },
   testMatch: [
-    '<rootDir>/src/**/__tests__/**/*.(ts|tsx|js)'
+    '<rootDir>/src/**/*.(test|spec).(ts|tsx|js)'
   ],
   testPathIgnorePatterns: ['/node_modules/', '\\.e2e\\.(ts|tsx|js)$'],
   collectCoverageFrom: [
