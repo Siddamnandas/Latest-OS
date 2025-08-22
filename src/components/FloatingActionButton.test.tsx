@@ -1,8 +1,10 @@
 import { render, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { axe } from 'jest-axe';
-import { describe, it, expect } from 'vitest';
+import { axe, toHaveNoViolations } from 'jest-axe';
 import { FloatingActionButton } from './FloatingActionButton';
+
+// Extend Jest matchers
+expect.extend(toHaveNoViolations);
 
 describe('FloatingActionButton accessibility', () => {
   it('has no accessibility violations', async () => {
