@@ -10,9 +10,10 @@ interface MagicButtonProps {
   className?: string;
   variant?: 'default' | 'secondary' | 'outline' | 'ghost';
   size?: 'default' | 'sm' | 'lg' | 'icon';
+  disabled?: boolean;
 }
 
-export function MagicButton({ children, onClick, className = '', variant = 'default', size = 'default' }: MagicButtonProps) {
+export function MagicButton({ children, onClick, className = '', variant = 'default', size = 'default', disabled = false }: MagicButtonProps) {
   const [isHovering, setIsHovering] = useState(false);
   const [sparkles, setSparkles] = useState<Array<{id: number, x: number, y: number}>>([]);
 
@@ -58,6 +59,7 @@ export function MagicButton({ children, onClick, className = '', variant = 'defa
         } relative overflow-hidden`}
         variant={variant}
         size={size}
+        disabled={disabled}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >

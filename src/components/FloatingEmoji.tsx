@@ -67,16 +67,16 @@ export function FloatingEmoji({ emoji, count = 5, duration = 2000, trigger }: Fl
 
   return (
     <div className="fixed inset-0 pointer-events-none z-40">
-      {emojis.map(emoji => (
+      {emojis.map(emojiInstance => (
         <div
-          key={emoji.id}
+          key={emojiInstance.id}
           className="absolute select-none"
           style={{
-            left: `${emoji.x}%`,
-            top: `${emoji.y}%`,
-            fontSize: `${emoji.size}px`,
-            opacity: emoji.opacity,
-            transform: `rotate(${emoji.x * 2}deg)`,
+            left: `${emojiInstance.x}%`,
+            top: `${emojiInstance.y}%`,
+            fontSize: `${emojiInstance.size}px`,
+            opacity: emojiInstance.opacity,
+            transform: `rotate(${emojiInstance.x * 2}deg)`,
             transition: 'all 0.1s ease-out'
           }}
         >

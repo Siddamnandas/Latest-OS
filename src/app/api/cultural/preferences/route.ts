@@ -11,9 +11,15 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'User ID required' }, { status: 400 });
     }
 
+    const user = await db.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+    const coupleId = user.couple_id;
+
     // Get user cultural preferences
     const preferences = await db.culturalPreference.findUnique({
-      where: { userId }
+      where: { couple_id: coupleId }
     });
 
     // Get personalized content recommendations
@@ -41,12 +47,18 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'User ID and preferences required' }, { status: 400 });
     }
 
+    const user = await db.user.findUnique({ where: { id: userId } });
+    if (!user) {
+        return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+    const coupleId = user.couple_id;
+
     // Update cultural preferences
     const updatedPreferences = await db.culturalPreference.upsert({
-      where: { userId },
+      where: { couple_id: coupleId },
       update: preferences,
       create: {
-        userId,
+        couple_id: coupleId,
         ...preferences
       }
     });

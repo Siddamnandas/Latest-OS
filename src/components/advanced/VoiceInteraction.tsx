@@ -201,7 +201,7 @@ export function VoiceInteraction() {
       primary: detectedEmotion as EmotionalState['primary'],
       confidence: Math.min(0.9, 0.5 + (maxScore * 0.1)),
       intensity: Math.min(1.0, 0.3 + (maxScore * 0.15)),
-      triggers: maxScore > 0 ? [detectedEmotion] : undefined,
+      ...(maxScore > 0 && { triggers: [detectedEmotion] }),
       recommendations: getEmotionRecommendations(detectedEmotion as EmotionalState['primary'])
     };
   };

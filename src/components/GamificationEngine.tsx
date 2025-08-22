@@ -15,7 +15,7 @@ import {
   Sparkles,
   Medal,
   Award,
-  Fire,
+  Flame,
   TrendingUp
 } from 'lucide-react';
 
@@ -286,7 +286,7 @@ export function GamificationEngine({
               { rank: 2, name: "Priya & Raj", score: 2380, change: "down", icon: "🥈" },
               { rank: 3, name: "Anita & Vikram", score: 2290, change: "up", icon: "🥉" },
               { rank: 4, name: "Neha & Arjun", score: 2150, change: "same", icon: "⭐" },
-              { rank: 5, name: "Meera & Rohan", score: 2080, change: "up", icon: "🔥" }
+              { rank: 5, name: "Meera & Rohan", score: 2080, change: "up", icon: <Flame className="w-4 h-4 text-orange-500" /> }
             ].map((player, index) => (
               <Card key={index} className={player.name === "You" ? 'bg-purple-50 border-purple-200' : ''}>
                 <CardContent className="p-3">

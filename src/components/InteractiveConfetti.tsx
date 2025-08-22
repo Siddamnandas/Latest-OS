@@ -34,7 +34,7 @@ export function InteractiveConfetti({ trigger, duration = 3000, colors = ['#8B5C
           id: i,
           x: Math.random() * 100,
           y: -10,
-          color: colors[Math.floor(Math.random() * colors.length)],
+          color: colors[Math.floor(Math.random() * colors.length)]!,
           size: Math.random() * 8 + 4,
           rotation: Math.random() * 360,
           velocity: {

@@ -88,7 +88,7 @@ export function HomeDashboard({ streak, coins }: HomeDashboardProps) {
       progress: streak,
       maxProgress: 7,
       unlocked: streak >= 7,
-      unlockedAt: streak >= 7 ? new Date().toISOString() : undefined,
+      ...(streak >= 7 && { unlockedAt: new Date().toISOString() }), // Fix: Use conditional spread
       reward: { coins: 100, badge: 'Consistency Master' }
     },
     {
@@ -105,8 +105,8 @@ export function HomeDashboard({ streak, coins }: HomeDashboardProps) {
   ];
 
   const aiSuggestion = {
-    type: 'ritual',
-    archetype: 'radha_krishna',
+    type: 'ritual' as const, // Fix: Use 'as const' for literal type
+    archetype: 'radha_krishna' as const, // Fix: Use 'as const' for literal type
     title: 'Evening Connection Ritual',
     description: 'Reignite your romance with a 15-minute tech-free evening ritual that deepens your emotional bond.',
     actionSteps: [
@@ -157,6 +157,15 @@ export function HomeDashboard({ streak, coins }: HomeDashboardProps) {
     if (streak >= 14) return '⚡';
     if (streak >= 7) return '✨';
     return '🌟';
+  };
+
+  // Fix: Data for the achievement celebration modal
+  const dailySyncAchievement = {
+    title: "Daily Sync Complete!",
+    description: "You've earned 50 Lakshmi Coins",
+    icon: '🎯',
+    rarity: 'common' as const,
+    coins: 50,
   };
 
   return (
@@ -341,10 +350,9 @@ export function HomeDashboard({ streak, coins }: HomeDashboardProps) {
 
       {/* Achievement Celebration */}
       {showAchievement && (
-        <AchievementCelebration 
-          title="Daily Sync Complete!"
-          description="You've earned 50 Lakshmi Coins"
-          coins={50}
+        <AchievementCelebration
+          isOpen={showAchievement}
+          achievement={dailySyncAchievement}
           onClose={() => setShowAchievement(false)}
         />
       )}

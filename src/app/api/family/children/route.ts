@@ -2,6 +2,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import ZAI from 'z-ai-web-dev-sdk';
 
+function calculateAge(birthdate: Date | null): number | null {
+  if (!birthdate) return null;
+  const today = new Date();
+  let age = today.getFullYear() - birthdate.getFullYear();
+  const m = today.getMonth() - birthdate.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birthdate.getDate())) {
+    age--;
+  }
+  return age;
+}
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -11,18 +22,16 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'User ID required' }, { status: 400 });
     }
 
+    const user = await db.user.findUnique({ where: { id: userId }});
+    if (!user) {
+        return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
     // Get children data from database
     const children = await db.child.findMany({
-      where: { 
-        OR: [
-          { parentId: userId },
-          { coParentId: userId }
-        ]
-      },
+      where: { coupleId: user.couple_id },
       include: {
-        milestones: true,
-        activities: true,
-        developmentRecords: true
+        activities: true
       }
     });
 
@@ -31,11 +40,10 @@ export async function GET(request: NextRequest) {
     
     const childrenWithScores = await Promise.all(
       children.map(async (child) => {
+        const age = calculateAge(child.birthdate);
         const developmentData = {
-          age: child.age,
-          milestones: child.milestones,
+          age: age,
           activities: child.activities,
-          developmentRecords: child.developmentRecords
         };
 
         const analysis = await zai.chat.completions.create({
@@ -43,7 +51,7 @@ export async function GET(request: NextRequest) {
             {
               role: 'system',
               content: `You are a child development expert. Analyze the provided child development data and calculate an overall development score (0-100). 
-              Consider milestones achieved, activities completed, and developmental progress. Return a JSON response with:
+              Consider activities completed. Return a JSON response with:
               {
                 "overallScore": number,
                 "breakdown": {
@@ -92,70 +100,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'User ID and child data required' }, { status: 400 });
     }
 
+    const user = await db.user.findUnique({ where: { id: userId }});
+    if (!user) {
+        return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
     // Create new child record
     const newChild = await db.child.create({
       data: {
+        coupleId: user.couple_id,
         name: childData.name,
-        age: childData.age,
-        parentId: userId,
-        coParentId: childData.coParentId || null,
-        avatar: childData.avatar || null,
-        birthDate: childData.birthDate,
-        gender: childData.gender
+        birthdate: childData.birthdate ? new Date(childData.birthdate) : null,
       }
     });
 
-    // Initialize standard milestones based on age
-    const zai = await ZAI.create();
-    const milestonesResponse = await zai.chat.completions.create({
-      messages: [
-        {
-          role: 'system',
-          content: `You are a child development expert. Generate age-appropriate developmental milestones for a ${childData.age}-year-old child.
-          Return a JSON array of milestones with:
-          {
-            "milestones": [
-              {
-                "title": string,
-                "category": "physical" | "cognitive" | "emotional" | "social",
-                "ageAchieved": number (in months),
-                "importance": "low" | "medium" | "high",
-                "description": string
-              }
-            ]
-          }`
-        },
-        {
-          role: 'user',
-          content: `Generate milestones for a ${childData.age}-year-old ${childData.gender || 'child'}`
-        }
-      ],
-      temperature: 0.3,
-      max_tokens: 800
-    });
-
-    const milestonesData = JSON.parse(milestonesResponse.choices[0].message.content || '{"milestones": []}');
-    
-    // Create milestone records
-    await Promise.all(
-      milestonesData.milestones.map((milestone: any) =>
-        db.childMilestone.create({
-          data: {
-            childId: newChild.id,
-            title: milestone.title,
-            category: milestone.category,
-            ageAchieved: milestone.ageAchieved,
-            importance: milestone.importance,
-            description: milestone.description,
-            isAchieved: false
-          }
-        })
-      )
-    );
-
     return NextResponse.json({ 
       child: newChild,
-      milestones: milestonesData.milestones 
     });
   } catch (error) {
     console.error('Error creating child:', error);

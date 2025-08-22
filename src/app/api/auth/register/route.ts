@@ -40,7 +40,6 @@ export async function POST(request: NextRequest) {
           city: coupleData.city || 'Hyderabad',
           region: coupleData.region || 'north-india',
           language: coupleData.language || 'hindi',
-          encryption_key: Math.random().toString(36).substring(7),
         }
       });
     }

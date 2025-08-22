@@ -1,23 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import ZAI from 'z-ai-web-dev-sdk';
 
-export async function POST(request: NextRequest) {
-  try {
-    const { userId, sessionType, context } = await request.json();
-
-    if (!userId || !sessionType) {
-      return NextResponse.json(
-        { error: 'Missing required fields: userId, sessionType' },
-        { status: 400 }
-      );
-    }
-
-    // Initialize Z-AI SDK
-    const zai = await ZAI.create();
-
-    // Create coaching prompt based on session type
-    const coachingPrompts = {
-      daily_checkin: `As an AI relationship coach, provide a daily check-in analysis for a couple. 
+// Define a single source of truth for session types and their properties.
+// 'as const' ensures that all values are inferred as their literal types (e.g., 'beginner' not string).
+const sessionTypeConfig = {
+  daily_checkin: {
+    title: 'Daily Relationship Check-in',
+    description: 'AI-powered daily assessment of your relationship health',
+    duration: 10,
+    difficulty: 'beginner',
+    getPrompt: (context?: string) => `As an AI relationship coach, provide a daily check-in analysis for a couple.
         Context: ${context || 'General daily relationship assessment'}
         
         Provide:
@@ -26,8 +18,13 @@ export async function POST(request: NextRequest) {
         3. Focus on communication, emotional connection, and task balance
         4. Keep suggestions practical and actionable
         5. Include both positive reinforcement and growth areas`,
-      
-      relationship_analysis: `As an AI relationship coach, conduct a deep relationship analysis.
+  },
+  relationship_analysis: {
+    title: 'Deep Relationship Analysis',
+    description: 'Comprehensive AI analysis of your relationship patterns',
+    duration: 25,
+    difficulty: 'intermediate',
+    getPrompt: (context?: string) => `As an AI relationship coach, conduct a deep relationship analysis.
         Context: ${context || 'Comprehensive relationship assessment'}
         
         Analyze and provide insights on:
@@ -38,8 +35,13 @@ export async function POST(request: NextRequest) {
         5. Shared values and goals alignment
         6. Growth areas and strengths
         7. Provide 4-5 specific, actionable recommendations`,
-      
-      goal_setting: `As an AI relationship coach, help with relationship goal setting.
+  },
+  goal_setting: {
+    title: 'Relationship Goal Setting',
+    description: 'AI-assisted goal setting for relationship growth',
+    duration: 30,
+    difficulty: 'advanced',
+    getPrompt: (context?: string) => `As an AI relationship coach, help with relationship goal setting.
         Context: ${context || 'Relationship goal planning'}
         
         Provide guidance on:
@@ -50,8 +52,13 @@ export async function POST(request: NextRequest) {
         5. Actionable steps for each goal
         6. Progress tracking suggestions
         7. Potential obstacles and solutions`,
-      
-      conflict_resolution: `As an AI relationship coach, provide conflict resolution guidance.
+  },
+  conflict_resolution: {
+    title: 'Conflict Resolution Guidance',
+    description: 'AI-guided strategies for healthy conflict resolution',
+    duration: 20,
+    difficulty: 'intermediate',
+    getPrompt: (context?: string) => `As an AI relationship coach, provide conflict resolution guidance.
         Context: ${context || 'Conflict resolution strategies'}
         
         Provide insights on:
@@ -61,10 +68,35 @@ export async function POST(request: NextRequest) {
         4. Emotional regulation strategies
         5. Compromise and negotiation skills
         6. Rebuilding trust after conflicts
-        7. Preventive measures for future conflicts`
-    };
+        7. Preventive measures for future conflicts`,
+  },
+} as const;
 
-    const prompt = coachingPrompts[sessionType as keyof typeof coachingPrompts] || coachingPrompts.daily_checkin;
+// Derive the SessionType union from the keys of our config object.
+type SessionType = keyof typeof sessionTypeConfig;
+
+// Type guard to validate sessionType from the untyped request body.
+function isValidSessionType(type: any): type is SessionType {
+  return type in sessionTypeConfig;
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const { userId, sessionType, context } = await request.json();
+
+    // Use the type guard to validate the sessionType.
+    if (!userId || !isValidSessionType(sessionType)) {
+      return NextResponse.json(
+        { error: 'Missing or invalid required fields: userId, sessionType' },
+        { status: 400 }
+      );
+    }
+
+    // Initialize Z-AI SDK
+    const zai = await ZAI.create();
+
+    // Safely access the prompt function from the config.
+    const prompt = sessionTypeConfig[sessionType].getPrompt(context);
 
     // Get AI coaching response
     const completion = await zai.chat.completions.create({
@@ -91,17 +123,18 @@ export async function POST(request: NextRequest) {
     const insights = extractInsights(aiResponse);
     const actionItems = extractActionItems(aiResponse);
 
-    // Generate coaching session data
+    // The CoachingSession type definition is no longer needed here.
+    // We construct the session object by safely accessing properties from our typed config.
     const coachingSession = {
       id: `session_${Date.now()}`,
       type: sessionType,
-      title: getCoachingTitle(sessionType),
-      description: getCoachingDescription(sessionType),
+      title: sessionTypeConfig[sessionType].title,
+      description: sessionTypeConfig[sessionType].description,
       aiInsights: insights,
       actionItems: actionItems,
       completed: false,
-      duration: getSessionDuration(sessionType),
-      difficulty: getSessionDifficulty(sessionType),
+      duration: sessionTypeConfig[sessionType].duration,
+      difficulty: sessionTypeConfig[sessionType].difficulty,
       aiConfidence: Math.floor(Math.random() * 15) + 85, // 85-99% confidence
       createdAt: new Date().toISOString(),
     };
@@ -121,6 +154,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
+// These helper functions remain unchanged as their logic is independent of the session types.
 function extractInsights(response: string): string[] {
   // Simple extraction - in production, use more sophisticated parsing
   const insights: string[] = [];
@@ -147,44 +181,4 @@ function extractActionItems(response: string): string[] {
   }
   
   return actions.slice(0, 4); // Return top 4 action items
-}
-
-function getCoachingTitle(type: string): string {
-  const titles = {
-    daily_checkin: 'Daily Relationship Check-in',
-    relationship_analysis: 'Deep Relationship Analysis',
-    goal_setting: 'Relationship Goal Setting',
-    conflict_resolution: 'Conflict Resolution Guidance'
-  };
-  return titles[type as keyof typeof titles] || 'Coaching Session';
-}
-
-function getCoachingDescription(type: string): string {
-  const descriptions = {
-    daily_checkin: 'AI-powered daily assessment of your relationship health',
-    relationship_analysis: 'Comprehensive AI analysis of your relationship patterns',
-    goal_setting: 'AI-assisted goal setting for relationship growth',
-    conflict_resolution: 'AI-guided strategies for healthy conflict resolution'
-  };
-  return descriptions[type as keyof typeof descriptions] || 'Personalized coaching session';
-}
-
-function getSessionDuration(type: string): number {
-  const durations = {
-    daily_checkin: 10,
-    relationship_analysis: 25,
-    goal_setting: 30,
-    conflict_resolution: 20
-  };
-  return durations[type as keyof typeof durations] || 15;
-}
-
-function getSessionDifficulty(type: string): 'beginner' | 'intermediate' | 'advanced' {
-  const difficulties = {
-    daily_checkin: 'beginner',
-    relationship_analysis: 'intermediate',
-    goal_setting: 'advanced',
-    conflict_resolution: 'intermediate'
-  };
-  return difficulties[type as keyof typeof difficulties] || 'beginner';
 }

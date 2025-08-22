@@ -199,23 +199,24 @@ export function FridgeToTableUpdated({ coupleId }: FridgeToTableProps) {
       }
     ];
 
-    const mockMealPlans: MealPlan[] = [
-      {
-        id: '1',
-        name: 'Weekly Plan - Week 1',
-        date: new Date(),
-        meals: {
-          breakfast: [mockRecipes[0]],
-          lunch: [mockRecipes[1]],
-          dinner: [mockRecipes[0]],
-          snacks: []
-        },
-        nutrition: { calories: 1800, protein: 65, carbs: 220, fats: 45 },
-        budget: 2500,
-        actualCost: 2350,
-        notes: 'Reduced cost by buying vegetables in bulk'
-      }
-    ];
+    const mockMealPlans: MealPlan[] = [];
+    if (mockRecipes[0] && mockRecipes[1]) {
+        mockMealPlans.push({
+            id: '1',
+            name: 'Weekly Plan - Week 1',
+            date: new Date(),
+            meals: {
+                breakfast: [mockRecipes[0]],
+                lunch: [mockRecipes[1]],
+                dinner: [mockRecipes[0]],
+                snacks: []
+            },
+            nutrition: { calories: 1800, protein: 65, carbs: 220, fats: 45 },
+            budget: 2500,
+            actualCost: 2350,
+            notes: 'Reduced cost by buying vegetables in bulk'
+        });
+    }
 
     const mockGroceryLists: GroceryList[] = [
       {

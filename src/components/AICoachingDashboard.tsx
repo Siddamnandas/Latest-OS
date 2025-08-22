@@ -516,7 +516,6 @@ export function AICoachingDashboard() {
 
         <TabsContent value="conversation" className="space-y-4">
           <AIConversationInterface 
-            sessionId="current-session"
             onSessionComplete={handleSessionSummary}
           />
         </TabsContent>

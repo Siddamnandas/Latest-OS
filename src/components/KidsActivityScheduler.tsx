@@ -78,7 +78,9 @@ export function KidsActivityScheduler() {
     
     setIsGenerating(false);
     
-    updateWeekProgress(schedule);
+    if (schedule) {
+      updateWeekProgress(schedule);
+    }
   };
 
   const createWeeklySchedule = (weekOffset = 0): WeeklySchedule => {
@@ -98,7 +100,7 @@ export function KidsActivityScheduler() {
       date.setDate(startOfWeek.getDate() + index);
       
       const activityIndex = activityDays.indexOf(index);
-      const activityType = activityIndex !== -1 ? activityTypes[activityIndex] : null;
+      const activityType = activityIndex !== -1 ? activityTypes[activityIndex]! : null;
       
       let assignedParent = null;
       let targetParent = null;
@@ -138,7 +140,7 @@ export function KidsActivityScheduler() {
     
     for (let i = 0; i < count; i++) {
       const randomIndex = Math.floor(Math.random() * days.length);
-      selectedDays.push(days.splice(randomIndex, 1)[0]);
+      selectedDays.push(days.splice(randomIndex, 1)[0]!);
     }
     
     return selectedDays.sort((a, b) => a - b);
@@ -151,13 +153,13 @@ export function KidsActivityScheduler() {
     const primaryParentIndex = weekNum % parents.length;
     const secondaryParentIndex = (primaryParentIndex + 1) % parents.length;
     
-    const assignedParent = parents[primaryParentIndex].id;
+    const assignedParent = parents[primaryParentIndex]!.id;
     
     if (activityType === 'krishna') {
       // For Krishna, one parent helps, one is targeted
       return {
         assignedParent,
-        targetParent: parents[secondaryParentIndex].id
+        targetParent: parents[secondaryParentIndex]!.id
       };
     } else {
       // For Hanuman and Saraswati, only one parent is assigned
@@ -204,7 +206,7 @@ export function KidsActivityScheduler() {
     };
     
     const typePrompts = prompts[type];
-    return typePrompts[Math.floor(Math.random() * typePrompts.length)];
+    return typePrompts[Math.floor(Math.random() * typePrompts.length)]!;
   };
 
   const getActivityIcon = (type: 'krishna' | 'hanuman' | 'saraswati') => {
@@ -227,7 +229,7 @@ export function KidsActivityScheduler() {
 
   const getDayName = (dayOfWeek: number): string => {
     const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    return days[dayOfWeek];
+    return days[dayOfWeek]!;
   };
 
   const getParentName = (parentId: string): string => {

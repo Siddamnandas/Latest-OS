@@ -243,17 +243,19 @@ export function NotificationCenter() {
       }
     ];
 
-    const randomNotification = randomNotifications[Math.floor(Math.random() * randomNotifications.length)];
+    const randomNotification = randomNotifications[Math.floor(Math.random() * randomNotifications.length)]!;
     
     const newNotification: Notification = {
       id: Date.now().toString(),
       ...randomNotification,
       timestamp: new Date(),
       read: false,
-      action: randomNotification.type === 'insight' ? {
-        label: 'View Details',
-        onClick: () => handleNotificationAction('view_insight')
-      } : undefined
+      ...(randomNotification.type === 'insight' && {
+        action: {
+          label: 'View Details',
+          onClick: () => handleNotificationAction('view_insight'),
+        },
+      }),
     };
 
     setNotifications(prev => [newNotification, ...prev]);

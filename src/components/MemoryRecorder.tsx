@@ -170,14 +170,28 @@ export function MemoryRecorder({ onSave, onCancel }: MemoryRecorderProps) {
       return;
     }
 
-    const memoryData = {
+    // Build the memory data object in a way that respects exactOptionalPropertyTypes
+    const memoryData: {
+      type: 'text' | 'audio' | 'video' | 'image';
+      content: string;
+      title: string;
+      description?: string;
+      tags: string[];
+      duration?: number;
+    } = {
       type: recordingType,
       content: recordingType === 'text' ? content : mediaUrl,
       title,
-      description: description || undefined,
       tags,
-      duration: recordingType !== 'text' ? recordingTime : undefined,
     };
+
+    if (description) {
+      memoryData.description = description;
+    }
+
+    if (recordingType !== 'text') {
+      memoryData.duration = recordingTime;
+    }
 
     onSave(memoryData);
   };

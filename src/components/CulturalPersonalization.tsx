@@ -23,7 +23,6 @@ import {
   Settings,
   Bell,
   Flag,
-  Temple,
   Utensils,
   Camera,
   Palette,
@@ -303,7 +302,7 @@ export function CulturalPersonalization() {
 
   const getFestivalIcon = (category: string) => {
     switch (category) {
-      case 'religious': return <Temple className="w-5 h-5" />;
+      case 'religious': return <Home className="w-5 h-5" />;
       case 'cultural': return <Music className="w-5 h-5" />;
       case 'seasonal': return <Cloud className="w-5 h-5" />;
       case 'harvest': return <Flower className="w-5 h-5" />;
@@ -379,7 +378,7 @@ export function CulturalPersonalization() {
             <div className="flex items-center gap-2">
               <Flag className="w-4 h-4" />
               <span className="text-sm">
-                Current Region: {getRegionData(selectedRegion).name}
+                Current Region: {getRegionData(selectedRegion)?.name}
               </span>
             </div>
             <div className="text-right">
@@ -517,7 +516,7 @@ export function CulturalPersonalization() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Star className="w-5 h-5" />
-                {getRegionData(selectedRegion).name} Festivals
+                {getRegionData(selectedRegion)?.name} Festivals
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -550,7 +549,7 @@ export function CulturalPersonalization() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Users className="w-5 h-5" />
-                {getRegionData(selectedRegion).name} Customs & Traditions
+                {getRegionData(selectedRegion)?.name} Customs & Traditions
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -558,7 +557,7 @@ export function CulturalPersonalization() {
                 <div>
                   <h4 className="font-medium text-gray-900 mb-3">Key Customs</h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {getRegionData(selectedRegion).customs.map((custom, index) => (
+                    {getRegionData(selectedRegion)?.customs.map((custom, index) => (
                       <div key={index} className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
                         <Star className="w-4 h-4 text-yellow-500" />
                         <span className="text-sm text-gray-700">{custom}</span>
@@ -570,7 +569,7 @@ export function CulturalPersonalization() {
                 <div>
                   <h4 className="font-medium text-gray-900 mb-3">Core Values</h4>
                   <div className="flex flex-wrap gap-2">
-                    {getRegionData(selectedRegion).values.map((value, index) => (
+                    {getRegionData(selectedRegion)?.values.map((value, index) => (
                       <Badge key={index} variant="outline" className="text-xs">
                         {value}
                       </Badge>
@@ -581,7 +580,7 @@ export function CulturalPersonalization() {
                 <div>
                   <h4 className="font-medium text-gray-900 mb-3">Relationship Norms</h4>
                   <div className="space-y-2">
-                    {getRegionData(selectedRegion).relationshipNorms.map((norm, index) => (
+                    {getRegionData(selectedRegion)?.relationshipNorms.map((norm, index) => (
                       <div key={index} className="flex items-center gap-2 text-sm text-gray-600">
                         <HeartHandshake className="w-4 h-4 text-pink-500" />
                         {norm}
@@ -593,7 +592,7 @@ export function CulturalPersonalization() {
                 <div>
                   <h4 className="font-medium text-gray-900 mb-3">Family Structure</h4>
                   <div className="space-y-2">
-                    {getRegionData(selectedRegion).familyStructure.map((structure, index) => (
+                    {getRegionData(selectedRegion)?.familyStructure.map((structure, index) => (
                       <div key={index} className="flex items-center gap-2 text-sm text-gray-600">
                         <Home className="w-4 h-4 text-blue-500" />
                         {structure}
@@ -606,7 +605,7 @@ export function CulturalPersonalization() {
                   <div>
                     <h4 className="font-medium text-gray-900 mb-3">Cuisine</h4>
                     <div className="flex flex-wrap gap-2">
-                      {getRegionData(selectedRegion).cuisine.map((item, index) => (
+                      {getRegionData(selectedRegion)?.cuisine.map((item, index) => (
                         <Badge key={index} variant="outline" className="text-xs">
                           <Utensils className="w-3 h-3 mr-1" />
                           {item}
@@ -618,7 +617,7 @@ export function CulturalPersonalization() {
                   <div>
                     <h4 className="font-medium text-gray-900 mb-3">Arts & Culture</h4>
                     <div className="flex flex-wrap gap-2">
-                      {getRegionData(selectedRegion).arts.map((art, index) => (
+                      {getRegionData(selectedRegion)?.arts.map((art, index) => (
                         <Badge key={index} variant="outline" className="text-xs">
                           <Palette className="w-3 h-3 mr-1" />
                           {art}

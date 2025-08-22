@@ -62,6 +62,22 @@ export function FamilyIntegration({ children, onAddChild, onLogActivity }: Famil
   const [selectedChild, setSelectedChild] = useState(children[0]);
   const [activeTab, setActiveTab] = useState('overview');
 
+  if (!selectedChild) {
+    return (
+      <Card>
+        <CardContent className="p-4 text-center">
+          <Baby className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+          <h3 className="text-lg font-semibold">No children found</h3>
+          <p className="text-sm text-gray-500 mb-4">Add a child to get started.</p>
+          <Button onClick={onAddChild} size="sm" className="gap-2">
+            <Plus className="w-4 h-4" />
+            Add Child
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
   const getMilestoneIcon = (category: string) => {
     switch (category) {
       case 'physical': return '🏃';

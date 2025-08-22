@@ -88,6 +88,13 @@ interface CommunicationMetric {
   voiceInteractions: number;
 }
 
+interface Recommendation {
+  title: string;
+  description: string;
+  priority: 'high' | 'medium' | 'low';
+  category: string;
+}
+
 export function RelationshipAnalytics() {
   const [timeRange, setTimeRange] = useState<'week' | 'month' | 'quarter' | 'year'>('month');
   const [analytics, setAnalytics] = useState({
@@ -284,7 +291,7 @@ export function RelationshipAnalytics() {
   };
 
   const generatePersonalizedRecommendations = () => {
-    const recommendations = [];
+    const recommendations: Recommendation[] = [];
     
     // Based on metrics
     const lowMetrics = metrics.filter(m => m.value < m.target * 0.8);

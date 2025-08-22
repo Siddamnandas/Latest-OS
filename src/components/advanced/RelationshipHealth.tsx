@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -84,132 +84,133 @@ export function RelationshipHealth() {
   const [assessment, setAssessment] = useState<HealthAssessment | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedTimeframe, setSelectedTimeframe] = useState<'current' | 'week' | 'month' | 'quarter'>('current');
+  const [selectedPriority, setSelectedPriority] = useState<'all' | 'high' | 'medium' | 'low'>('all');
   const [showDetails, setShowDetails] = useState(false);
 
-  useEffect(() => {
-    const fetchAssessment = async () => {
-      setLoading(true);
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      setAssessment({
-        scores: {
-          overall: 78,
-          breakdown: {
-            emotionalConnection: 85,
-            communication: 82,
-            intimacy: 72,
-            conflictResolution: 75,
-            sharedValues: 88,
-            trust: 90,
-            support: 86,
-            growth: 79
-          },
-          trend: 'improving',
-          lastUpdated: new Date().toISOString()
-        },
-        recommendations: [
-          {
-            id: 'rec-1',
-            priority: 'high',
-            category: 'Intimacy',
-            title: 'Deepen Emotional Intimacy',
-            description: 'Focus on building deeper emotional connection through vulnerability exercises',
-            actionSteps: [
-              'Schedule weekly emotional check-ins',
-              'Practice active listening without interruption',
-              'Share feelings using "I" statements',
-              'Create safe space for vulnerability'
-            ],
-            expectedImpact: '20% improvement in emotional connection scores',
-            timeframe: '2-4 weeks',
-            difficulty: 'moderate',
-            estimatedTime: '15-20 minutes daily',
-            resources: ['Emotional intimacy guide', 'Communication exercises']
-          },
-          {
-            id: 'rec-2',
-            priority: 'medium',
-            category: 'Communication',
-            title: 'Enhance Communication Patterns',
-            description: 'Improve communication effectiveness through structured techniques',
-            actionSteps: [
-              'Practice reflective listening',
-              'Use non-violent communication',
-              'Schedule regular state-of-the-union meetings',
-              'Learn each other\'s communication styles'
-            ],
-            expectedImpact: '15% improvement in communication scores',
-            timeframe: '3-6 weeks',
-            difficulty: 'easy',
-            estimatedTime: '10-15 minutes daily',
-            resources: ['Communication workbook', 'Style assessment tools']
-          },
-          {
-            id: 'rec-3',
-            priority: 'low',
-            category: 'Growth',
-            title: 'Explore New Activities Together',
-            description: 'Try new experiences to strengthen bond and create shared memories',
-            actionSteps: [
-              'Plan monthly adventure dates',
-              'Take up a new hobby together',
-              'Attend relationship workshops',
-              'Set and work on shared goals'
-            ],
-            expectedImpact: '10% improvement in overall satisfaction',
-            timeframe: '1-3 months',
-            difficulty: 'easy',
-            estimatedTime: '2-4 hours weekly',
-            resources: ['Activity ideas list', 'Goal planning templates']
-          }
-        ],
-        insights: [
-          {
-            id: 'insight-1',
-            type: 'strength',
-            title: 'Strong Trust Foundation',
-            description: 'Your relationship shows exceptional trust levels, which provides a solid foundation for growth',
-            data: { score: 90, trend: 'stable' },
-            confidence: 0.95,
-            actionable: false
-          },
-          {
-            id: 'insight-2',
-            type: 'opportunity',
-            title: 'Intimacy Enhancement Potential',
-            description: 'Emotional intimacy shows room for growth and could significantly impact overall satisfaction',
-            data: { current: 72, potential: 85, impact: 'high' },
-            confidence: 0.88,
-            actionable: true
-          },
-          {
-            id: 'insight-3',
-            type: 'trend',
-            title: 'Positive Growth Trajectory',
-            description: 'Your relationship shows consistent improvement across multiple dimensions',
-            data: { growthRate: 0.12, areas: ['communication', 'support'] },
-            confidence: 0.92,
-            actionable: false
-          }
-        ],
-        riskFactors: [
-          'Occasional communication breakdown during stress',
-          'Limited quality time due to busy schedules',
-          'Different intimacy needs and preferences'
-        ],
-        protectiveFactors: [
-          'Strong commitment to relationship growth',
-          'Excellent conflict resolution skills',
-          'Shared values and life goals',
-          'Good support system'
-        ],
-        nextAssessment: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
-      });
-      setLoading(false);
-    };
+  const fetchAssessment = useCallback(async () => {
+    setLoading(true);
+    await new Promise(resolve => setTimeout(resolve, 2000));
 
+    setAssessment({
+      scores: {
+        overall: 78,
+        breakdown: {
+          emotionalConnection: 85,
+          communication: 82,
+          intimacy: 72,
+          conflictResolution: 75,
+          sharedValues: 88,
+          trust: 90,
+          support: 86,
+          growth: 79
+        },
+        trend: 'improving',
+        lastUpdated: new Date().toISOString()
+      },
+      recommendations: [
+        {
+          id: 'rec-1',
+          priority: 'high',
+          category: 'Intimacy',
+          title: 'Deepen Emotional Intimacy',
+          description: 'Focus on building deeper emotional connection through vulnerability exercises',
+          actionSteps: [
+            'Schedule weekly emotional check-ins',
+            'Practice active listening without interruption',
+            'Share feelings using "I" statements',
+            'Create safe space for vulnerability'
+          ],
+          expectedImpact: '20% improvement in emotional connection scores',
+          timeframe: '2-4 weeks',
+          difficulty: 'moderate',
+          estimatedTime: '15-20 minutes daily',
+          resources: ['Emotional intimacy guide', 'Communication exercises']
+        },
+        {
+          id: 'rec-2',
+          priority: 'medium',
+          category: 'Communication',
+          title: 'Enhance Communication Patterns',
+          description: 'Improve communication effectiveness through structured techniques',
+          actionSteps: [
+            'Practice reflective listening',
+            'Use non-violent communication',
+            'Schedule regular state-of-the-union meetings',
+            'Learn each other\'s communication styles'
+          ],
+          expectedImpact: '15% improvement in communication scores',
+          timeframe: '3-6 weeks',
+          difficulty: 'easy',
+          estimatedTime: '10-15 minutes daily',
+          resources: ['Communication workbook', 'Style assessment tools']
+        },
+        {
+          id: 'rec-3',
+          priority: 'low',
+          category: 'Growth',
+          title: 'Explore New Activities Together',
+          description: 'Try new experiences to strengthen bond and create shared memories',
+          actionSteps: [
+            'Plan monthly adventure dates',
+            'Take up a new hobby together',
+            'Attend relationship workshops',
+            'Set and work on shared goals'
+          ],
+          expectedImpact: '10% improvement in overall satisfaction',
+          timeframe: '1-3 months',
+          difficulty: 'easy',
+          estimatedTime: '2-4 hours weekly',
+          resources: ['Activity ideas list', 'Goal planning templates']
+        }
+      ],
+      insights: [
+        {
+          id: 'insight-1',
+          type: 'strength',
+          title: 'Strong Trust Foundation',
+          description: 'Your relationship shows exceptional trust levels, which provides a solid foundation for growth',
+          data: { score: 90, trend: 'stable' },
+          confidence: 0.95,
+          actionable: false
+        },
+        {
+          id: 'insight-2',
+          type: 'opportunity',
+          title: 'Intimacy Enhancement Potential',
+          description: 'Emotional intimacy shows room for growth and could significantly impact overall satisfaction',
+          data: { current: 72, potential: 85, impact: 'high' },
+          confidence: 0.88,
+          actionable: true
+        },
+        {
+          id: 'insight-3',
+          type: 'trend',
+          title: 'Positive Growth Trajectory',
+          description: 'Your relationship shows consistent improvement across multiple dimensions',
+          data: { growthRate: 0.12, areas: ['communication', 'support'] },
+          confidence: 0.92,
+          actionable: false
+        }
+      ],
+      riskFactors: [
+        'Occasional communication breakdown during stress',
+        'Limited quality time due to busy schedules',
+        'Different intimacy needs and preferences'
+      ],
+      protectiveFactors: [
+        'Strong commitment to relationship growth',
+        'Excellent conflict resolution skills',
+        'Shared values and life goals',
+        'Good support system'
+      ],
+      nextAssessment: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+    });
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
     fetchAssessment();
-  }, [selectedTimeframe]);
+  }, [selectedTimeframe, fetchAssessment]);
 
   const getHealthColor = (score: number) => {
     if (score >= 80) return 'text-green-600';
@@ -395,9 +396,9 @@ export function RelationshipHealth() {
             {['all', 'high', 'medium', 'low'].map((priority) => (
               <Button
                 key={priority}
-                variant={selectedTimeframe === priority ? 'default' : 'outline'}
+                variant={selectedPriority === priority ? 'default' : 'outline'}
                 size="sm"
-                onClick={() => setSelectedTimeframe(priority as any)}
+                onClick={() => setSelectedPriority(priority as any)}
                 className="capitalize"
               >
                 {priority === 'all' ? 'All Recommendations' : `${priority} Priority`}
@@ -408,7 +409,7 @@ export function RelationshipHealth() {
           {/* Recommendations List */}
           <div className="space-y-4">
             {assessment.recommendations
-              .filter(rec => selectedTimeframe === 'all' || rec.priority === selectedTimeframe)
+              .filter(rec => selectedPriority === 'all' || rec.priority === selectedPriority)
               .map((recommendation) => (
                 <Card key={recommendation.id} className="transition-all hover:shadow-lg">
                   <CardHeader>

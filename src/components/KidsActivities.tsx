@@ -404,7 +404,7 @@ export function KidsActivities() {
     
     // Set current day (randomized daily selection)
     const availableDays = ['krishna', 'hanuman', 'saraswati'];
-    const randomDay = availableDays[Math.floor(Math.random() * availableDays.length)];
+    const randomDay = availableDays[Math.floor(Math.random() * availableDays.length)]!;
     setCurrentDay(randomDay);
     
     setLoading(false);

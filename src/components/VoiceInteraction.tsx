@@ -128,7 +128,7 @@ export function VoiceInteraction({
           "Thank you for your help"
         ];
 
-        const randomPhrase = phrases[Math.floor(Math.random() * phrases.length)];
+        const randomPhrase = phrases[Math.floor(Math.random() * phrases.length)]!;
         
         // Simulate processing delay
         setIsProcessing(true);
@@ -190,7 +190,7 @@ export function VoiceInteraction({
     // Detect emotions
     const detectedEmotions = detectEmotions(input);
     if (detectedEmotions.length > 0) {
-      setCurrentEmotion(detectedEmotions[0]);
+      setCurrentEmotion(detectedEmotions[0] || null);
     }
 
     // Detect sentiment
@@ -432,7 +432,7 @@ export function VoiceInteraction({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 {commandPatterns.slice(0, 6).map((pattern, index) => (
                   <div key={index} className="p-2 bg-gray-50 rounded text-xs">
-                    <code className="text-blue-600">"{pattern.command}"</code>
+                    <code className="text-blue-600">"{pattern.regex.source}"</code>
                     <p className="text-gray-600 mt-1">→ {pattern.action.replace('_', ' ')}</p>
                   </div>
                 ))}

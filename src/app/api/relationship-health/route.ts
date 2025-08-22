@@ -481,11 +481,12 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Relationship Health API Error:', error);
+    const message = error instanceof Error ? error.message : 'An unknown error occurred';
     return NextResponse.json(
       { 
         success: false, 
         error: 'Failed to process relationship health request',
-        message: error.message 
+        message: message
       },
       { status: 500 }
     );

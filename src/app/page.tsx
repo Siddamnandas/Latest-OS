@@ -6,7 +6,6 @@ import { HomeDashboard } from '@/components/HomeDashboard';
 import { TaskManagement } from '@/components/TaskManagement';
 import { RitualSystem } from '@/components/RitualSystem';
 import { GoalsHub } from '@/components/GoalsHub';
-import { CoupleSyncSystem } from '@/components/CoupleSyncSystem';
 import { KidsActivities } from '@/components/KidsActivities';
 import { ProfileSettings } from '@/components/ProfileSettings';
 import { FloatingActionButton } from '@/components/FloatingActionButton';
@@ -48,8 +47,6 @@ export default function Home() {
         return <RitualSystem />;
       case 'goals':
         return <GoalsHub />;
-      case 'sync':
-        return <CoupleSyncSystem />;
       case 'kids':
         return <KidsActivities />;
       case 'profile':

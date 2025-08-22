@@ -43,21 +43,32 @@ export async function GET(request: NextRequest) {
       orderBy: { recorded_at: 'desc' }
     });
 
-    // Calculate aggregated metrics
-    const metrics = {};
+    // Calculate aggregated metrics using a Map for type-safe handling of dynamic keys.
+    const metrics = new Map<string, number[]>();
     analytics.forEach(analytic => {
-      if (!metrics[analytic.metric_type]) {
-        metrics[analytic.metric_type] = [];
+      const key = analytic.metric_type;
+      let values = metrics.get(key);
+      if (!values) {
+        values = [];
+        metrics.set(key, values);
       }
-      metrics[analytic.metric_type].push(analytic.metric_value);
+      values.push(analytic.metric_value);
     });
 
-    // Calculate averages and trends
-    const aggregatedMetrics = Object.entries(metrics).map(([type, values]) => {
+    // Calculate averages and trends from the metrics map.
+    const aggregatedMetrics = Array.from(metrics.entries()).map(([type, values]) => {
+      if (values.length === 0) {
+        return {
+          type,
+          value: 0,
+          trend: 'stable',
+          dataPoints: 0
+        };
+      }
       const avgValue = values.reduce((sum, val) => sum + val, 0) / values.length;
       const latest = values[0];
-      const previous = values[1];
-      const trend = previous ? (latest > previous ? 'up' : latest < previous ? 'down' : 'stable') : 'stable';
+      const previous = values.length > 1 ? values[1] : undefined;
+      const trend = (latest !== undefined && previous !== undefined) ? (latest > previous ? 'up' : latest < previous ? 'down' : 'stable') : 'stable';
       
       return {
         type,

@@ -146,7 +146,7 @@ export function MemoryTimeline({ memories, onMemoryClick }: MemoryTimelineProps)
                   onClick={() => setSelectedYear(prev => {
                     const currentIndex = availableYears.indexOf(prev);
                     const nextIndex = currentIndex < availableYears.length - 1 ? currentIndex + 1 : 0;
-                    return availableYears[nextIndex];
+                    return availableYears[nextIndex]!;
                   })}
                 >
                   <ChevronLeft className="w-4 h-4" />
@@ -171,7 +171,7 @@ export function MemoryTimeline({ memories, onMemoryClick }: MemoryTimelineProps)
                   onClick={() => setSelectedYear(prev => {
                     const currentIndex = availableYears.indexOf(prev);
                     const prevIndex = currentIndex > 0 ? currentIndex - 1 : availableYears.length - 1;
-                    return availableYears[prevIndex];
+                    return availableYears[prevIndex]!;
                   })}
                 >
                   <ChevronRight className="w-4 h-4" />
