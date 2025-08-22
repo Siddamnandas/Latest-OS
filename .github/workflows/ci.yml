@@ -66,6 +66,7 @@ jobs:
       NEXTAUTH_SECRET: test-secret-for-ci
       NEXTAUTH_URL: http://localhost:3000
       SENTRY_DSN: ""
+      EAS_RELEASE_CHANNEL: ${{ github.ref == 'refs/heads/production' && 'production' || 'staging' }}
     services:
       postgres:
         image: postgres:15
@@ -90,6 +91,8 @@ jobs:
       - run: npx prisma generate
       - run: npx prisma db push
       - run: npm run build
+      - name: Publish OTA update
+        run: npx eas update --non-interactive --channel $EAS_RELEASE_CHANNEL
 =======
 
 on:

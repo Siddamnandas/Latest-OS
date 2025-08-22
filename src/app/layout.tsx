@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { Toaster } from "@/components/ui/sonner";
 import { QueryProvider } from "@/lib/query-provider";
 import { AuthProvider } from "@/lib/auth-context";
+import { UpdateNotifier } from "@/lib/update-notifier";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 // import enMessages from "@/messages/en.json";
 // import hiMessages from "@/messages/hi.json";
@@ -80,6 +81,7 @@ export default async function RootLayout({
         <ErrorBoundary>
           <AuthProvider>
             <QueryProvider>
+              <UpdateNotifier />
               {children}
               <Toaster />
             </QueryProvider>

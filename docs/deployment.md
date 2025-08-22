@@ -33,3 +33,23 @@ Use the scripts in the `scripts/` directory to automate deployment tasks:
 - `scripts/run-migrations.sh` – runs database migrations using Prisma.
 
 Ensure Docker and Node.js are installed on your deployment machine.
+
+## OTA Updates & Release Channels
+
+The CI workflow publishes over-the-air updates with Expo EAS. Commits to
+different branches are mapped to release channels:
+
+- `main` ➜ `staging`
+- `production` ➜ `production`
+
+### Rollback
+
+If an update causes issues, republish a previous commit to the affected
+channel:
+
+```bash
+eas update --non-interactive --channel <channel> --commit <commit-hash>
+```
+
+This will make the selected commit active again for all users on that
+release channel.
