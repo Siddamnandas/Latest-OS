@@ -33,7 +33,7 @@ jobs:
         with:
           node-version: 20
           cache: 'npm'
-      - run: npm install
+      - run: npm ci
       - run: npx prisma generate
       - run: npx prisma db push
       - run: npm run lint
@@ -65,7 +65,7 @@ jobs:
         with:
           node-version: 20
           cache: 'npm'
-      - run: npm install
+      - run: npm ci
       - run: npx prisma generate
       - run: npx prisma db push
       - run: npm run build
