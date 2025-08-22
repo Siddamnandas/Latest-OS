@@ -23,6 +23,7 @@ model Couple {
   encryption_key  String
   created_at      DateTime @default(now())
   updated_at      DateTime @updatedAt
+  version         Int      @default(1)
 
   // Relationships
   sync_entries     SyncEntry[]
@@ -43,6 +44,7 @@ model Couple {
   shared_goals     SharedGoal[]
   notifications   Notification[]
 
+  @@unique([id, version])
   @@map("couples")
 }
 
@@ -55,9 +57,11 @@ model SyncEntry {
   mood_tags    Json     @default("[]") // Array of mood tags
   context_notes String?
   created_at   DateTime @default(now())
+  version      Int      @default(1)
 
   couple Couple @relation(fields: [couple_id], references: [id], onDelete: Cascade)
 
+  @@unique([id, version])
   @@map("sync_entries")
 }
 
@@ -74,9 +78,11 @@ model Task {
   completed_at   DateTime?
   created_at     DateTime    @default(now())
   updated_at     DateTime    @updatedAt
+  version        Int         @default(1)
 
   couple Couple @relation(fields: [couple_id], references: [id], onDelete: Cascade)
 
+  @@unique([id, version])
   @@map("tasks")
 }
 
@@ -89,9 +95,11 @@ model RitualSession {
   completion_data  Json?
   started_at       DateTime      @default(now())
   completed_at     DateTime?
+  version          Int           @default(1)
 
   couple Couple @relation(fields: [couple_id], references: [id], onDelete: Cascade)
 
+  @@unique([id, version])
   @@map("ritual_sessions")
 }
 
@@ -102,10 +110,12 @@ model RasaBalance {
   duty_percentage  Float
   balance_percentage Float
   updated_at       DateTime @default(now())
+  version          Int      @default(1)
 
   couple Couple @relation(fields: [couple_id], references: [id], onDelete: Cascade)
 
   @@unique([couple_id])
+  @@unique([id, version])
   @@map("rasa_balance")
 }
 
@@ -116,10 +126,12 @@ model Child {
   age          Int
   preferences  Json     @default("[]")
   created_at   DateTime @default(now())
+  version      Int      @default(1)
 
   couple       Couple           @relation(fields: [couple_id], references: [id], onDelete: Cascade)
   activities   FamilyActivity[]
 
+  @@unique([id, version])
   @@map("children")
 }
 
@@ -131,9 +143,11 @@ model FamilyActivity {
   completion_data Json?
   completed_at    DateTime?
   created_at      DateTime      @default(now())
+  version         Int           @default(1)
 
   child Child @relation(fields: [child_id], references: [id], onDelete: Cascade)
 
+  @@unique([id, version])
   @@map("family_activities")
 }
 
@@ -144,9 +158,11 @@ model RewardTransaction {
   coins_spent Int      @default(0)
   activity    String   // Description of activity
   created_at  DateTime @default(now())
+  version     Int      @default(1)
 
   couple Couple @relation(fields: [couple_id], references: [id], onDelete: Cascade)
 
+  @@unique([id, version])
   @@map("reward_transactions")
 }
 
@@ -193,9 +209,11 @@ model Memory {
   memory_type String?  // 'kindness', 'storybook', 'general'
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
+  version     Int      @default(1)
 
   couple Couple @relation(fields: [couple_id], references: [id], onDelete: Cascade)
 
+  @@unique([id, version])
   @@map("memories")
 }
 
@@ -215,7 +233,9 @@ model Recipe {
   is_favorite  Boolean  @default(false)
   created_at   DateTime @default(now())
   updated_at   DateTime @updatedAt
+  version      Int      @default(1)
 
+  @@unique([id, version])
   @@map("recipes")
 }
 
@@ -231,9 +251,11 @@ model MealPlan {
   notes       String?
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
+  version     Int      @default(1)
 
   couple Couple @relation(fields: [couple_id], references: [id], onDelete: Cascade)
 
+  @@unique([id, version])
   @@map("meal_plans")
 }
 
@@ -249,9 +271,11 @@ model GroceryList {
   due_date    DateTime?
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
+  version     Int      @default(1)
 
   couple Couple @relation(fields: [couple_id], references: [id], onDelete: Cascade)
 
+  @@unique([id, version])
   @@map("grocery_lists")
 }
 
@@ -270,9 +294,11 @@ model AISuggestion {
   is_completed    Boolean  @default(false)
   created_at      DateTime @default(now())
   updated_at      DateTime @updatedAt
+  version         Int      @default(1)
 
   couple Couple @relation(fields: [couple_id], references: [id], onDelete: Cascade)
 
+  @@unique([id, version])
   @@map("ai_suggestions")
 }
 
@@ -282,7 +308,9 @@ model DailyActivityTheme {
   activity_type String   // 'krishna', 'hanuman', 'saraswati'
   activities    Json     // JSON array of activities for the day
   created_at    DateTime @default(now())
+  version       Int      @default(1)
 
+  @@unique([id, version])
   @@map("daily_activity_themes")
 }
 
@@ -298,12 +326,14 @@ model User {
   last_login    DateTime?
   created_at    DateTime  @default(now())
   updated_at    DateTime  @updatedAt
+  version       Int       @default(1)
 
   couple        Couple       @relation(fields: [couple_id], references: [id], onDelete: Cascade)
   conversations Conversation[]
   voice_sessions VoiceSession[]
   notifications Notification[]
 
+  @@unique([id, version])
   @@map("users")
 }
 
@@ -322,10 +352,12 @@ model Conversation {
   completed_at    DateTime?
   created_at      DateTime @default(now())
   updated_at      DateTime @updatedAt
+  version         Int      @default(1)
 
   couple Couple @relation(fields: [couple_id], references: [id], onDelete: Cascade)
   user   User   @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
+  @@unique([id, version])
   @@map("conversations")
 }
 
@@ -341,10 +373,12 @@ model VoiceSession {
   emotions        Json?    // JSON array of detected emotions
   session_data    Json?    // Additional session data
   created_at      DateTime @default(now())
+  version         Int      @default(1)
 
   couple Couple @relation(fields: [couple_id], references: [id], onDelete: Cascade)
   user   User   @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
+  @@unique([id, version])
   @@map("voice_sessions")
 }
 
@@ -358,9 +392,11 @@ model Analytics {
   trend              String?  // 'up', 'down', 'stable'
   context_data       Json?    // Additional context data
   recorded_at        DateTime @default(now())
+  version            Int      @default(1)
 
   couple Couple @relation(fields: [couple_id], references: [id], onDelete: Cascade)
 
+  @@unique([id, version])
   @@map("analytics")
 }
 
@@ -376,10 +412,12 @@ model CulturalPreference {
   regional_content      Boolean  @default(true)
   created_at            DateTime @default(now())
   updated_at            DateTime @updatedAt
+  version               Int      @default(1)
 
   couple Couple @relation(fields: [couple_id], references: [id], onDelete: Cascade)
 
   @@unique([couple_id])
+  @@unique([id, version])
   @@map("cultural_preferences")
 }
 
@@ -396,9 +434,11 @@ model SharedGoal {
   milestones      Json     @default("[]") // JSON array of milestones
   created_at      DateTime @default(now())
   updated_at      DateTime @updatedAt
+  version         Int      @default(1)
 
   couple Couple @relation(fields: [couple_id], references: [id], onDelete: Cascade)
 
+  @@unique([id, version])
   @@map("shared_goals")
 }
 
@@ -415,9 +455,11 @@ model Notification {
   is_delivered Boolean @default(false)
   delivered_at DateTime?
   created_at  DateTime @default(now())
+  version     Int      @default(1)
 
   couple Couple @relation(fields: [couple_id], references: [id], onDelete: Cascade)
   user   User?  @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
+  @@unique([id, version])
   @@map("notifications")
 }
