@@ -48,3 +48,12 @@ test
 prompt
 
 server.log
+
+# terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+terraform.tfvars
+*.tfplan
+*.tfplan.*
