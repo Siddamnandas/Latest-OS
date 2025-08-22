@@ -1,0 +1,4 @@
+bucket = "latest-os-terraform-state"
+key    = "prod/terraform.tfstate"
+region = "us-east-1"
+dynamodb_table = "latest-os-terraform-locks"
