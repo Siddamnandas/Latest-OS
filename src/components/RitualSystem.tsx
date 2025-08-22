@@ -166,15 +166,25 @@ export function RitualSystem() {
   const totalRituals = rituals.length;
   const completionRate = totalRituals > 0 ? (completedRituals / totalRituals) * 100 : 0;
 
+  const [showRitualDetails, setShowRitualDetails] = useState<string | null>(null);
+
   const startRitual = (ritualId: string) => {
     setActiveRitual(ritualId);
     setCurrentStep(0);
+    // Play a success sound or haptic feedback
+    if (navigator.vibrate) {
+      navigator.vibrate(100);
+    }
   };
 
   const completeRitualStep = () => {
     const ritual = rituals.find(r => r.id === activeRitual);
     if (ritual && currentStep < ritual.steps.length - 1) {
       setCurrentStep(currentStep + 1);
+      // Play step completion sound
+      if (navigator.vibrate) {
+        navigator.vibrate(50);
+      }
     } else {
       // Complete ritual
       setRituals(prev => prev.map(r => 
@@ -189,13 +199,43 @@ export function RitualSystem() {
       ));
       setActiveRitual(null);
       setCurrentStep(0);
+      // Play completion celebration
+      if (navigator.vibrate) {
+        navigator.vibrate([100, 50, 100]);
+      }
     }
+  };
+
+  const showDetails = (ritualId: string) => {
+    setShowRitualDetails(ritualId);
   };
 
   const handleRebalance = () => {
     // Handle rasa rebalance logic
     console.log('Rasa rebalance requested');
     // Update balance based on ritual completions or other factors
+    const playIncrease = Math.random() * 10;
+    const dutyIncrease = Math.random() * 10;
+    const remaining = 100 - playIncrease - dutyIncrease;
+    
+    setRasaBalance({
+      play: Math.round(playIncrease),
+      duty: Math.round(dutyIncrease),
+      balance: Math.round(remaining)
+    });
+  };
+
+  const pauseRitual = () => {
+    setActiveRitual(null);
+    setCurrentStep(0);
+  };
+
+  const resetRitual = (ritualId: string) => {
+    setRituals(prev => prev.map(r => 
+      r.id === ritualId 
+        ? { ...r, completed: false, streak: 0 }
+        : r
+    ));
   };
 
   return (
@@ -302,13 +342,114 @@ export function RitualSystem() {
                         onClick={() => setActiveRitual(null)}
                         className="flex-1"
                       >
-                        Exit
+                        <Pause className="w-4 h-4 mr-1" />
+                        Pause
                       </Button>
                       <Button 
                         onClick={completeRitualStep}
                         className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white"
                       >
                         {currentStep < ritual.steps.length - 1 ? 'Next Step' : 'Complete Ritual'}
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Ritual Details Modal */}
+      {showRitualDetails && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md bg-white/95 backdrop-blur-lg border-0 shadow-2xl rounded-2xl">
+            <div className="p-6">
+              {(() => {
+                const ritual = rituals.find(r => r.id === showRitualDetails);
+                if (!ritual) return null;
+                
+                const archetypeInfo = getArchetypeInfo(ritual.archetype);
+                
+                return (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-xl font-bold text-gray-900">Ritual Details</h3>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setShowRitualDetails(null)}
+                      >
+                        ✕
+                      </Button>
+                    </div>
+                    
+                    <div className="text-center">
+                      <div className={`w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br ${archetypeInfo.color} flex items-center justify-center text-white shadow-lg mb-3`}>
+                        <span className="text-2xl">{archetypeInfo.emoji}</span>
+                      </div>
+                      <h4 className="text-lg font-bold text-gray-900">{ritual.title}</h4>
+                      <p className="text-sm text-gray-600 mb-2">{ritual.description}</p>
+                      <Badge className={archetypeInfo.bgColor + ' ' + archetypeInfo.textColor}>
+                        {archetypeInfo.name} - {archetypeInfo.description}
+                      </Badge>
+                    </div>
+                    
+                    <div className="space-y-4">
+                      <div>
+                        <h5 className="font-semibold text-gray-900 mb-2">Steps:</h5>
+                        <ol className="space-y-2">
+                          {ritual.steps.map((step, index) => (
+                            <li key={index} className="flex items-start gap-3">
+                              <div className="w-6 h-6 rounded-full bg-purple-500 text-white flex items-center justify-center text-xs font-bold flex-shrink-0">
+                                {index + 1}
+                              </div>
+                              <span className="text-sm text-gray-700">{step}</span>
+                            </li>
+                          ))}
+                        </ol>
+                      </div>
+                      
+                      <div className="grid grid-cols-3 gap-3 p-3 bg-gray-50 rounded-lg">
+                        <div className="text-center">
+                          <div className="text-lg font-bold text-purple-600">{ritual.duration}</div>
+                          <div className="text-xs text-gray-600">Minutes</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-lg font-bold text-yellow-600">{ritual.coins}</div>
+                          <div className="text-xs text-gray-600">Coins</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-lg font-bold text-green-600">{ritual.streak}</div>
+                          <div className="text-xs text-gray-600">Streak</div>
+                        </div>
+                      </div>
+                      
+                      {ritual.lastCompleted && (
+                        <div className="text-center p-3 bg-green-50 rounded-lg">
+                          <p className="text-sm text-green-700">
+                            Last completed: {new Date(ritual.lastCompleted).toLocaleDateString()}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="flex gap-3 pt-4">
+                      <Button
+                        variant="outline"
+                        className="flex-1"
+                        onClick={() => setShowRitualDetails(null)}
+                      >
+                        Close
+                      </Button>
+                      <Button
+                        className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white"
+                        onClick={() => {
+                          setShowRitualDetails(null);
+                          startRitual(ritual.id);
+                        }}
+                      >
+                        Start Now
                       </Button>
                     </div>
                   </div>
@@ -390,6 +531,7 @@ export function RitualSystem() {
                     size="sm" 
                     variant="outline"
                     className="border-gray-300 text-gray-700 hover:bg-gray-50"
+                    onClick={() => showDetails(ritual.id)}
                   >
                     Details
                   </Button>

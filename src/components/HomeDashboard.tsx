@@ -6,23 +6,15 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import dynamic from 'next/dynamic';
 
-const DailySyncCard = dynamic(() => import('@/components/DailySyncCard'));
-const AISuggestionCard = dynamic(() => import('@/components/AISuggestionCard'));
-const CoinStreakAnimation = dynamic(() => import('@/components/CoinStreakAnimation'));
-const AchievementCelebration = dynamic(() => import('@/components/AchievementCelebration'));
-const RewardModal = dynamic(() =>
-  import('@/components/PremiumModal').then((m) => m.RewardModal)
-);
-const LevelUpModal = dynamic(() =>
-  import('@/components/PremiumModal').then((m) => m.LevelUpModal)
-);
-const MilestoneModal = dynamic(() =>
-  import('@/components/PremiumModal').then((m) => m.MilestoneModal)
-);
-const MemoryJukebox = dynamic(() => import('@/components/MemoryJukebox'));
-const StreakCelebration = dynamic(() => import('@/components/StreakCelebration'));
-const RelationshipInsights = dynamic(() => import('@/components/RelationshipInsights'));
-const GamificationEngine = dynamic(() => import('@/components/GamificationEngine'));
+// Importing components directly to avoid dynamic import issues
+import { DailySyncCard } from '@/components/DailySyncCard';
+import { AISuggestionCard } from '@/components/AISuggestionCard';
+import { CoinStreakAnimation } from '@/components/CoinStreakAnimation';
+import { AchievementCelebration } from '@/components/AchievementCelebration';
+import { MemoryJukebox } from '@/components/MemoryJukebox';
+import { StreakCelebration } from '@/components/StreakCelebration';
+import { RelationshipInsights } from '@/components/RelationshipInsights';
+import { GamificationEngine } from '@/components/GamificationEngine';
 import { 
   Sparkles, 
   Heart, 
@@ -115,8 +107,8 @@ export function HomeDashboard({ streak, coins }: HomeDashboardProps) {
   ];
 
   const aiSuggestion = {
-    type: 'ritual',
-    archetype: 'radha_krishna',
+    type: 'ritual' as const,
+    archetype: 'radha_krishna' as const,
     title: 'Evening Connection Ritual',
     description: 'Reignite your romance with a 15-minute tech-free evening ritual that deepens your emotional bond.',
     actionSteps: [
@@ -352,10 +344,15 @@ export function HomeDashboard({ streak, coins }: HomeDashboardProps) {
       {/* Achievement Celebration */}
       {showAchievement && (
         <AchievementCelebration 
-          title="Daily Sync Complete!"
-          description="You've earned 50 Lakshmi Coins"
-          coins={50}
+          isOpen={showAchievement}
           onClose={() => setShowAchievement(false)}
+          achievement={{
+            title: "Daily Sync Complete!",
+            description: "You've earned 50 Lakshmi Coins",
+            icon: "🎉",
+            rarity: "common" as const,
+            coins: 50
+          }}
         />
       )}
     </div>

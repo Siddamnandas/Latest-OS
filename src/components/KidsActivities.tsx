@@ -549,11 +549,154 @@ export function KidsActivities() {
 
   const getCharacterColor = (character: string) => {
     switch (character) {
-      case 'Krishna': return 'bg-purple-100 text-purple-700';
-      case 'Hanuman': return 'bg-orange-100 text-orange-700';
-      case 'Saraswati': return 'bg-blue-100 text-blue-700';
-      default: return 'bg-gray-100 text-gray-700';
+      case 'krishna': return 'bg-purple-100 text-purple-700 border-purple-200';
+      case 'hanuman': return 'bg-orange-100 text-orange-700 border-orange-200';
+      case 'saraswati': return 'bg-blue-100 text-blue-700 border-blue-200';
+      case 'Krishna': return 'bg-purple-100 text-purple-700 border-purple-200';
+      case 'Hanuman': return 'bg-orange-100 text-orange-700 border-orange-200';
+      case 'Saraswati': return 'bg-blue-100 text-blue-700 border-blue-200';
+      default: return 'bg-gray-100 text-gray-700 border-gray-200';
     }
+  };
+
+  // Add new activity handlers
+  const startDailyGame = () => {
+    const games = emotionScenarios;
+    const randomGame = games[Math.floor(Math.random() * games.length)];
+    setSelectedEmotion(null);
+    setCelebrationEmoji('🎲');
+    setShowFloatingEmoji(true);
+    toast({
+      title: "Game Started! 🎲",
+      description: `Let's play "${randomGame.title}" - Help ${randomGame.character} with their emotions!`,
+      duration: 4000,
+    });
+    setTimeout(() => setShowFloatingEmoji(false), 2000);
+  };
+
+  const startKindnessChallenge = () => {
+    const challenges = [
+      "Share a toy with a friend",
+      "Help mom or dad with a task", 
+      "Say something nice to someone",
+      "Help someone who is sad",
+      "Clean up without being asked"
+    ];
+    const randomChallenge = challenges[Math.floor(Math.random() * challenges.length)];
+    setCelebrationEmoji('💖');
+    setShowFloatingEmoji(true);
+    toast({
+      title: "Kindness Challenge! 💖",
+      description: `Today's challenge: ${randomChallenge}`,
+      duration: 5000,
+    });
+    setTimeout(() => setShowFloatingEmoji(false), 2000);
+  };
+
+  const readMythologicalStory = () => {
+    const stories = mythologicalQuestions;
+    const randomStory = stories[Math.floor(Math.random() * stories.length)];
+    setCelebrationEmoji('📚');
+    setShowFloatingEmoji(true);
+    toast({
+      title: "Story Time! 📚",
+      description: `Let's learn about ${randomStory.character}: ${randomStory.context}`,
+      duration: 6000,
+    });
+    setTimeout(() => setShowFloatingEmoji(false), 2000);
+  };
+
+  const startCreativeActivity = () => {
+    const activities = saraswatiCreatives;
+    const randomActivity = activities[Math.floor(Math.random() * activities.length)];
+    setCelebrationEmoji('🎨');
+    setShowFloatingEmoji(true);
+    toast({
+      title: "Creative Time! 🎨",
+      description: `Let's create: ${randomActivity.title}`,
+      duration: 5000,
+    });
+    setTimeout(() => setShowFloatingEmoji(false), 2000);
+  };
+
+  const startDevelopmentTracking = () => {
+    setCelebrationEmoji('🧠');
+    setShowFloatingEmoji(true);
+    toast({
+      title: "Development Tracking! 🧠",
+      description: "Let's track your child's amazing growth and milestones!",
+      duration: 4000,
+    });
+    setTimeout(() => setShowFloatingEmoji(false), 2000);
+  };
+
+  const startAICoaching = () => {
+    setCelebrationEmoji('✨');
+    setShowFloatingEmoji(true);
+    toast({
+      title: "AI Coach Ready! ✨",
+      description: "Your personal parenting assistant is here to help!",
+      duration: 4000,
+    });
+    setTimeout(() => setShowFloatingEmoji(false), 2000);
+  };
+
+  const viewFamilyMilestones = () => {
+    setCelebrationEmoji('🏆');
+    setShowFloatingEmoji(true);
+    toast({
+      title: "Family Milestones! 🏆",
+      description: "Celebrating all your family's amazing achievements!",
+      duration: 4000,
+    });
+    setTimeout(() => setShowFloatingEmoji(false), 2000);
+  };
+
+  const saveKindnessMemory = () => {
+    const newMoment: KindnessMoment = {
+      id: Date.now().toString(),
+      date: new Date(),
+      description: "Custom kindness memory",
+      category: "Custom",
+      points: 10,
+      verified: true
+    };
+    
+    setKindnessMoments(prev => [...prev, newMoment]);
+    setKindnessPoints(prev => prev + newMoment.points);
+    setCelebrationEmoji('📸');
+    setShowFloatingEmoji(true);
+    
+    toast({
+      title: "Memory Saved! 📸",
+      description: "Your special kindness moment has been added to the family story!",
+      duration: 3000,
+    });
+    setTimeout(() => setShowFloatingEmoji(false), 2000);
+  };
+
+  const addFirstMemory = () => {
+    const newEntry: FamilyStorybookEntry = {
+      id: Date.now().toString(),
+      date: new Date(),
+      type: 'krishna',
+      title: 'Our First Adventure',
+      description: 'Started our mythology-inspired family journey!',
+      participants: ['Family']
+    };
+    
+    setStorybookEntries(prev => [...prev, newEntry]);
+    setCelebrationEmoji('📚');
+    setShowFloatingEmoji(true);
+    setShowConfetti(true);
+    
+    toast({
+      title: "First Memory Added! 📚",
+      description: "Welcome to your family's mythology-inspired storybook!",
+      duration: 4000,
+    });
+    setTimeout(() => setShowFloatingEmoji(false), 2000);
+    setTimeout(() => setShowConfetti(false), 3000);
   };
 
   if (loading) {
@@ -852,7 +995,7 @@ export function KidsActivities() {
                     <Play className="w-4 h-4 mr-2" />
                     Add Video
                   </Button>
-                  <Button size="sm" className="flex-1 bg-pink-500 hover:bg-pink-600">
+                  <Button size="sm" className="flex-1 bg-pink-500 hover:bg-pink-600" onClick={saveKindnessMemory}>
                     <Heart className="w-4 h-4 mr-2" />
                     Save Memory
                   </Button>
@@ -913,7 +1056,7 @@ export function KidsActivities() {
                 <p className="text-gray-600 mb-4">
                   Complete activities to start building your family's mythology-inspired storybook!
                 </p>
-                <Button className="bg-purple-500 hover:bg-purple-600">
+                <Button className="bg-purple-500 hover:bg-purple-600" onClick={addFirstMemory}>
                   <Plus className="w-4 h-4 mr-2" />
                   Add First Memory
                 </Button>
@@ -988,7 +1131,7 @@ export function KidsActivities() {
                       <p className="text-xs text-gray-600">Fun & learning</p>
                     </div>
                   </div>
-                  <Button className="w-full bg-blue-600 hover:bg-blue-700">
+                  <Button className="w-full bg-blue-600 hover:bg-blue-700" onClick={startDailyGame}>
                     Play Now
                   </Button>
                 </CardContent>
@@ -1006,7 +1149,7 @@ export function KidsActivities() {
                       <p className="text-xs text-gray-600">Spread love & joy</p>
                     </div>
                   </div>
-                  <Button className="w-full bg-pink-600 hover:bg-pink-700">
+                  <Button className="w-full bg-pink-600 hover:bg-pink-700" onClick={startKindnessChallenge}>
                     Start Challenge
                   </Button>
                 </CardContent>
@@ -1024,7 +1167,7 @@ export function KidsActivities() {
                       <p className="text-xs text-gray-600">Ancient wisdom tales</p>
                     </div>
                   </div>
-                  <Button className="w-full bg-orange-600 hover:bg-orange-700">
+                  <Button className="w-full bg-orange-600 hover:bg-orange-700" onClick={readMythologicalStory}>
                     Read Stories
                   </Button>
                 </CardContent>
@@ -1042,7 +1185,7 @@ export function KidsActivities() {
                       <p className="text-xs text-gray-600">Art & craft fun</p>
                     </div>
                   </div>
-                  <Button className="w-full bg-green-600 hover:bg-green-700">
+                  <Button className="w-full bg-green-600 hover:bg-green-700" onClick={startCreativeActivity}>
                     Create Now
                   </Button>
                 </CardContent>
@@ -1060,7 +1203,7 @@ export function KidsActivities() {
                 <Brain className="w-12 h-12 text-blue-600 mx-auto mb-4" />
                 <h3 className="text-lg font-semibold mb-2">Child Development Tracking</h3>
                 <p className="text-gray-600 mb-4">Monitor your children's growth and development milestones</p>
-                <Button className="bg-blue-600 hover:bg-blue-700">
+                <Button className="bg-blue-600 hover:bg-blue-700" onClick={startDevelopmentTracking}>
                   Track Development
                 </Button>
               </div>
@@ -1076,7 +1219,7 @@ export function KidsActivities() {
                 <Sparkles className="w-12 h-12 text-purple-600 mx-auto mb-4" />
                 <h3 className="text-lg font-semibold mb-2">AI Parenting Coach</h3>
                 <p className="text-gray-600 mb-4">Get personalized AI-powered parenting advice and insights</p>
-                <Button className="bg-purple-600 hover:bg-purple-700">
+                <Button className="bg-purple-600 hover:bg-purple-700" onClick={startAICoaching}>
                   Start Coaching Session
                 </Button>
               </div>
@@ -1092,7 +1235,7 @@ export function KidsActivities() {
                 <Trophy className="w-12 h-12 text-yellow-600 mx-auto mb-4" />
                 <h3 className="text-lg font-semibold mb-2">Family Milestones</h3>
                 <p className="text-gray-600 mb-4">Celebrate and track important family achievements</p>
-                <Button className="bg-yellow-600 hover:bg-yellow-700">
+                <Button className="bg-yellow-600 hover:bg-yellow-700" onClick={viewFamilyMilestones}>
                   View Milestones
                 </Button>
               </div>

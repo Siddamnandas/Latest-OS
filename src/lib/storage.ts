@@ -62,19 +62,17 @@ if (typeof window !== 'undefined' && 'indexedDB' in window) {
     removeItem: idbRemove,
   };
 } else {
-  // Fallback for React Native using AsyncStorage
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const AsyncStorage = require('@react-native-async-storage/async-storage')?.default;
+  // Fallback for server-side rendering or environments without IndexedDB
   adapter = {
-    async getItem<T>(key: string) {
-      const raw = await AsyncStorage.getItem(key);
-      return raw ? (JSON.parse(raw) as T) : null;
+    async getItem<T>(key: string): Promise<T | null> {
+      // Return null for server-side rendering
+      return null;
     },
-    async setItem<T>(key: string, value: T) {
-      await AsyncStorage.setItem(key, JSON.stringify(value));
+    async setItem<T>(key: string, value: T): Promise<void> {
+      // No-op for server-side rendering
     },
-    async removeItem(key: string) {
-      await AsyncStorage.removeItem(key);
+    async removeItem(key: string): Promise<void> {
+      // No-op for server-side rendering
     },
   };
 }

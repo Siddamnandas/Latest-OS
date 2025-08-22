@@ -80,6 +80,15 @@ export function TaskManagement() {
 
   const [filter, setFilter] = useState<'all' | 'my' | 'completed' | 'pending'>('all');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const [showAddTask, setShowAddTask] = useState(false);
+  const [newTask, setNewTask] = useState({
+    title: '',
+    description: '',
+    assignedTo: 'both' as 'partner1' | 'partner2' | 'both',
+    category: 'household',
+    priority: 'medium' as 'low' | 'medium' | 'high',
+    estimatedTime: 30
+  });
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -125,6 +134,57 @@ export function TaskManagement() {
         ? { ...task, completed: !task.completed }
         : task
     ));
+  };
+
+  const addNewTask = () => {
+    if (newTask.title.trim() === '') return;
+    
+    const task: Task = {
+      id: Date.now().toString(),
+      title: newTask.title,
+      description: newTask.description,
+      assignedTo: newTask.assignedTo,
+      category: newTask.category,
+      priority: newTask.priority,
+      estimatedTime: newTask.estimatedTime,
+      coins: newTask.priority === 'high' ? 50 : newTask.priority === 'medium' ? 30 : 20,
+      completed: false,
+      createdAt: new Date().toISOString().split('T')[0]
+    };
+    
+    setTasks(prev => [task, ...prev]);
+    setNewTask({
+      title: '',
+      description: '',
+      assignedTo: 'both',
+      category: 'household',
+      priority: 'medium',
+      estimatedTime: 30
+    });
+    setShowAddTask(false);
+  };
+
+  const startTask = (taskId: string) => {
+    // Simulate starting a task
+    const task = tasks.find(t => t.id === taskId);
+    if (task) {
+      alert(`Starting task: ${task.title}\nEstimated time: ${task.estimatedTime} minutes`);
+    }
+  };
+
+  const editTask = (taskId: string) => {
+    const task = tasks.find(t => t.id === taskId);
+    if (task) {
+      setNewTask({
+        title: task.title,
+        description: task.description,
+        assignedTo: task.assignedTo,
+        category: task.category,
+        priority: task.priority,
+        estimatedTime: task.estimatedTime
+      });
+      setShowAddTask(true);
+    }
   };
 
   return (
@@ -206,7 +266,7 @@ export function TaskManagement() {
                   <Filter className="w-4 h-4" />
                   Filters
                 </h3>
-                <Button size="sm" className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white">
+                <Button size="sm" className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white" onClick={() => setShowAddTask(true)}>
                   <Plus className="w-4 h-4 mr-1" />
                   Add Task
                 </Button>
@@ -286,12 +346,14 @@ export function TaskManagement() {
                         size="sm" 
                         variant="outline"
                         className="border-gray-300 text-gray-700 hover:bg-gray-50"
+                        onClick={() => editTask(task.id)}
                       >
                         Edit
                       </Button>
                       <Button 
                         size="sm"
                         className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white"
+                        onClick={() => startTask(task.id)}
                       >
                         Start Task
                       </Button>
@@ -311,7 +373,7 @@ export function TaskManagement() {
                 </div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">All tasks completed!</h3>
                 <p className="text-gray-600 mb-4">Great job! You've completed all your tasks.</p>
-                <Button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white">
+                <Button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white" onClick={() => setShowAddTask(true)}>
                   <Plus className="w-4 h-4 mr-2" />
                   Add New Task
                 </Button>
@@ -401,6 +463,116 @@ export function TaskManagement() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Add/Edit Task Modal */}
+      {showAddTask && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold">Add New Task</h3>
+              <Button variant="ghost" size="sm" onClick={() => setShowAddTask(false)}>
+                ✕
+              </Button>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">Title</label>
+                <input
+                  type="text"
+                  value={newTask.title}
+                  onChange={(e) => setNewTask(prev => ({ ...prev, title: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  placeholder="Enter task title"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-2">Description</label>
+                <textarea
+                  value={newTask.description}
+                  onChange={(e) => setNewTask(prev => ({ ...prev, description: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  placeholder="Enter task description"
+                  rows={3}
+                />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Assigned To</label>
+                  <select
+                    value={newTask.assignedTo}
+                    onChange={(e) => setNewTask(prev => ({ ...prev, assignedTo: e.target.value as any }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  >
+                    <option value="both">Both</option>
+                    <option value="partner1">You</option>
+                    <option value="partner2">Partner</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium mb-2">Priority</label>
+                  <select
+                    value={newTask.priority}
+                    onChange={(e) => setNewTask(prev => ({ ...prev, priority: e.target.value as any }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  >
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                  </select>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Category</label>
+                  <select
+                    value={newTask.category}
+                    onChange={(e) => setNewTask(prev => ({ ...prev, category: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  >
+                    <option value="household">Household</option>
+                    <option value="romance">Romance</option>
+                    <option value="parenting">Parenting</option>
+                    <option value="personal">Personal</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium mb-2">Time (minutes)</label>
+                  <input
+                    type="number"
+                    value={newTask.estimatedTime}
+                    onChange={(e) => setNewTask(prev => ({ ...prev, estimatedTime: parseInt(e.target.value) || 30 }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    min="5"
+                    max="300"
+                  />
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex gap-3 pt-4">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => setShowAddTask(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white"
+                onClick={addNewTask}
+              >
+                Add Task
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

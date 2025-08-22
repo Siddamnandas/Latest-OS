@@ -18,8 +18,6 @@ export async function POST() {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
-  const session = await getServerSession(authOptions);
-
   if (!session?.user?.id || !session.user.email) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }

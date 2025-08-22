@@ -1,21 +1,27 @@
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
-import { NextResponse } from "next/server";
+import { prisma } from '@/lib/prisma';
+import { NextResponse } from 'next/server';
 
 export async function GET() {
-  const session = await getServerSession(authOptions);
-  if (session?.user?.role !== 'ADMIN') {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  try {
+    // Get the first couple's goals (in a real app, this would be based on user authentication)
+    const couple = await prisma.couple.findFirst();
+    
+    if (!couple) {
+      return NextResponse.json([]);
+    }
+
+    const goals = await prisma.sharedGoal.findMany({
+      where: {
+        couple_id: couple.id,
+      },
+      orderBy: {
+        created_at: 'desc',
+      },
+    });
+
+    return NextResponse.json(goals);
+  } catch (error) {
+    console.error('Error fetching goals:', error);
+    return NextResponse.json({ error: 'Failed to fetch goals' }, { status: 500 });
   }
-
-  return NextResponse.json({ message: "API endpoint" });
-}
-
-export async function POST() {
-  const session = await getServerSession(authOptions);
-  if (session?.user?.role !== 'ADMIN') {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-  }
-
-  return NextResponse.json({ message: "Operation completed" });
 }

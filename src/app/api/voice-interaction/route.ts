@@ -19,7 +19,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
-  const session = await getServerSession(authOptions);
   if (!session?.user?.id || !session.user.couple?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -42,7 +41,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
-  const session = await getServerSession(authOptions);
   if (!session?.user?.id || !session.user.couple?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

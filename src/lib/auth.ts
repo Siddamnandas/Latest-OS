@@ -1,7 +1,7 @@
 import { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import bcrypt from 'bcryptjs';
-import { db } from './db';
+import { prisma } from './prisma';
 
 export const authOptions: NextAuthOptions = {
   session: {
@@ -19,9 +19,9 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
-        const user = await db.user.findUnique({
+        const user = await prisma.user.findUnique({
           where: { email: credentials.email },
-          include: { couple: true, role: true },
+          include: { couple: true },
         });
         if (!user) {
           return null;
@@ -36,7 +36,7 @@ export const authOptions: NextAuthOptions = {
           id: user.id,
           email: user.email,
           name: user.name,
-          role: user.role?.name,
+          role: user.role,
           couple: user.couple,
         } as any;
       },
