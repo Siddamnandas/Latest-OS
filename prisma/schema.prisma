@@ -12,49 +12,49 @@ datasource db {
 }
 
 model Couple {
-  id               String   @id @default(cuid())
+  id               String    @id @default(cuid())
   partner_a_name   String
   partner_b_name   String
   anniversary_date DateTime?
-  city             String   @default("Hyderabad")
-  region           String   @default("north-india") // Cultural region
-  language         String   @default("hindi")
+  city             String    @default("Hyderabad")
+  region           String    @default("north-india") // Cultural region
+  language         String    @default("hindi")
   premium_until    DateTime?
-  created_at       DateTime @default(now())
-  updated_at       DateTime @updatedAt
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @updatedAt
 
   // Relationships from old schema
-  sync_entries          SyncEntry[]
-  tasks                 Task[]
-  ritual_sessions       RitualSession[]
-  rasa_balance          RasaBalance[]
-  reward_transactions   RewardTransaction[]
-  memories              Memory[]
-  meal_plans            MealPlan[]
-  grocery_lists         GroceryList[]
-  ai_suggestions        AISuggestion[]
-  users                 User[]
-  conversations         Conversation[]
-  voice_sessions        VoiceSession[]
-  analytics             Analytics[]
-  cultural_preferences  CulturalPreference[]
-  shared_goals          SharedGoal[]
-  notifications         Notification[]
+  sync_entries         SyncEntry[]
+  tasks                Task[]
+  ritual_sessions      RitualSession[]
+  rasa_balance         RasaBalance[]
+  reward_transactions  RewardTransaction[]
+  memories             Memory[]
+  meal_plans           MealPlan[]
+  grocery_lists        GroceryList[]
+  ai_suggestions       AISuggestion[]
+  users                User[]
+  conversations        Conversation[]
+  voice_sessions       VoiceSession[]
+  analytics            Analytics[]
+  cultural_preferences CulturalPreference[]
+  shared_goals         SharedGoal[]
+  notifications        Notification[]
 
   // New normalized relationships
-  children    Child[]
-  messages    Message[]
-  milestones  Milestone[]
-  moodTags    CoupleMoodTag[]
+  children   Child[]
+  messages   Message[]
+  milestones Milestone[]
+  moodTags   CoupleMoodTag[]
 
-  @@map("couples")
   @@index([created_at])
+  @@map("couples")
 }
 
 model Child {
-  id        String   @id @default(cuid())
-  coupleId  String
-  couple    Couple   @relation(fields: [coupleId], references: [id], onDelete: Cascade)
+  id       String @id @default(cuid())
+  coupleId String
+  couple   Couple @relation(fields: [coupleId], references: [id], onDelete: Cascade)
 
   name      String
   birthdate DateTime?
@@ -81,24 +81,24 @@ model Message {
 }
 
 model Milestone {
-  id         String   @id @default(cuid())
-  coupleId   String
-  couple     Couple   @relation(fields: [coupleId], references: [id], onDelete: Cascade)
+  id       String @id @default(cuid())
+  coupleId String
+  couple   Couple @relation(fields: [coupleId], references: [id], onDelete: Cascade)
 
   title      String
   notes      String?
   achievedAt DateTime?
 
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([coupleId, achievedAt])
 }
 
 model Tag {
-  id      String           @id @default(cuid())
-  name    String           @unique
-  type    String?          // e.g. "mood", "topic"
+  id      String          @id @default(cuid())
+  name    String          @unique
+  type    String? // e.g. "mood", "topic"
   couples CoupleMoodTag[]
 
   createdAt DateTime @default(now())
@@ -127,7 +127,7 @@ model SyncEntry {
   partner       String // 'partner_a' or 'partner_b'
   mood_score    Int // 1-5 scale
   energy_level  Int // 1-10 scale
-  mood_tags     Json @default("[]") // Array of mood tags
+  mood_tags     Json     @default("[]") // Array of mood tags
   context_notes String?
   created_at    DateTime @default(now())
 
@@ -137,18 +137,18 @@ model SyncEntry {
 }
 
 model Task {
-  id           String     @id @default(cuid())
+  id           String       @id @default(cuid())
   couple_id    String
   title        String
   description  String?
   assigned_to  String // 'partner_a', 'partner_b', or 'both'
-  status       TaskStatus @default(PENDING)
+  status       TaskStatus   @default(PENDING)
   category     TaskCategory
   ai_reasoning Json?
   due_at       DateTime?
   completed_at DateTime?
-  created_at   DateTime   @default(now())
-  updated_at   DateTime   @updatedAt
+  created_at   DateTime     @default(now())
+  updated_at   DateTime     @updatedAt
 
   couple Couple @relation(fields: [couple_id], references: [id], onDelete: Cascade)
 
@@ -171,7 +171,7 @@ model RitualSession {
 }
 
 model RasaBalance {
-  id                 String @id @default(cuid())
+  id                 String   @id @default(cuid())
   couple_id          String
   play_percentage    Float
   duty_percentage    Float
@@ -247,9 +247,9 @@ model Memory {
   title       String
   description String?
   date        DateTime @default(now())
-  tags        Json @default("[]") // JSON array of tags
+  tags        Json     @default("[]") // JSON array of tags
   sentiment   String // 'positive', 'neutral', 'negative'
-  partners    Json @default("[]") // JSON array of partner IDs who contributed
+  partners    Json     @default("[]") // JSON array of partner IDs who contributed
   is_private  Boolean  @default(false)
   memory_type String? // 'kindness', 'storybook', 'general'
   created_at  DateTime @default(now())
@@ -271,7 +271,7 @@ model Recipe {
   servings     Int
   difficulty   String // 'easy', 'medium', 'hard'
   cuisine      String // 'indian', 'italian', 'chinese', etc.
-  tags         Json @default("[]") // JSON array of tags
+  tags         Json     @default("[]") // JSON array of tags
   nutrition    Json // JSON nutrition info
   is_favorite  Boolean  @default(false)
   created_at   DateTime @default(now())
@@ -299,7 +299,7 @@ model MealPlan {
 }
 
 model GroceryList {
-  id           String   @id @default(cuid())
+  id           String    @id @default(cuid())
   couple_id    String
   name         String
   items        Json // JSON array of grocery items
@@ -308,8 +308,8 @@ model GroceryList {
   assigned_to  String // User ID
   status       String // 'pending', 'shopping', 'completed'
   due_date     DateTime?
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
+  created_at   DateTime  @default(now())
+  updated_at   DateTime  @updatedAt
 
   couple Couple @relation(fields: [couple_id], references: [id], onDelete: Cascade)
 
@@ -323,7 +323,7 @@ model AISuggestion {
   archetype          String? // 'radha_krishna', 'sita_ram', 'shiva_shakti'
   title              String
   description        String
-  action_steps       Json @default("[]") // JSON array of action steps
+  action_steps       Json     @default("[]") // JSON array of action steps
   estimated_duration Int // in minutes
   reward_coins       Int
   reasoning          Json // AI reasoning data
@@ -360,17 +360,17 @@ model User {
   created_at    DateTime  @default(now())
   updated_at    DateTime  @updatedAt
 
-  couple        Couple         @relation(fields: [couple_id], references: [id], onDelete: Cascade)
-  conversations Conversation[]
+  couple         Couple         @relation(fields: [couple_id], references: [id], onDelete: Cascade)
+  conversations  Conversation[]
   voice_sessions VoiceSession[]
-  notifications Notification[]
+  notifications  Notification[]
 
   @@map("users")
 }
 
 // Conversation sessions for AI coaching
 model Conversation {
-  id              String   @id @default(cuid())
+  id              String    @id @default(cuid())
   couple_id       String
   user_id         String
   title           String?
@@ -381,8 +381,8 @@ model Conversation {
   topics          Json? // JSON array of topics
   insights        Json? // JSON array of insights
   completed_at    DateTime?
-  created_at      DateTime @default(now())
-  updated_at      DateTime @updatedAt
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @updatedAt
 
   couple Couple @relation(fields: [couple_id], references: [id], onDelete: Cascade)
   user   User   @relation(fields: [user_id], references: [id], onDelete: Cascade)
@@ -396,7 +396,7 @@ model VoiceSession {
   couple_id    String
   user_id      String
   transcript   String?
-  commands     Json @default("[]") // JSON array of voice commands
+  commands     Json     @default("[]") // JSON array of voice commands
   duration     Int // in seconds
   sentiment    String? // 'positive', 'negative', 'neutral'
   emotions     Json? // JSON array of detected emotions
@@ -431,7 +431,7 @@ model CulturalPreference {
   couple_id              String
   region                 String   @default("north-india")
   language               String   @default("hindi")
-  interests              Json @default("[]") // JSON array of interests
+  interests              Json     @default("[]") // JSON array of interests
   festival_notifications Boolean  @default(true)
   cultural_tips          Boolean  @default(true)
   regional_content       Boolean  @default(true)
@@ -454,7 +454,7 @@ model SharedGoal {
   target_date DateTime
   progress    Int      @default(0) // 0-100 percentage
   completed   Boolean  @default(false)
-  milestones  Json @default("[]") // JSON array of milestones
+  milestones  Json     @default("[]") // JSON array of milestones
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
 
@@ -465,17 +465,17 @@ model SharedGoal {
 
 // Notification system
 model Notification {
-  id           String   @id @default(cuid())
+  id           String    @id @default(cuid())
   couple_id    String
   user_id      String?
   type         String // 'sync_reminder', 'task_update', 'goal_achievement', ' festival', 'insight', etc.
   title        String
   message      String
   data         Json? // Additional notification data
-  is_read      Boolean  @default(false)
-  is_delivered Boolean  @default(false)
+  is_read      Boolean   @default(false)
+  is_delivered Boolean   @default(false)
   delivered_at DateTime?
-  created_at   DateTime @default(now())
+  created_at   DateTime  @default(now())
 
   couple Couple @relation(fields: [couple_id], references: [id], onDelete: Cascade)
   user   User?  @relation(fields: [user_id], references: [id], onDelete: Cascade)
