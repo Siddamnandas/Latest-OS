@@ -216,8 +216,11 @@ model User {
   name          String
   email         String   @unique
   password_hash String
-  role          String   @default("USER") // USER, ADMIN
-  created_at    DateTime @default(now())
+  role              String   @default("USER") // USER, ADMIN
+  totp_enabled      Boolean  @default(false)
+  totp_secret       String?
+  totp_recovery_codes String @default("[]") // JSON as String for SQLite
+  created_at        DateTime @default(now())
 
   couple Couple @relation(fields: [couple_id], references: [id], onDelete: Cascade)
 
