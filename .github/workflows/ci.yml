@@ -22,10 +22,11 @@ jobs:
           --health-retries 5
         ports:
           - 5432:5432
-    env:
-      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/testdb
-      NEXTAUTH_SECRET: test-secret-for-ci
-      SENTRY_DSN: ""
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/testdb
+        NEXTAUTH_SECRET: test-secret-for-ci
+        NEXTAUTH_URL: http://localhost:3000
+        SENTRY_DSN: ""
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -54,10 +55,11 @@ jobs:
           --health-retries 5
         ports:
           - 5432:5432
-    env:
-      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/testdb
-      NEXTAUTH_SECRET: test-secret-for-ci
-      SENTRY_DSN: ""
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/testdb
+        NEXTAUTH_SECRET: test-secret-for-ci
+        NEXTAUTH_URL: http://localhost:3000
+        SENTRY_DSN: ""
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
