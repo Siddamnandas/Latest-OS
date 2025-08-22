@@ -35,8 +35,16 @@ export default function middleware(request: NextRequest) {
     if (limited) return limited;
   }
   
-  // DEVELOPMENT MODE: Bypass all authentication
-  // Comment out the lines below to re-enable authentication
+  // DEVELOPMENT MODE: Bypass authentication for most routes except admin
+  if (pathname.startsWith('/admin')) {
+    // Protect admin routes - redirect to login if no session
+    console.log('🔒 Admin route - checking authentication for:', pathname);
+    // For demo, we'll redirect to login for admin routes
+    const loginUrl = new URL('/login', request.url);
+    loginUrl.searchParams.set('callbackUrl', request.url);
+    return NextResponse.redirect(loginUrl);
+  }
+  
   console.log('🚀 Development Mode: Authentication bypassed for:', pathname);
   return NextResponse.next();
   

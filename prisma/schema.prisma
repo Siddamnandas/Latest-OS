@@ -4,8 +4,8 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model Couple {
@@ -16,7 +16,7 @@ model Couple {
   city                   String    @default("Hyderabad")
   region                 String    @default("north-india") // Cultural region
   language               String    @default("hindi")
-  children               String    @default("[]") // JSON as String for SQLite
+  children               String    @default("[]")
   premium_until          DateTime?
   stripe_customer_id     String?
   stripe_subscription_id String?
@@ -54,7 +54,7 @@ model SyncEntry {
   partner       String // 'partner_a' or 'partner_b'
   mood_score    Int // 1-5 scale
   energy_level  Int // 1-10 scale
-  mood_tags     String   @default("[]") // JSON as String for SQLite
+  mood_tags     String   @default("[]")
   context_notes String?
   created_at    DateTime @default(now())
 
@@ -71,7 +71,7 @@ model Task {
   assigned_to  String // 'partner_a', 'partner_b', or 'both'
   status       String    @default("PENDING") // TaskStatus as String
   category     String // TaskCategory as String
-  ai_reasoning String? // JSON as String for SQLite
+  ai_reasoning String?
   due_at       DateTime?
   completed_at DateTime?
   version      Int       @default(1)
@@ -89,7 +89,7 @@ model RitualSession {
   ritual_type      String // RitualType as String
   archetype        String // Archetype as String
   duration_minutes Int
-  completion_data  String? // JSON as String for SQLite
+  completion_data  String?
   started_at       DateTime  @default(now())
   completed_at     DateTime?
 
@@ -117,7 +117,7 @@ model Child {
   couple_id   String
   name        String
   age         Int
-  preferences String   @default("[]") // JSON as String for SQLite
+  preferences String   @default("[]")
   created_at  DateTime @default(now())
 
   couple     Couple           @relation(fields: [couple_id], references: [id], onDelete: Cascade)
@@ -131,7 +131,7 @@ model FamilyActivity {
   child_id        String
   activity_type   String
   activity_theme  String? // 'krishna', 'hanuman', 'saraswati', 'mythology', 'kindness', 'storybook'
-  completion_data String? // JSON as String for SQLite
+  completion_data String?
   completed_at    DateTime?
   created_at      DateTime  @default(now())
 
@@ -161,9 +161,9 @@ model Memory {
   title       String
   description String?
   date        DateTime @default(now())
-  tags        String   @default("[]") // JSON as String for SQLite
-  sentiment   String // 'positive', 'neutral', 'negative'
-  partners    String   @default("[]") // JSON as String for SQLite
+  tags        String   @default("[]")
+  sentiment   String
+  partners    String   @default("[]")
   is_private  Boolean  @default(false)
   memory_type String? // 'kindness', 'storybook', 'general'
   version     Int      @default(1)
@@ -216,7 +216,9 @@ model User {
   name          String
   email         String   @unique
   password_hash String
-  role              String   @default("USER") // USER, ADMIN
+  role          String   @default("USER") // USER, ADMIN
+  partner_role  String? // 'partner_a' or 'partner_b'
+  last_login    DateTime?
   totp_enabled      Boolean  @default(false)
   totp_secret       String?
   totp_recovery_codes String @default("[]") // JSON as String for SQLite
@@ -263,11 +265,15 @@ model Analytics {
 }
 
 model CulturalPreference {
-  id         String   @id @default(cuid())
-  couple_id  String
-  preference String
-  value      String
-  created_at DateTime @default(now())
+  id                      String   @id @default(cuid())
+  couple_id               String   @unique
+  region                  String   @default("north-india")
+  language                String   @default("hindi")
+  interests               String   @default("[]") // JSON array as string
+  festival_notifications  Boolean  @default(true)
+  cultural_tips          Boolean  @default(true)
+  regional_content       Boolean  @default(true)
+  created_at             DateTime @default(now())
 
   couple Couple @relation(fields: [couple_id], references: [id], onDelete: Cascade)
 

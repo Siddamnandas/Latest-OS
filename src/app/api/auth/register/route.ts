@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
           couple_id: couple.id,
           region: coupleData?.region || 'north-india',
           language: coupleData?.language || 'hindi',
-          interests: coupleData?.interests || [],
+          interests: JSON.stringify(coupleData?.interests || []),
           festival_notifications: true,
           cultural_tips: true,
           regional_content: true

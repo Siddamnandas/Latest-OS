@@ -1,69 +1,256 @@
 import { Server } from 'socket.io';
 import { logger } from '@/lib/logger';
 import { db } from '@/lib/db';
-import { Prisma } from '@prisma/client';
+
+interface CoupleRoom {
+  coupleId: string;
+  partnerA?: string;
+  partnerB?: string;
+}
+
+interface SocketUser {
+  userId: string;
+  coupleId: string;
+  partnerRole: 'partner_a' | 'partner_b';
+  name: string;
+}
+
+// Store active connections
+const activeConnections = new Map<string, SocketUser>();
+const coupleRooms = new Map<string, CoupleRoom>();
 
 export const setupSocket = (io: Server) => {
-  // Prisma middleware to emit CRUD events and handle version conflicts
-  db.$use(async (params, next) => {
-    const action = params.action;
-    const model = params.model?.toLowerCase();
-
-    // Optimistic concurrency control: include version in where clause
-    if (action === 'update') {
-      const version = params.args.data?.version;
-      if (typeof version === 'number') {
-        params.args.where = { ...params.args.where, version };
-        params.args.data.version = { increment: 1 };
-      }
-    }
-    if (action === 'delete') {
-      const version = params.args.where?.version;
-      if (typeof version === 'number') {
-        params.args.where = { ...params.args.where, version };
-      }
-    }
-
+  // Helper function to emit to couple room
+  const emitToCouple = (coupleId: string, event: string, data: any, excludeSocket?: string) => {
     try {
-      const result = await next(params);
-      if (model && ['create', 'update', 'delete'].includes(action)) {
-        io.emit(`${model}:${action}`, result);
+      const room = `couple:${coupleId}`;
+      if (excludeSocket) {
+        io.to(room).except(excludeSocket).emit(event, data);
+      } else {
+        io.to(room).emit(event, data);
       }
-      return result;
+      logger.debug(`Emitted ${event} to couple ${coupleId}`);
     } catch (error) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === 'P2025'
-      ) {
-        // Version conflict or missing record
-        throw new Error('VersionConflict');
-      }
-      throw error;
+      logger.error({ error }, `Failed to emit ${event} to couple`);
     }
-  });
+  };
+
+  // Helper function to notify partner activity
+  const notifyPartnerActivity = (coupleId: string, partnerName: string, activity: string, socketId: string) => {
+    emitToCouple(coupleId, 'partner:activity', {
+      partner: partnerName,
+      activity,
+      timestamp: new Date().toISOString()
+    }, socketId);
+  };
 
   io.on('connection', (socket) => {
     logger.info({ id: socket.id }, 'Client connected');
     
-    // Handle messages
-    socket.on('message', (msg: { text: string; senderId: string }) => {
-      // Echo: broadcast message only the client who send the message
-      socket.emit('message', {
-        text: `Echo: ${msg.text}`,
-        senderId: 'system',
-        timestamp: new Date().toISOString(),
-      });
+    // Handle couple room joining
+    socket.on('join:couple', async (data: { userId: string; coupleId: string; partnerRole: 'partner_a' | 'partner_b'; name: string }) => {
+      try {
+        const { userId, coupleId, partnerRole, name } = data;
+        
+        // Store user info
+        activeConnections.set(socket.id, { userId, coupleId, partnerRole, name });
+        
+        // Join couple room
+        const roomName = `couple:${coupleId}`;
+        await socket.join(roomName);
+        
+        // Update couple room info
+        const existingRoom = coupleRooms.get(coupleId) || { coupleId };
+        if (partnerRole === 'partner_a') {
+          existingRoom.partnerA = socket.id;
+        } else {
+          existingRoom.partnerB = socket.id;
+        }
+        coupleRooms.set(coupleId, existingRoom);
+        
+        // Notify partner of connection
+        notifyPartnerActivity(coupleId, name, 'connected', socket.id);
+        
+        // Send connection confirmation
+        socket.emit('couple:joined', {
+          coupleId,
+          partnerRole,
+          partnersOnline: {
+            partner_a: !!existingRoom.partnerA,
+            partner_b: !!existingRoom.partnerB
+          }
+        });
+        
+        logger.info({ userId, coupleId, partnerRole }, 'User joined couple room');
+      } catch (error) {
+        logger.error({ error }, 'Failed to join couple room');
+        socket.emit('error', { message: 'Failed to join couple room' });
+      }
+    });
+
+    // Handle sync start notification
+    socket.on('sync:start', (data: { mood: number; energy: number }) => {
+      const user = activeConnections.get(socket.id);
+      if (user) {
+        notifyPartnerActivity(user.coupleId, user.name, `started daily sync (mood: ${data.mood}, energy: ${data.energy})`, socket.id);
+      }
+    });
+
+    // Handle sync completion
+    socket.on('sync:complete', async (data: { syncData: any }) => {
+      const user = activeConnections.get(socket.id);
+      if (user) {
+        // Emit to partner that sync was completed
+        emitToCouple(user.coupleId, 'sync:partner_completed', {
+          partner: user.name,
+          partnerRole: user.partnerRole,
+          syncData: data.syncData,
+          timestamp: new Date().toISOString()
+        }, socket.id);
+        
+        // Check if both partners have synced today for streak bonus
+        try {
+          const today = new Date().toISOString().split('T')[0];
+          const syncs = await db.syncEntry.findMany({
+            where: {
+              couple_id: user.coupleId,
+              created_at: {
+                gte: new Date(today),
+                lt: new Date(new Date(today).getTime() + 24 * 60 * 60 * 1000)
+              }
+            }
+          });
+          
+          if (syncs.length >= 2) {
+            emitToCouple(user.coupleId, 'streak:bonus', {
+              message: 'Both partners synced today! Streak bonus earned! 🔥',
+              coins: 25
+            });
+          }
+        } catch (error) {
+          logger.error({ error }, 'Failed to check sync streak');
+        }
+      }
+    });
+
+    // Handle task updates
+    socket.on('task:update', (data: { taskId: string; update: any }) => {
+      const user = activeConnections.get(socket.id);
+      if (user) {
+        emitToCouple(user.coupleId, 'task:updated', {
+          taskId: data.taskId,
+          update: data.update,
+          updatedBy: user.name,
+          timestamp: new Date().toISOString()
+        }, socket.id);
+      }
+    });
+
+    // Handle task completion
+    socket.on('task:complete', (data: { taskId: string; title: string; coins: number }) => {
+      const user = activeConnections.get(socket.id);
+      if (user) {
+        emitToCouple(user.coupleId, 'task:completed', {
+          taskId: data.taskId,
+          title: data.title,
+          completedBy: user.name,
+          coins: data.coins,
+          timestamp: new Date().toISOString()
+        }, socket.id);
+      }
+    });
+
+    // Handle memory creation
+    socket.on('memory:create', (data: { memory: any }) => {
+      const user = activeConnections.get(socket.id);
+      if (user) {
+        emitToCouple(user.coupleId, 'memory:created', {
+          memory: data.memory,
+          createdBy: user.name,
+          timestamp: new Date().toISOString()
+        }, socket.id);
+      }
+    });
+
+    // Handle typing indicators
+    socket.on('typing:start', () => {
+      const user = activeConnections.get(socket.id);
+      if (user) {
+        emitToCouple(user.coupleId, 'partner:typing', {
+          partner: user.name,
+          isTyping: true
+        }, socket.id);
+      }
+    });
+
+    socket.on('typing:stop', () => {
+      const user = activeConnections.get(socket.id);
+      if (user) {
+        emitToCouple(user.coupleId, 'partner:typing', {
+          partner: user.name,
+          isTyping: false
+        }, socket.id);
+      }
+    });
+
+    // Handle live location sharing (for date planning)
+    socket.on('location:share', (data: { location: { lat: number; lng: number; address: string } }) => {
+      const user = activeConnections.get(socket.id);
+      if (user) {
+        emitToCouple(user.coupleId, 'location:shared', {
+          partner: user.name,
+          location: data.location,
+          timestamp: new Date().toISOString()
+        }, socket.id);
+      }
+    });
+
+    // Handle heartbeat/presence
+    socket.on('heartbeat', () => {
+      const user = activeConnections.get(socket.id);
+      if (user) {
+        socket.emit('heartbeat:ack', { timestamp: new Date().toISOString() });
+        // Update partner with active status
+        emitToCouple(user.coupleId, 'partner:active', {
+          partner: user.name,
+          lastSeen: new Date().toISOString()
+        }, socket.id);
+      }
     });
 
     // Handle disconnect
     socket.on('disconnect', () => {
-      logger.info({ id: socket.id }, 'Client disconnected');
+      const user = activeConnections.get(socket.id);
+      if (user) {
+        // Notify partner of disconnection
+        notifyPartnerActivity(user.coupleId, user.name, 'disconnected', socket.id);
+        
+        // Update couple room
+        const room = coupleRooms.get(user.coupleId);
+        if (room) {
+          if (user.partnerRole === 'partner_a' && room.partnerA === socket.id) {
+            delete room.partnerA;
+          } else if (user.partnerRole === 'partner_b' && room.partnerB === socket.id) {
+            delete room.partnerB;
+          }
+          
+          if (!room.partnerA && !room.partnerB) {
+            coupleRooms.delete(user.coupleId);
+          } else {
+            coupleRooms.set(user.coupleId, room);
+          }
+        }
+        
+        activeConnections.delete(socket.id);
+        logger.info({ userId: user.userId, coupleId: user.coupleId }, 'User disconnected');
+      } else {
+        logger.info({ id: socket.id }, 'Anonymous client disconnected');
+      }
     });
 
     // Send welcome message
-    socket.emit('message', {
-      text: 'Welcome to WebSocket Echo Server!',
-      senderId: 'system',
+    socket.emit('connection:welcome', {
+      message: 'Welcome to Latest-OS! Connect with your partner in real-time 💕',
       timestamp: new Date().toISOString(),
     });
   });
