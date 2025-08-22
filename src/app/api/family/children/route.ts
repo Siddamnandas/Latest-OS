@@ -2,7 +2,88 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import ZAI from 'z-ai-web-dev-sdk';
+
+// Mock AI implementation to replace z-ai-web-dev-sdk
+class MockZAI {
+  chat = {
+    completions: {
+      create: async (params: any) => {
+        const userMessage = params.messages[1]?.content || '';
+        
+        if (userMessage.includes('development data')) {
+          return {
+            choices: [{
+              message: {
+                content: JSON.stringify({
+                  overallScore: Math.floor(Math.random() * 25) + 75, // 75-100
+                  breakdown: {
+                    physical: Math.floor(Math.random() * 20) + 80,
+                    cognitive: Math.floor(Math.random() * 20) + 75,
+                    emotional: Math.floor(Math.random() * 25) + 70,
+                    social: Math.floor(Math.random() * 20) + 75
+                  },
+                  insights: [
+                    'Child shows excellent progress in physical development',
+                    'Cognitive skills are developing well for this age group',
+                    'Social interactions are improving consistently'
+                  ],
+                  recommendations: [
+                    'Continue encouraging creative play activities',
+                    'Introduce more challenging cognitive tasks gradually',
+                    'Plan regular social interaction opportunities'
+                  ]
+                })
+              }
+            }]
+          };
+        } else {
+          return {
+            choices: [{
+              message: {
+                content: JSON.stringify({
+                  milestones: [
+                    {
+                      title: 'Can walk independently',
+                      category: 'physical',
+                      ageAchieved: 12,
+                      importance: 'high',
+                      description: 'Child can walk without support for several steps'
+                    },
+                    {
+                      title: 'Says first words',
+                      category: 'cognitive',
+                      ageAchieved: 12,
+                      importance: 'high',
+                      description: 'Child can say simple words like mama, dada'
+                    },
+                    {
+                      title: 'Shows affection to familiar people',
+                      category: 'emotional',
+                      ageAchieved: 15,
+                      importance: 'medium',
+                      description: 'Child shows affection through hugs and kisses'
+                    },
+                    {
+                      title: 'Plays simple games',
+                      category: 'social',
+                      ageAchieved: 18,
+                      importance: 'medium',
+                      description: 'Child engages in simple interactive games'
+                    }
+                  ]
+                })
+              }
+            }]
+          };
+        }
+      }
+    }
+  };
+  
+  static async create() {
+    return new MockZAI();
+  }
+}
 
 export async function GET(request: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -33,8 +114,8 @@ export async function GET(request: NextRequest) {
       }
     });
 
-    // Calculate development scores using AI
-    const zai = await ZAI.create();
+    // Calculate development scores using Mock AI
+    const zai = await MockZAI.create();
     
     const childrenWithScores = await Promise.all(
       children.map(async (child) => {
@@ -118,7 +199,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Initialize standard milestones based on age
-    const zai = await ZAI.create();
+    const zai = await MockZAI.create();
     const milestonesResponse = await zai.chat.completions.create({
       messages: [
         {

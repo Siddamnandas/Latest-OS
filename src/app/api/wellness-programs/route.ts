@@ -1,7 +1,56 @@
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { NextRequest, NextResponse } from 'next/server';
-import ZAI from 'z-ai-web-dev-sdk';
+
+// Mock AI implementation to replace z-ai-web-dev-sdk
+class MockZAI {
+  chat = {
+    completions: {
+      create: async (params: any) => {
+        return {
+          choices: [{
+            message: {
+              content: JSON.stringify({
+                programs: [
+                  {
+                    id: 'mindfulness-1',
+                    title: 'Daily Mindfulness for Couples',
+                    description: 'A 7-day program focusing on mindful communication and presence',
+                    duration: '7 days',
+                    difficulty: 'beginner',
+                    benefits: ['Better communication', 'Reduced stress', 'Improved connection'],
+                    activities: [
+                      'Morning gratitude practice',
+                      'Mindful listening exercises',
+                      'Evening reflection together'
+                    ]
+                  },
+                  {
+                    id: 'fitness-1',
+                    title: 'Couples Fitness Challenge',
+                    description: 'Fun fitness activities designed for couples to do together',
+                    duration: '14 days',
+                    difficulty: 'intermediate',
+                    benefits: ['Physical health', 'Teamwork', 'Shared goals'],
+                    activities: [
+                      'Partner workouts',
+                      'Walking challenges',
+                      'Healthy meal planning'
+                    ]
+                  }
+                ]
+              })
+            }
+          }]
+        };
+      }
+    }
+  };
+  
+  static async create() {
+    return new MockZAI();
+  }
+}
 
 export async function POST(request: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -13,7 +62,7 @@ export async function POST(request: NextRequest) {
     const { action, programId, userId, partnerId, activityData } = await request.json();
     
     // Initialize Z-AI SDK
-    const zai = await ZAI.create();
+    const zai = await MockZAI.create();
 
     if (action === 'generate') {
       // Generate personalized wellness programs based on user data
