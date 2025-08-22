@@ -18,6 +18,9 @@ model Couple {
   language        String   @default("hindi")
   children        String   @default("[]") // JSON as String for SQLite
   premium_until   DateTime?
+  stripe_customer_id     String?
+  stripe_subscription_id String?
+  subscription_status    String? @default("inactive")
   encryption_key  String
   created_at      DateTime @default(now())
   updated_at      DateTime @updatedAt
