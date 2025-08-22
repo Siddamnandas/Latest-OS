@@ -2,8 +2,38 @@ import { withAuth } from 'next-auth/middleware';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
+const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
+const RATE_LIMIT_MAX = 60;
+const requests = new Map<string, { count: number; start: number }>();
+
+function rateLimit(req: NextRequest): NextResponse | null {
+  const ip = req.ip ?? req.headers.get('x-forwarded-for') ?? 'unknown';
+  const now = Date.now();
+  const entry = requests.get(ip) || { count: 0, start: now };
+
+  if (now - entry.start > RATE_LIMIT_WINDOW) {
+    entry.count = 0;
+    entry.start = now;
+  }
+
+  entry.count += 1;
+  requests.set(ip, entry);
+
+  if (entry.count > RATE_LIMIT_MAX) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+  }
+
+  return null;
+}
+
 export default function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  
+  // Apply rate limiting to API routes
+  if (pathname.startsWith('/api/')) {
+    const limited = rateLimit(request);
+    if (limited) return limited;
+  }
   
   // DEVELOPMENT MODE: Bypass all authentication
   // Comment out the lines below to re-enable authentication
