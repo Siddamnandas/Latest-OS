@@ -9,53 +9,53 @@ datasource db {
 }
 
 model Couple {
-  id              String   @id @default(cuid())
-  partner_a_name  String
-  partner_b_name  String
-  anniversary_date DateTime?
-  city            String   @default("Hyderabad")
-  region          String   @default("north-india") // Cultural region
-  language        String   @default("hindi")
-  children        String   @default("[]") // JSON as String for SQLite
-  premium_until   DateTime?
+  id                     String    @id @default(cuid())
+  partner_a_name         String
+  partner_b_name         String
+  anniversary_date       DateTime?
+  city                   String    @default("Hyderabad")
+  region                 String    @default("north-india") // Cultural region
+  language               String    @default("hindi")
+  children               String    @default("[]") // JSON as String for SQLite
+  premium_until          DateTime?
   stripe_customer_id     String?
   stripe_subscription_id String?
-  subscription_status    String? @default("inactive")
-  encryption_key  String
-  created_at      DateTime @default(now())
-  updated_at      DateTime @updatedAt
+  subscription_status    String?   @default("inactive")
+  encryption_key         String
+  created_at             DateTime  @default(now())
+  updated_at             DateTime  @updatedAt
 
   // Relationships
-  sync_entries     SyncEntry[]
-  tasks            Task[]
-  ritual_sessions  RitualSession[]
-  rasa_balance     RasaBalance[]
-  children_profiles Child[]
-  reward_transactions RewardTransaction[]
-  memories         Memory[]
-  meal_plans       MealPlan[]
-  grocery_lists    GroceryList[]
-  ai_suggestions   AISuggestion[]
-  users            User[]
-  conversations    Conversation[]
-  voice_sessions   VoiceSession[]
-  analytics       Analytics[]
+  sync_entries         SyncEntry[]
+  tasks                Task[]
+  ritual_sessions      RitualSession[]
+  rasa_balance         RasaBalance[]
+  children_profiles    Child[]
+  reward_transactions  RewardTransaction[]
+  memories             Memory[]
+  meal_plans           MealPlan[]
+  grocery_lists        GroceryList[]
+  ai_suggestions       AISuggestion[]
+  users                User[]
+  conversations        Conversation[]
+  voice_sessions       VoiceSession[]
+  analytics            Analytics[]
   cultural_preferences CulturalPreference[]
-  shared_goals     SharedGoal[]
-  notifications   Notification[]
+  shared_goals         SharedGoal[]
+  notifications        Notification[]
 
   @@map("couples")
 }
 
 model SyncEntry {
-  id           String   @id @default(cuid())
-  couple_id    String
-  partner      String   // 'partner_a' or 'partner_b'
-  mood_score   Int      // 1-5 scale
-  energy_level Int      // 1-10 scale
-  mood_tags    String   @default("[]") // JSON as String for SQLite
+  id            String   @id @default(cuid())
+  couple_id     String
+  partner       String // 'partner_a' or 'partner_b'
+  mood_score    Int // 1-5 scale
+  energy_level  Int // 1-10 scale
+  mood_tags     String   @default("[]") // JSON as String for SQLite
   context_notes String?
-  created_at   DateTime @default(now())
+  created_at    DateTime @default(now())
 
   couple Couple @relation(fields: [couple_id], references: [id], onDelete: Cascade)
 
@@ -63,18 +63,18 @@ model SyncEntry {
 }
 
 model Task {
-  id             String      @id @default(cuid())
-  couple_id      String
-  title          String
-  description    String?
-  assigned_to    String      // 'partner_a', 'partner_b', or 'both'
-  status         String      @default("PENDING") // TaskStatus as String
-  category       String      // TaskCategory as String
-  ai_reasoning   String?     // JSON as String for SQLite
-  due_at         DateTime?
-  completed_at   DateTime?
-  created_at     DateTime    @default(now())
-  updated_at     DateTime    @updatedAt
+  id           String    @id @default(cuid())
+  couple_id    String
+  title        String
+  description  String?
+  assigned_to  String // 'partner_a', 'partner_b', or 'both'
+  status       String    @default("PENDING") // TaskStatus as String
+  category     String // TaskCategory as String
+  ai_reasoning String? // JSON as String for SQLite
+  due_at       DateTime?
+  completed_at DateTime?
+  created_at   DateTime  @default(now())
+  updated_at   DateTime  @updatedAt
 
   couple Couple @relation(fields: [couple_id], references: [id], onDelete: Cascade)
 
@@ -82,13 +82,13 @@ model Task {
 }
 
 model RitualSession {
-  id               String        @id @default(cuid())
+  id               String    @id @default(cuid())
   couple_id        String
-  ritual_type      String        // RitualType as String
-  archetype        String        // Archetype as String
+  ritual_type      String // RitualType as String
+  archetype        String // Archetype as String
   duration_minutes Int
-  completion_data  String?       // JSON as String for SQLite
-  started_at       DateTime      @default(now())
+  completion_data  String? // JSON as String for SQLite
+  started_at       DateTime  @default(now())
   completed_at     DateTime?
 
   couple Couple @relation(fields: [couple_id], references: [id], onDelete: Cascade)
@@ -97,12 +97,12 @@ model RitualSession {
 }
 
 model RasaBalance {
-  id               String   @id @default(cuid())
-  couple_id        String
-  play_percentage  Float
-  duty_percentage  Float
+  id                 String   @id @default(cuid())
+  couple_id          String
+  play_percentage    Float
+  duty_percentage    Float
   balance_percentage Float
-  updated_at       DateTime @default(now())
+  updated_at         DateTime @default(now())
 
   couple Couple @relation(fields: [couple_id], references: [id], onDelete: Cascade)
 
@@ -111,27 +111,27 @@ model RasaBalance {
 }
 
 model Child {
-  id           String   @id @default(cuid())
-  couple_id    String
-  name         String
-  age          Int
-  preferences  String   @default("[]") // JSON as String for SQLite
-  created_at   DateTime @default(now())
+  id          String   @id @default(cuid())
+  couple_id   String
+  name        String
+  age         Int
+  preferences String   @default("[]") // JSON as String for SQLite
+  created_at  DateTime @default(now())
 
-  couple       Couple           @relation(fields: [couple_id], references: [id], onDelete: Cascade)
-  activities   FamilyActivity[]
+  couple     Couple           @relation(fields: [couple_id], references: [id], onDelete: Cascade)
+  activities FamilyActivity[]
 
   @@map("children")
 }
 
 model FamilyActivity {
-  id              String        @id @default(cuid())
+  id              String    @id @default(cuid())
   child_id        String
   activity_type   String
-  activity_theme  String?       // 'krishna', 'hanuman', 'saraswati', 'mythology', 'kindness', 'storybook'
-  completion_data String?       // JSON as String for SQLite
+  activity_theme  String? // 'krishna', 'hanuman', 'saraswati', 'mythology', 'kindness', 'storybook'
+  completion_data String? // JSON as String for SQLite
   completed_at    DateTime?
-  created_at      DateTime      @default(now())
+  created_at      DateTime  @default(now())
 
   child Child @relation(fields: [child_id], references: [id], onDelete: Cascade)
 
@@ -139,12 +139,12 @@ model FamilyActivity {
 }
 
 model RewardTransaction {
-  id          String   @id @default(cuid())
-  couple_id   String
+  id           String   @id @default(cuid())
+  couple_id    String
   coins_earned Int
-  coins_spent Int      @default(0)
-  activity    String   // Description of activity
-  created_at  DateTime @default(now())
+  coins_spent  Int      @default(0)
+  activity     String // Description of activity
+  created_at   DateTime @default(now())
 
   couple Couple @relation(fields: [couple_id], references: [id], onDelete: Cascade)
 
@@ -154,16 +154,16 @@ model RewardTransaction {
 model Memory {
   id          String   @id @default(cuid())
   couple_id   String
-  type        String   // 'text', 'audio', 'video', 'image'
-  content     String   // URL for media, text content for text memories
+  type        String // 'text', 'audio', 'video', 'image'
+  content     String // URL for media, text content for text memories
   title       String
   description String?
   date        DateTime @default(now())
   tags        String   @default("[]") // JSON as String for SQLite
-  sentiment   String   // 'positive', 'neutral', 'negative'
+  sentiment   String // 'positive', 'neutral', 'negative'
   partners    String   @default("[]") // JSON as String for SQLite
   is_private  Boolean  @default(false)
-  memory_type String?  // 'kindness', 'storybook', 'general'
+  memory_type String? // 'kindness', 'storybook', 'general'
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
 
@@ -174,113 +174,123 @@ model Memory {
 
 // Placeholder models for missing relations
 model MealPlan {
-  id        String   @id @default(cuid())
-  couple_id String
-  title     String
+  id         String   @id @default(cuid())
+  couple_id  String
+  title      String
   created_at DateTime @default(now())
-  
+
   couple Couple @relation(fields: [couple_id], references: [id], onDelete: Cascade)
+
   @@map("meal_plans")
 }
 
 model GroceryList {
-  id        String   @id @default(cuid())
-  couple_id String
-  title     String
+  id         String   @id @default(cuid())
+  couple_id  String
+  title      String
   created_at DateTime @default(now())
-  
+
   couple Couple @relation(fields: [couple_id], references: [id], onDelete: Cascade)
+
   @@map("grocery_lists")
 }
 
 model AISuggestion {
-  id        String   @id @default(cuid())
-  couple_id String
-  title     String
-  content   String
+  id         String   @id @default(cuid())
+  couple_id  String
+  title      String
+  content    String
   created_at DateTime @default(now())
-  
+
   couple Couple @relation(fields: [couple_id], references: [id], onDelete: Cascade)
+
   @@map("ai_suggestions")
 }
 
 model User {
-  id        String   @id @default(cuid())
-  couple_id String
-  name      String
-  email     String   @unique
+  id            String   @id @default(cuid())
+  couple_id     String
+  name          String
+  email         String   @unique
   password_hash String
-  role      String   @default("USER") // USER, ADMIN
-  created_at DateTime @default(now())
-  
+  role          String   @default("USER") // USER, ADMIN
+  created_at    DateTime @default(now())
+
   couple Couple @relation(fields: [couple_id], references: [id], onDelete: Cascade)
+
   @@map("users")
 }
 
 model Conversation {
-  id        String   @id @default(cuid())
-  couple_id String
-  title     String
-  content   String
+  id         String   @id @default(cuid())
+  couple_id  String
+  title      String
+  content    String
   created_at DateTime @default(now())
-  
+
   couple Couple @relation(fields: [couple_id], references: [id], onDelete: Cascade)
+
   @@map("conversations")
 }
 
 model VoiceSession {
-  id        String   @id @default(cuid())
-  couple_id String
-  title     String
-  duration  Int
+  id         String   @id @default(cuid())
+  couple_id  String
+  title      String
+  duration   Int
   created_at DateTime @default(now())
-  
+
   couple Couple @relation(fields: [couple_id], references: [id], onDelete: Cascade)
+
   @@map("voice_sessions")
 }
 
 model Analytics {
-  id        String   @id @default(cuid())
-  couple_id String
-  data      String   // JSON as String
+  id         String   @id @default(cuid())
+  couple_id  String
+  data       String // JSON as String
   created_at DateTime @default(now())
-  
+
   couple Couple @relation(fields: [couple_id], references: [id], onDelete: Cascade)
+
   @@map("analytics")
 }
 
 model CulturalPreference {
-  id        String   @id @default(cuid())
-  couple_id String
+  id         String   @id @default(cuid())
+  couple_id  String
   preference String
-  value     String
+  value      String
   created_at DateTime @default(now())
-  
+
   couple Couple @relation(fields: [couple_id], references: [id], onDelete: Cascade)
+
   @@map("cultural_preferences")
 }
 
 model SharedGoal {
-  id        String   @id @default(cuid())
-  couple_id String
-  title     String
+  id          String    @id @default(cuid())
+  couple_id   String
+  title       String
   description String?
   target_date DateTime?
-  completed Boolean @default(false)
-  created_at DateTime @default(now())
-  
+  completed   Boolean   @default(false)
+  created_at  DateTime  @default(now())
+
   couple Couple @relation(fields: [couple_id], references: [id], onDelete: Cascade)
+
   @@map("shared_goals")
 }
 
 model Notification {
-  id        String   @id @default(cuid())
-  couple_id String
-  title     String
-  message   String
-  read      Boolean  @default(false)
+  id         String   @id @default(cuid())
+  couple_id  String
+  title      String
+  message    String
+  read       Boolean  @default(false)
   created_at DateTime @default(now())
-  
+
   couple Couple @relation(fields: [couple_id], references: [id], onDelete: Cascade)
+
   @@map("notifications")
 }
