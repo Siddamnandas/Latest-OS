@@ -1,17 +1,17 @@
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import { cookies } from "next/headers";
-// import { NextIntlClientProvider } from "next-intl";
+import { NextIntlClientProvider } from "next-intl";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { cn } from "@/lib/utils";
 import { Toaster } from "@/components/ui/sonner";
 import { QueryProvider } from "@/lib/query-provider";
 import { AuthProvider } from "@/lib/auth-context";
 import { UpdateNotifier } from "@/lib/update-notifier";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-// import enMessages from "@/messages/en.json";
-// import hiMessages from "@/messages/hi.json";
+import enMessages from "@/messages/en.json";
+import hiMessages from "@/messages/hi.json";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import React from "react";
 
 const geistSans = Inter({
@@ -60,8 +60,7 @@ export default async function RootLayout({
 }) {
   const cookieStore = await cookies();
   const locale = cookieStore.get('locale')?.value || 'en';
-  
-  // const messages = locale === 'hi' ? hiMessages : enMessages;
+  const messages = locale === 'hi' ? hiMessages : enMessages;
   
   const themeScript = `(function(){try{var t=localStorage.getItem('theme');var m=window.matchMedia('(prefers-color-scheme: dark)').matches;if(t==='dark'||(!t&&m)){document.documentElement.classList.add('dark');}else{document.documentElement.classList.remove('dark');}}catch(e){}})();`;
 
@@ -81,9 +80,14 @@ export default async function RootLayout({
         <ErrorBoundary>
           <AuthProvider>
             <QueryProvider>
-              <UpdateNotifier />
-              {children}
-              <Toaster />
+              <NextIntlClientProvider locale={locale} messages={messages}>
+                <UpdateNotifier />
+                <div className="fixed top-4 right-4 z-50">
+                  <LanguageSwitcher />
+                </div>
+                {children}
+                <Toaster />
+              </NextIntlClientProvider>
             </QueryProvider>
           </AuthProvider>
         </ErrorBoundary>
