@@ -1,7 +1,9 @@
+import { getServerSession } from 'next-auth';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
+import { authOptions } from '@/lib/auth';
 
 const unsubscribeSchema = z.object({
   endpoint: z.string().url(),
@@ -12,9 +14,14 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { endpoint } = unsubscribeSchema.parse(body);
 
-    // For now, we'll use a demo user ID since auth is bypassed in development
-    // In production, get user ID from session
-    const userId = 'demo-user-1'; // TODO: Get from authenticated session
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+    const userId = session.user.id;
 
     // Find and deactivate the subscription
     const subscription = await db.pushSubscription.findFirst({
