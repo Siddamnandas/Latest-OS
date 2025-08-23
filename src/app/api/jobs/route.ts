@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { emailQueue } from '@/queues/email';
+import { logger } from '@/lib/logger';
 
 export async function POST(request: NextRequest) {
   try {
@@ -7,7 +8,7 @@ export async function POST(request: NextRequest) {
     await emailQueue.add('send', data);
     return NextResponse.json({ status: 'queued' });
   } catch (err) {
-    console.error('Failed to schedule job', err);
+    logger.error('Failed to schedule job', err);
     return NextResponse.json({ error: 'Failed to schedule job' }, { status: 500 });
   }
 }

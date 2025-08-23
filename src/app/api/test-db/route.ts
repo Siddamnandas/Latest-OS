@@ -1,23 +1,24 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { logger } from '@/lib/logger';
 
 export async function GET() {
   try {
-    console.log('Testing database connection...');
-    console.log('Current working directory:', process.cwd());
-    console.log('DATABASE_URL:', process.env.DATABASE_URL);
+    logger.info('Testing database connection...');
+    logger.info('Current working directory:', process.cwd());
+    logger.info('DATABASE_URL:', process.env.DATABASE_URL);
     
     // Test basic connection
     await db.$connect();
-    console.log('Database connection successful');
+    logger.info('Database connection successful');
     
     // Test query
     const coupleCount = await db.couple.count();
-    console.log('Couple count:', coupleCount);
+    logger.info('Couple count:', coupleCount);
     
     // Test findFirst
     const couple = await db.couple.findFirst();
-    console.log('First couple:', couple);
+    logger.info('First couple:', couple);
     
     await db.$disconnect();
     
@@ -32,7 +33,7 @@ export async function GET() {
     });
     
   } catch (error) {
-    console.error('Database test error:', error);
+    logger.error('Database test error:', error);
     return NextResponse.json({
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',

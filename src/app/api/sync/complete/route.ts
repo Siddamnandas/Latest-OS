@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { z } from 'zod';
+import { logger } from '@/lib/logger';
 
 const syncCompleteSchema = z.object({
   partner: z.enum(['partner_a', 'partner_b']),
@@ -128,7 +129,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Error completing sync:', error);
+    logger.error('Error completing sync:', error);
     
     if (error instanceof z.ZodError) {
       return NextResponse.json(
@@ -191,7 +192,7 @@ export async function GET() {
     });
 
   } catch (error) {
-    console.error('Error getting sync status:', error);
+    logger.error('Error getting sync status:', error);
     return NextResponse.json(
       { error: 'Failed to get sync status' },
       { status: 500 }

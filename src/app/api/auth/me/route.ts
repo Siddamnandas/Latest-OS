@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/session';
+import { logger } from '@/lib/logger';
 
 export async function GET() {
   try {
@@ -24,7 +25,7 @@ export async function GET() {
     });
 
   } catch (error) {
-    console.error('Protected route error:', error);
+    logger.error('Protected route error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

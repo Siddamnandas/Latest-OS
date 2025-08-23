@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { logger } from '@/lib/logger';
 import { 
   CheckCircle, 
   Clock, 
@@ -93,7 +94,7 @@ export function LiveTaskManagement() {
       setCompletedToday(sampleTasks.filter(t => t.status === 'COMPLETED').length);
       setLoading(false);
     } catch (error) {
-      console.error('Error fetching tasks:', error);
+      logger.error('Error fetching tasks:', error);
       setLoading(false);
     }
   };

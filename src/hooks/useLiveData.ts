@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { logger } from '@/lib/logger';
 
 interface LiveData {
   couple: {
@@ -76,7 +77,7 @@ export function useLiveData() {
       setData(liveData);
       setError(null);
     } catch (err) {
-      console.error('Error fetching live data:', err);
+      logger.error('Error fetching live data:', err);
       setError(err instanceof Error ? err.message : 'Unknown error');
       
       // Fallback to demo data if API fails

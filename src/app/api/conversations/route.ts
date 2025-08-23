@@ -2,6 +2,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { logger } from '@/lib/logger';
 
 export async function GET(request: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -34,7 +35,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ conversations }, { status: 200 });
 
   } catch (error) {
-    console.error('Error fetching conversations:', error);
+    logger.error('Error fetching conversations:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -83,7 +84,7 @@ export async function POST(request: NextRequest) {
     }, { status: 201 });
 
   } catch (error) {
-    console.error('Error creating conversation:', error);
+    logger.error('Error creating conversation:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

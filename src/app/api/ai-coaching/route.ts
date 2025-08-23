@@ -1,6 +1,7 @@
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { NextRequest, NextResponse } from 'next/server';
+import { logger } from '@/lib/logger';
 
 // Mock AI implementation to replace z-ai-web-dev-sdk
 class MockZAI {
@@ -222,7 +223,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('AI Coaching error:', error);
+    logger.error('AI Coaching error:', error);
     return NextResponse.json(
       { error: 'Failed to generate AI coaching session' },
       { status: 500 }

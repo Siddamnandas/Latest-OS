@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { logger } from '@/lib/logger';
 import { 
   Mic, 
   MicOff, 
@@ -99,7 +100,7 @@ export function VoiceInteraction() {
         };
 
         recognitionRef.current.onerror = (event: any) => {
-          console.error('Speech recognition error:', event.error);
+          logger.error('Speech recognition error:', event.error);
           setIsListening(false);
         };
       }

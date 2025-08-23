@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { z } from "zod";
+import { logger } from '@/lib/logger';
 
 const createSchema = z.object({
   transcript: z.string().optional(),
@@ -30,7 +31,7 @@ export async function GET(request: NextRequest) {
     });
     return NextResponse.json({ sessions }, { status: 200 });
   } catch (error) {
-    console.error("Error fetching voice sessions:", error);
+    logger.error("Error fetching voice sessions:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
@@ -67,7 +68,7 @@ export async function POST(request: NextRequest) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: error.flatten() }, { status: 400 });
     }
-    console.error("Error creating voice session:", error);
+    logger.error("Error creating voice session:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

@@ -2,6 +2,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { logger } from '@/lib/logger';
 
 export async function POST(request: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -62,7 +63,7 @@ export async function POST(request: NextRequest) {
       syncTimestamp: new Date().toISOString()
     });
   } catch (error) {
-    console.error('Error during sync:', error);
+    logger.error('Error during sync:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -100,7 +101,7 @@ export async function GET(request: NextRequest) {
       syncLogs
     });
   } catch (error) {
-    console.error('Error fetching sync status:', error);
+    logger.error('Error fetching sync status:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

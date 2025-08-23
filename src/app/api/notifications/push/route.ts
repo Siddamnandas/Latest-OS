@@ -3,6 +3,7 @@ import { authOptions } from '@/lib/auth';
 import { NextRequest, NextResponse } from 'next/server';
 import webpush from 'web-push';
 import { getWebSubscriptions, getExpoPushTokens } from '../subscribe/route';
+import { logger } from '@/lib/logger';
 
 const WEB_PUSH_CONTACT = process.env.WEB_PUSH_CONTACT || 'mailto:example@example.com';
 const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || '';
@@ -30,7 +31,7 @@ export async function POST(req: NextRequest) {
 
   const webPromises = webSubs.map((sub) =>
     webpush.sendNotification(sub, payload).catch((err) => {
-      console.error('Web push error:', err);
+      logger.error('Web push error:', err);
     })
   );
 
@@ -47,7 +48,7 @@ export async function POST(req: NextRequest) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(expoMessages),
-      }).catch((err) => console.error('Expo push error:', err))
+      }).catch((err) => logger.error('Expo push error:', err))
     : Promise.resolve();
 
   await Promise.all([...webPromises, expoPromise]);

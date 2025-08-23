@@ -1,12 +1,13 @@
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { NextResponse } from 'next/server';
+import { logger } from '@/lib/logger';
 
 async function createIssue(message: string, screenshot?: string) {
   const repo = process.env.FEEDBACK_GITHUB_REPO;
   const token = process.env.GITHUB_TOKEN;
   if (!repo || !token) {
-    console.log('Feedback:', message, screenshot ? '(screenshot included)' : '');
+    logger.info('Feedback:', message, screenshot ? '(screenshot included)' : '');
     return;
   }
   const [owner, repoName] = repo.split('/');
@@ -43,7 +44,7 @@ export async function POST(request: Request) {
     await createIssue(message, screenshotBase64);
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Feedback error:', error);
+    logger.error('Feedback error:', error);
     return NextResponse.json({ error: 'Failed to submit feedback' }, { status: 500 });
   }
 }

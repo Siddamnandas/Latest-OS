@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { logger } from '@/lib/logger';
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -98,7 +99,7 @@ export function RelationshipAnalytics() {
           throw new Error('API failed');
         }
       } catch (error) {
-        console.error('Failed to fetch analytics:', error);
+        logger.error('Failed to fetch analytics:', error);
         // Fallback to mock data
         await new Promise(resolve => setTimeout(resolve, 1000));
         setAnalytics({
