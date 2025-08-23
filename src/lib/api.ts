@@ -1,3 +1,22 @@
+import type { paths } from './api-types';
+
+type APIRequest<P extends keyof paths, M extends keyof paths[P]> =
+  paths[P][M] extends { requestBody?: { content?: { 'application/json'?: infer R } } }
+    ? R
+    : unknown;
+
+type APIResponse<P extends keyof paths, M extends keyof paths[P]> =
+  paths[P][M] extends { responses: { 200: { content?: { 'application/json'?: infer R } } } }
+    ? R
+    : unknown;
+
+type APIQuery<P extends keyof paths, M extends keyof paths[P]> =
+  paths[P][M] extends { parameters: { query?: infer Q } }
+    ? Q extends Record<string, unknown> ? Q : Record<string, string>
+    : Record<string, string>;
+
+export type APIError = { error: string };
+
 // API Service for Leela OS
 export class LeelaOSAPI {
   private baseUrl: string;
@@ -7,7 +26,7 @@ export class LeelaOSAPI {
   }
 
   // Generic request method
-  private async request(endpoint: string, options: RequestInit = {}) {
+  private async request<TResponse>(endpoint: string, options: RequestInit = {}): Promise<TResponse> {
     const url = `${this.baseUrl}${endpoint}`;
     const response = await fetch(url, {
       headers: {
@@ -18,112 +37,155 @@ export class LeelaOSAPI {
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'API request failed');
+      let error: APIError;
+      try {
+        error = await response.json();
+      } catch {
+        error = { error: 'API request failed' };
+      }
+      throw new Error(error.error);
     }
 
-    return response.json();
+    return response.json() as Promise<TResponse>;
   }
 
   // Couple Management
-  async createCouple(data: any) {
-    return this.request('/couples', {
+  async createCouple(
+    data: APIRequest<'/api/couples', 'post'>
+  ): Promise<APIResponse<'/api/couples', 'post'>> {
+    return this.request<APIResponse<'/api/couples', 'post'>>('/couples', {
       method: 'POST',
       body: JSON.stringify(data),
     });
   }
 
-  async getCouple(coupleId: string) {
-    return this.request(`/couples?id=${coupleId}`);
+  async getCouple(coupleId: string): Promise<APIResponse<'/api/couples', 'get'>> {
+    return this.request<APIResponse<'/api/couples', 'get'>>(`/couples?id=${coupleId}`);
   }
 
   // Daily Sync
-  async createSyncEntry(data: any) {
-    return this.request('/sync', {
+  async createSyncEntry(
+    data: APIRequest<'/api/sync', 'post'>
+  ): Promise<APIResponse<'/api/sync', 'post'>> {
+    return this.request<APIResponse<'/api/sync', 'post'>>('/sync', {
       method: 'POST',
       body: JSON.stringify(data),
     });
   }
 
-  async getSyncEntries(coupleId: string, todayOnly = false) {
+  async getSyncEntries(
+    coupleId: string,
+    todayOnly = false
+  ): Promise<APIResponse<'/api/sync', 'get'>> {
     const params = new URLSearchParams({ couple_id: coupleId });
     if (todayOnly) params.append('today', 'true');
-    return this.request(`/sync?${params}`);
+    return this.request<APIResponse<'/api/sync', 'get'>>(`/sync?${params}`);
   }
 
   // Task Management
-  async createTask(data: any) {
-    return this.request('/tasks', {
+  async createTask(
+    data: APIRequest<'/api/tasks', 'post'>
+  ): Promise<APIResponse<'/api/tasks', 'post'>> {
+    return this.request<APIResponse<'/api/tasks', 'post'>>('/tasks', {
       method: 'POST',
       body: JSON.stringify(data),
     });
   }
 
-  async getTasks(coupleId: string, filters?: any) {
+  async getTasks(
+    coupleId: string,
+    filters?: APIQuery<'/api/tasks', 'get'>
+  ): Promise<APIResponse<'/api/tasks', 'get'>> {
     const params = new URLSearchParams({ couple_id: coupleId });
-    if (filters?.status) params.append('status', filters.status);
-    if (filters?.assigned_to) params.append('assigned_to', filters.assigned_to);
-    return this.request(`/tasks?${params}`);
+    if (filters?.['status']) params.append('status', filters['status']);
+    if (filters?.['assigned_to']) params.append('assigned_to', filters['assigned_to']);
+    return this.request<APIResponse<'/api/tasks', 'get'>>(`/tasks?${params}`);
   }
 
-  async updateTask(taskId: string, data: any) {
-    return this.request(`/tasks?id=${taskId}`, {
+  async updateTask(
+    taskId: string,
+    data: APIRequest<'/api/tasks', 'put'>
+  ): Promise<APIResponse<'/api/tasks', 'put'>> {
+    return this.request<APIResponse<'/api/tasks', 'put'>>(`/tasks?id=${taskId}`, {
       method: 'PUT',
       body: JSON.stringify(data),
     });
   }
 
-  async deleteTask(taskId: string) {
-    return this.request(`/tasks?id=${taskId}`, {
+  async deleteTask(taskId: string): Promise<APIResponse<'/api/tasks', 'delete'>> {
+    return this.request<APIResponse<'/api/tasks', 'delete'>>(`/tasks?id=${taskId}`, {
       method: 'DELETE',
     });
   }
 
   // AI Suggestions
-  async createAISuggestion(data: any) {
-    return this.request('/ai-suggestions', {
+  async createAISuggestion(
+    data: APIRequest<'/api/ai-suggestions', 'post'>
+  ): Promise<APIResponse<'/api/ai-suggestions', 'post'>> {
+    return this.request<APIResponse<'/api/ai-suggestions', 'post'>>('/ai-suggestions', {
       method: 'POST',
       body: JSON.stringify(data),
     });
   }
 
-  async getAISuggestions(coupleId: string, filters?: any) {
+  async getAISuggestions(
+    coupleId: string,
+    filters?: APIQuery<'/api/ai-suggestions', 'get'>
+  ): Promise<APIResponse<'/api/ai-suggestions', 'get'>> {
     const params = new URLSearchParams({ couple_id: coupleId });
-    if (filters?.type) params.append('type', filters.type);
-    if (filters?.pending !== undefined) params.append('pending', filters.pending.toString());
-    return this.request(`/ai-suggestions?${params}`);
+    if (filters?.['type']) params.append('type', filters['type']);
+    if (filters?.['pending'] !== undefined) params.append('pending', String(filters['pending']));
+    return this.request<APIResponse<'/api/ai-suggestions', 'get'>>(`/ai-suggestions?${params}`);
   }
 
-  async updateAISuggestion(suggestionId: string, action: 'accept' | 'complete' | 'reject') {
-    return this.request(`/ai-suggestions?id=${suggestionId}&action=${action}`, {
-      method: 'PUT',
-    });
+  async updateAISuggestion(
+    suggestionId: string,
+    action: 'accept' | 'complete' | 'reject'
+  ): Promise<APIResponse<'/api/ai-suggestions', 'put'>> {
+    return this.request<APIResponse<'/api/ai-suggestions', 'put'>>(
+      `/ai-suggestions?id=${suggestionId}&action=${action}`,
+      {
+        method: 'PUT',
+      }
+    );
   }
 
   // Kids Activities
-  async getDailyActivityTheme() {
-    return this.request('/kids-activities');
+  async getDailyActivityTheme(): Promise<APIResponse<'/api/kids-activities', 'get'>> {
+    return this.request<APIResponse<'/api/kids-activities', 'get'>>('/kids-activities');
   }
 
-  async createKidActivity(data: any) {
-    return this.request('/kids-activities', {
+  async createKidActivity(
+    data: APIRequest<'/api/kids-activities', 'post'>
+  ): Promise<APIResponse<'/api/kids-activities', 'post'>> {
+    return this.request<APIResponse<'/api/kids-activities', 'post'>>('/kids-activities', {
       method: 'POST',
       body: JSON.stringify(data),
     });
   }
 
-  async getKidActivities(childId: string, filters?: any) {
+  async getKidActivities(
+    childId: string,
+    filters?: APIQuery<'/api/kids-activities', 'get'>
+  ): Promise<APIResponse<'/api/kids-activities', 'get'>> {
     const params = new URLSearchParams({ child_id: childId });
-    if (filters?.theme) params.append('theme', filters.theme);
-    if (filters?.completed !== undefined) params.append('completed', filters.completed.toString());
-    return this.request(`/kids-activities?${params}`);
+    if (filters?.['theme']) params.append('theme', filters['theme']);
+    if (filters?.['completed'] !== undefined)
+      params.append('completed', String(filters['completed']));
+    return this.request<APIResponse<'/api/kids-activities', 'get'>>(`/kids-activities?${params}`);
   }
 
-  async updateKidActivity(activityId: string, data: any) {
-    return this.request(`/kids-activities?id=${activityId}`, {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    });
+  async updateKidActivity(
+    activityId: string,
+    data: APIRequest<'/api/kids-activities', 'put'>
+  ): Promise<APIResponse<'/api/kids-activities', 'put'>> {
+    return this.request<APIResponse<'/api/kids-activities', 'put'>>(
+      `/kids-activities?id=${activityId}`,
+      {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }
+    );
   }
 
   // Memories & Kindness Jar
@@ -135,42 +197,50 @@ export class LeelaOSAPI {
     });
   }
 
-  async getMemories(coupleId: string, filters?: any) {
+  async getMemories(
+    coupleId: string,
+    filters?: APIQuery<'/api/memories', 'get'>
+  ): Promise<APIResponse<'/api/memories', 'get'>> {
     const params = new URLSearchParams({ couple_id: coupleId });
-    if (filters?.type) params.append('type', filters.type);
-    if (filters?.memory_type) params.append('memory_type', filters.memory_type);
-    if (filters?.limit) params.append('limit', filters.limit.toString());
-    return this.request(`/memories?${params}`);
+    if (filters?.['type']) params.append('type', filters['type']);
+    if (filters?.['memory_type']) params.append('memory_type', filters['memory_type']);
+    if (filters?.['limit']) params.append('limit', String(filters['limit']));
+    return this.request<APIResponse<'/api/memories', 'get'>>(`/memories?${params}`);
   }
 
-  async updateMemory(memoryId: string, data: any) {
-    return this.request(`/memories?id=${memoryId}`, {
+  async updateMemory(
+    memoryId: string,
+    data: APIRequest<'/api/memories', 'put'>
+  ): Promise<APIResponse<'/api/memories', 'put'>> {
+    return this.request<APIResponse<'/api/memories', 'put'>>(`/memories?id=${memoryId}`, {
       method: 'PUT',
       body: JSON.stringify(data),
     });
   }
 
-  async deleteMemory(memoryId: string) {
-    return this.request(`/memories?id=${memoryId}`, {
+  async deleteMemory(memoryId: string): Promise<APIResponse<'/api/memories', 'delete'>> {
+    return this.request<APIResponse<'/api/memories', 'delete'>>(`/memories?id=${memoryId}`, {
       method: 'DELETE',
     });
   }
 
   // Rewards & Gamification
-  async getRewards(coupleId: string) {
-    return this.request(`/rewards?couple_id=${coupleId}`);
+  async getRewards(coupleId: string): Promise<APIResponse<'/api/rewards', 'get'>> {
+    return this.request<APIResponse<'/api/rewards', 'get'>>(`/rewards?couple_id=${coupleId}`);
   }
 
-  async createRewardTransaction(data: any) {
-    return this.request('/rewards', {
+  async createRewardTransaction(
+    data: APIRequest<'/api/rewards', 'post'>
+  ): Promise<APIResponse<'/api/rewards', 'post'>> {
+    return this.request<APIResponse<'/api/rewards', 'post'>>('/rewards', {
       method: 'POST',
       body: JSON.stringify(data),
     });
   }
 
   // Billing
-  async getSubscription(coupleId: string) {
-    return this.request(`/payments?couple_id=${coupleId}`);
+  async getSubscription(coupleId: string): Promise<APIResponse<'/api/payments', 'get'>> {
+    return this.request<APIResponse<'/api/payments', 'get'>>(`/payments?couple_id=${coupleId}`);
   }
 }
 

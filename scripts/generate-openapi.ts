@@ -2,6 +2,7 @@ import fg from 'fast-glob';
 import path from 'path';
 import fs from 'fs';
 import { registry, generateOpenApiDocument } from '../src/lib/openapi';
+import openapiTS, { astToString } from 'openapi-typescript';
 
 async function main() {
   const files = await fg('src/app/api/**/route.ts');
@@ -27,7 +28,13 @@ async function main() {
   const doc = generateOpenApiDocument();
   const outDir = path.resolve('public/api-docs');
   fs.mkdirSync(outDir, { recursive: true });
-  fs.writeFileSync(path.join(outDir, 'openapi.json'), JSON.stringify(doc, null, 2));
+  const jsonPath = path.join(outDir, 'openapi.json');
+  fs.writeFileSync(jsonPath, JSON.stringify(doc, null, 2));
+
+  const ast = await openapiTS(doc as any);
+  const types = astToString(ast);
+  const typesOut = path.resolve('src/lib/api-types.ts');
+  fs.writeFileSync(typesOut, types);
 }
 
 main();

@@ -50,7 +50,7 @@
         }
       }
     },
-    "/api/analytics": {
+    "/api/ai-suggestions": {
       "get": {
         "responses": {
           "200": {
@@ -66,7 +66,7 @@
         }
       }
     },
-    "/api/ai-suggestions": {
+    "/api/analytics": {
       "get": {
         "responses": {
           "200": {
@@ -527,15 +527,6 @@
         }
       }
     },
-    "/api/test-db": {
-      "get": {
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      }
-    },
     "/api/tasks": {
       "get": {
         "responses": {
@@ -545,6 +536,15 @@
         }
       },
       "post": {
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/test-db": {
+      "get": {
         "responses": {
           "200": {
             "description": "Success"
@@ -677,7 +677,7 @@
         }
       }
     },
-    "/api/family/activities": {
+    "/api/family/children": {
       "get": {
         "responses": {
           "200": {
@@ -693,7 +693,7 @@
         }
       }
     },
-    "/api/family/children": {
+    "/api/family/activities": {
       "get": {
         "responses": {
           "200": {
