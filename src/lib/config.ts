@@ -29,6 +29,36 @@ const rawEnv = envsafe({
     allowEmpty: true,
     default: '',
   }),
+  REDIS_URL: str({
+    desc: 'Redis connection string',
+    default: 'redis://localhost:6379',
+    allowEmpty: true,
+  }),
+  STRIPE_SECRET_KEY: str({
+    desc: 'Secret key for Stripe API',
+    default: '',
+    allowEmpty: true,
+  }),
+  STRIPE_WEBHOOK_SECRET: str({
+    desc: 'Stripe webhook signing secret',
+    default: '',
+    allowEmpty: true,
+  }),
+  SENTRY_ORG: str({
+    desc: 'Sentry organization slug for API access',
+    default: '',
+    allowEmpty: true,
+  }),
+  SENTRY_PROJECT: str({
+    desc: 'Sentry project slug for API access',
+    default: '',
+    allowEmpty: true,
+  }),
+  SENTRY_AUTH_TOKEN: str({
+    desc: 'Authentication token for Sentry API',
+    default: '',
+    allowEmpty: true,
+  }),
 });
 
 const envSchema = z.object({
@@ -37,6 +67,12 @@ const envSchema = z.object({
   UNLEASH_URL: z.string().optional(),
   UNLEASH_CLIENT_KEY: z.string().optional(),
   SENTRY_DSN: z.string().optional().or(z.literal('')),
+  REDIS_URL: z.string().optional(),
+  STRIPE_SECRET_KEY: z.string().optional(),
+  STRIPE_WEBHOOK_SECRET: z.string().optional(),
+  SENTRY_ORG: z.string().optional(),
+  SENTRY_PROJECT: z.string().optional(),
+  SENTRY_AUTH_TOKEN: z.string().optional(),
 });
 
 export const env = envSchema.parse(rawEnv);

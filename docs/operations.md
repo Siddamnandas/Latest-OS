@@ -1,5 +1,21 @@
 # Operations Guide
 
+## Required Environment Variables
+
+The application relies on the following environment variables:
+
+- `DATABASE_URL` – connection string for the primary database.
+- `NEXTAUTH_SECRET` – secret used for NextAuth sessions.
+- `SENTRY_DSN` – DSN for reporting errors to Sentry.
+- `REDIS_URL` – Redis connection string for caching and queues.
+- `UNLEASH_URL` – URL of the Unleash proxy server.
+- `UNLEASH_CLIENT_KEY` – client key for accessing Unleash.
+- `STRIPE_SECRET_KEY` – server-side Stripe API key.
+- `STRIPE_WEBHOOK_SECRET` – signature secret for verifying Stripe webhooks.
+- `SENTRY_ORG` – Sentry organization slug for API calls.
+- `SENTRY_PROJECT` – Sentry project slug for API calls.
+- `SENTRY_AUTH_TOKEN` – authentication token for Sentry API.
+
 ## Nightly Database Backups
 
 Use `scripts/backup-db.sh` to create a nightly dump of the production database and store it in object storage.
