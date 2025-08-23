@@ -13,4 +13,3 @@ export async function promptBiometricAuth(promptMessage = 'Authenticate') {
 
   return LocalAuthentication.authenticateAsync({ promptMessage });
 }
-

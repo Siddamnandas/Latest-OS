@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useFeatureFlag } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -68,6 +69,7 @@ interface Achievement {
 }
 
 export function MilestoneSystem() {
+  const enabled = useFeatureFlag('milestone-system');
   const [milestones, setMilestones] = useState<Milestone[]>([]);
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [loading, setLoading] = useState(true);
@@ -86,6 +88,7 @@ export function MilestoneSystem() {
   });
 
   useEffect(() => {
+    if (!enabled) return;
     const fetchData = async () => {
       setLoading(true);
       await new Promise(resolve => setTimeout(resolve, 1500));
@@ -310,7 +313,11 @@ export function MilestoneSystem() {
     };
 
     fetchData();
-  }, []);
+  }, [enabled]);
+
+  if (!enabled) {
+    return null;
+  }
 
   const getCategoryInfo = (category: string) => {
     switch (category) {

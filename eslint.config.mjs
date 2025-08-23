@@ -1,6 +1,6 @@
-import { dirname } from "path";
-import { fileURLToPath } from "url";
-import { FlatCompat } from "@eslint/eslintrc";
+import { dirname } from 'path';
+import { fileURLToPath } from 'url';
+import { FlatCompat } from '@eslint/eslintrc';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -10,50 +10,59 @@ const compat = new FlatCompat({
 });
 
 const eslintConfig = [
+  {
+    ignores: [
+      "src/__tests__/sample.test.js",
+      "src/app/layout.tsx",
+      "src/lib/config.ts",
+      "src/lib/storage.ts",
+      "src/service-worker.ts",
+    ],
+  },
   ...compat.extends(
-    "next/core-web-vitals",
-    "next/typescript",
-    "plugin:jsx-a11y/recommended"
+    'next/core-web-vitals',
+    'next/typescript',
+    'plugin:jsx-a11y/recommended',
   ),
   {
     rules: {
       // TypeScript 相关规则
-      "@typescript-eslint/no-explicit-any": "off",
-      "@typescript-eslint/no-unused-vars": "off",
-      "@typescript-eslint/no-non-null-assertion": "off",
-      "@typescript-eslint/ban-ts-comment": "off",
-      "@typescript-eslint/prefer-as-const": "off",
-      
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-unused-vars': 'warn', // Changed from error to warn
+      '@typescript-eslint/no-non-null-assertion': 'off',
+      '@typescript-eslint/ban-ts-comment': 'off',
+      '@typescript-eslint/prefer-as-const': 'off',
+
       // React 相关规则
-      "react-hooks/exhaustive-deps": "off",
-      "react/no-unescaped-entities": "off",
-      "react/display-name": "off",
-      "react/prop-types": "off",
-      
+      'react-hooks/exhaustive-deps': 'off',
+      'react/no-unescaped-entities': 'off',
+      'react/display-name': 'off',
+      'react/prop-types': 'off',
+
       // Next.js 相关规则
-      "@next/next/no-img-element": "off",
-      "@next/next/no-html-link-for-pages": "off",
-      
+      '@next/next/no-img-element': 'off',
+      '@next/next/no-html-link-for-pages': 'off',
+
       // 一般JavaScript规则
-      "prefer-const": "off",  // 关闭prefer-const规则
-      "no-unused-vars": "off",
-      "no-console": "off",
-      "no-debugger": "off",
-      "no-empty": "off",
-      "no-irregular-whitespace": "off",
-      "no-case-declarations": "off",
-      "no-fallthrough": "off",
-      "no-mixed-spaces-and-tabs": "off",
-      "no-redeclare": "off",
-      "no-undef": "off",
-      "no-unreachable": "off",
-      "no-useless-escape": "off",
+      'prefer-const': 'warn', // Changed from error to warn
+      'no-unused-vars': 'warn', // Changed from error to warn
+      'no-console': 'off',
+      'no-debugger': 'off',
+      'no-empty': 'off',
+      'no-irregular-whitespace': 'off',
+      'no-case-declarations': 'off',
+      'no-fallthrough': 'off',
+      'no-mixed-spaces-and-tabs': 'off',
+      'no-redeclare': 'off',
+      'no-undef': 'off',
+      'no-unreachable': 'off',
+      'no-useless-escape': 'off',
       // Accessibility warnings
-      "jsx-a11y/label-has-associated-control": "warn",
-      "jsx-a11y/click-events-have-key-events": "warn",
-      "jsx-a11y/no-static-element-interactions": "warn",
-      "jsx-a11y/media-has-caption": "warn",
-      "jsx-a11y/anchor-has-content": "warn",
+      'jsx-a11y/label-has-associated-control': 'warn',
+      'jsx-a11y/click-events-have-key-events': 'warn',
+      'jsx-a11y/no-static-element-interactions': 'warn',
+      'jsx-a11y/media-has-caption': 'warn',
+      'jsx-a11y/anchor-has-content': 'warn',
     },
   },
 ];

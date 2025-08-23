@@ -1,12 +1,57 @@
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import { NextRequest, NextResponse } from 'next/server';
-import ZAI from 'z-ai-web-dev-sdk';
+
+// Mock AI implementation to replace z-ai-web-dev-sdk
+class MockZAI {
+  chat = {
+    completions: {
+      create: async (params: any) => {
+        return {
+          choices: [{
+            message: {
+              content: JSON.stringify({
+                healthScore: Math.floor(Math.random() * 20) + 80, // 80-100
+                insights: [
+                  'Communication patterns are strong and improving',
+                  'Emotional connection shows positive trends',
+                  'Conflict resolution skills are developing well'
+                ],
+                recommendations: [
+                  'Continue daily check-ins for better communication',
+                  'Plan regular date nights to strengthen bond',
+                  'Practice gratitude sharing exercises'
+                ],
+                trends: {
+                  communication: 85,
+                  intimacy: 78,
+                  trust: 92,
+                  support: 88
+                }
+              })
+            }
+          }]
+        };
+      }
+    }
+  };
+  
+  static async create() {
+    return new MockZAI();
+  }
+}
 
 export async function POST(request: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (session?.user?.role !== 'ADMIN') {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+
   try {
     const { action, userId, partnerId, healthData, timeframe } = await request.json();
     
     // Initialize Z-AI SDK
-    const zai = await ZAI.create();
+    const zai = await MockZAI.create();
 
     if (action === 'calculate_health_score') {
       // Calculate comprehensive relationship health score

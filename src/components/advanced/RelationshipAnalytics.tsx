@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useFeatureFlag } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -67,11 +68,13 @@ interface AnalyticsData {
 }
 
 export function RelationshipAnalytics() {
+  const enabled = useFeatureFlag('relationship-analytics');
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedTimeframe, setSelectedTimeframe] = useState<'week' | 'month' | 'quarter'>('month');
 
   useEffect(() => {
+    if (!enabled) return;
     const fetchAnalytics = async () => {
       setLoading(true);
       try {
@@ -185,7 +188,11 @@ export function RelationshipAnalytics() {
     };
 
     fetchAnalytics();
-  }, [selectedTimeframe]);
+  }, [selectedTimeframe, enabled]);
+
+  if (!enabled) {
+    return null;
+  }
 
   const getHealthColor = (score: number) => {
     if (score >= 80) return 'text-green-600';

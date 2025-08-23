@@ -1,196 +1,6 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-generator client {
-  provider = "prisma-client-js"
-}
-
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-}
-
-model Couple {
-  id              String   @id @default(cuid())
-  partner_a_name  String
-  partner_b_name  String
-  anniversary_date DateTime?
-  city            String   @default("Hyderabad")
-  region          String   @default("north-india") // Cultural region
-  language        String   @default("hindi")
-  children        Json     @default("[]")
-  premium_until   DateTime?
-  encryption_key  String
-  created_at      DateTime @default(now())
-  updated_at      DateTime @updatedAt
-
-  // Relationships
-  sync_entries     SyncEntry[]
-  tasks            Task[]
-  ritual_sessions  RitualSession[]
-  rasa_balance     RasaBalance[]
-  children_profiles Child[]
-  reward_transactions RewardTransaction[]
-  memories         Memory[]
-  meal_plans       MealPlan[]
-  grocery_lists    GroceryList[]
-  ai_suggestions   AISuggestion[]
-  users            User[]
-  conversations    Conversation[]
-  voice_sessions   VoiceSession[]
-  analytics       Analytics[]
-  cultural_preferences CulturalPreference[]
-  shared_goals     SharedGoal[]
-  notifications   Notification[]
-
-  @@map("couples")
-}
-
-model SyncEntry {
-  id           String   @id @default(cuid())
-  couple_id    String
-  partner      String   // 'partner_a' or 'partner_b'
-  mood_score   Int      // 1-5 scale
-  energy_level Int      // 1-10 scale
-  mood_tags    Json     @default("[]") // Array of mood tags
-  context_notes String?
-  created_at   DateTime @default(now())
-
-  couple Couple @relation(fields: [couple_id], references: [id], onDelete: Cascade)
-
-  @@map("sync_entries")
-}
-
-model Task {
-  id             String      @id @default(cuid())
-  couple_id      String
-  title          String
-  description    String?
-  assigned_to    String      // 'partner_a', 'partner_b', or 'both'
-  status         TaskStatus  @default(PENDING)
-  category       TaskCategory
-  ai_reasoning   Json?
-  due_at         DateTime?
-  completed_at   DateTime?
-  created_at     DateTime    @default(now())
-  updated_at     DateTime    @updatedAt
-
-  couple Couple @relation(fields: [couple_id], references: [id], onDelete: Cascade)
-
-  @@map("tasks")
-}
-
-model RitualSession {
-  id               String        @id @default(cuid())
-  couple_id        String
-  ritual_type      RitualType
-  archetype        Archetype
-  duration_minutes Int
-  completion_data  Json?
-  started_at       DateTime      @default(now())
-  completed_at     DateTime?
-
-  couple Couple @relation(fields: [couple_id], references: [id], onDelete: Cascade)
-
-  @@map("ritual_sessions")
-}
-
-model RasaBalance {
-  id               String   @id @default(cuid())
-  couple_id        String
-  play_percentage  Float
-  duty_percentage  Float
-  balance_percentage Float
-  updated_at       DateTime @default(now())
-
-  couple Couple @relation(fields: [couple_id], references: [id], onDelete: Cascade)
-
-  @@unique([couple_id])
-  @@map("rasa_balance")
-}
-
-model Child {
-  id           String   @id @default(cuid())
-  couple_id    String
-  name         String
-  age          Int
-  preferences  Json     @default("[]")
-  created_at   DateTime @default(now())
-
-  couple       Couple           @relation(fields: [couple_id], references: [id], onDelete: Cascade)
-  activities   FamilyActivity[]
-
-  @@map("children")
-}
-
-model FamilyActivity {
-  id              String        @id @default(cuid())
-  child_id        String
-  activity_type   String
-  activity_theme  String?       // 'krishna', 'hanuman', 'saraswati', 'mythology', 'kindness', 'storybook'
-  completion_data Json?
-  completed_at    DateTime?
-  created_at      DateTime      @default(now())
-
-  child Child @relation(fields: [child_id], references: [id], onDelete: Cascade)
-
-  @@map("family_activities")
-}
-
-model RewardTransaction {
-  id          String   @id @default(cuid())
-  couple_id   String
-  coins_earned Int
-  coins_spent Int      @default(0)
-  activity    String   // Description of activity
-  created_at  DateTime @default(now())
-
-  couple Couple @relation(fields: [couple_id], references: [id], onDelete: Cascade)
-
-  @@map("reward_transactions")
-}
-
-enum TaskStatus {
-  PENDING
-  IN_PROGRESS
-  COMPLETED
-  CANCELLED
-}
-
-enum TaskCategory {
-  DAILY
-  WEEKLY
-  MONTHLY
-  SEASONAL
-}
-
-enum RitualType {
-  DAILY_SYNC
-  FAIRNESS_RESET
-  CONNECTION_RITUAL
-  PLAY_ACTIVITY
-  BALANCE_PRACTICE
-}
-
-enum Archetype {
-  RADHA_KRISHNA
-  SITA_RAM
-  SHIVA_SHAKTI
-}
-
-model Memory {
-  id          String   @id @default(cuid())
-  couple_id   String
-  type        String   // 'text', 'audio', 'video', 'image'
-  content     String   // URL for media, text content for text memories
-  title       String
-  description String?
-  date        DateTime @default(now())
-  tags        Json     @default("[]") // JSON array of tags
-  sentiment   String   // 'positive', 'neutral', 'negative'
-  partners    Json     @default("[]") // JSON array of partner IDs who contributed
   is_private  Boolean  @default(false)
-  memory_type String?  // 'kindness', 'storybook', 'general'
+  memory_type String? // 'kindness', 'storybook', 'general'
+  version     Int      @default(1)
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
 
@@ -199,38 +9,12 @@ model Memory {
   @@map("memories")
 }
 
-model Recipe {
-  id           String   @id @default(cuid())
-  name         String
-  description  String?
-  ingredients  Json     // JSON array of ingredients
-  instructions String
-  prep_time    Int      // in minutes
-  cook_time    Int      // in minutes
-  servings     Int
-  difficulty   String   // 'easy', 'medium', 'hard'
-  cuisine      String   // 'indian', 'italian', 'chinese', etc.
-  tags         Json     @default("[]") // JSON array of tags
-  nutrition    Json     // JSON nutrition info
-  is_favorite  Boolean  @default(false)
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
-
-  @@map("recipes")
-}
-
+// Placeholder models for missing relations
 model MealPlan {
-  id          String   @id @default(cuid())
-  couple_id   String
-  name        String
-  date        DateTime
-  meals       Json     // JSON meal structure with breakfast, lunch, dinner, snacks
-  nutrition   Json     // JSON nutrition info
-  budget      Float
-  actual_cost Float?
-  notes       String?
-  created_at  DateTime @default(now())
-  updated_at  DateTime @updatedAt
+  id         String   @id @default(cuid())
+  couple_id  String
+  title      String
+  created_at DateTime @default(now())
 
   couple Couple @relation(fields: [couple_id], references: [id], onDelete: Cascade)
 
@@ -238,17 +22,10 @@ model MealPlan {
 }
 
 model GroceryList {
-  id          String   @id @default(cuid())
-  couple_id   String
-  name        String
-  items       Json     // JSON array of grocery items
-  total_budget Float
-  actual_cost Float?
-  assigned_to  String   // User ID
-  status      String   // 'pending', 'shopping', 'completed'
-  due_date    DateTime?
-  created_at  DateTime @default(now())
-  updated_at  DateTime @updatedAt
+  id         String   @id @default(cuid())
+  couple_id  String
+  title      String
+  created_at DateTime @default(now())
 
   couple Couple @relation(fields: [couple_id], references: [id], onDelete: Cascade)
 
@@ -256,171 +33,34 @@ model GroceryList {
 }
 
 model AISuggestion {
-  id              String   @id @default(cuid())
-  couple_id       String
-  type            String   // 'ritual', 'task', 'activity', 'kindness', 'mythology'
-  archetype       String?  // 'radha_krishna', 'sita_ram', 'shiva_shakti'
-  title           String
-  description     String
-  action_steps    Json     @default("[]") // JSON array of action steps
-  estimated_duration Int   // in minutes
-  reward_coins    Int
-  reasoning       Json     // AI reasoning data
-  is_accepted     Boolean  @default(false)
-  is_completed    Boolean  @default(false)
-  created_at      DateTime @default(now())
-  updated_at      DateTime @updatedAt
+  id         String   @id @default(cuid())
+  couple_id  String
+  title      String
+  content    String
+  created_at DateTime @default(now())
 
   couple Couple @relation(fields: [couple_id], references: [id], onDelete: Cascade)
 
   @@map("ai_suggestions")
 }
 
-model DailyActivityTheme {
-  id            String   @id @default(cuid())
-  date          DateTime @unique
-  activity_type String   // 'krishna', 'hanuman', 'saraswati'
-  activities    Json     // JSON array of activities for the day
-  created_at    DateTime @default(now())
-
-  @@map("daily_activity_themes")
-}
-
-// User model for authentication
 model User {
-  id            String    @id @default(cuid())
+  id            String   @id @default(cuid())
   couple_id     String
-  email         String    @unique
-  password_hash String
   name          String
+  email         String   @unique
+  password_hash String
+  role          String   @default("USER") // USER, ADMIN
   totp_enabled  Boolean   @default(false)
   totp_secret   String?
   totp_recovery_codes String[] @default([])
-  partner_role  String    // 'partner_a' or 'partner_b'
+  partner_role  String?   // 'partner_a' or 'partner_b'
   is_active     Boolean   @default(true)
   last_login    DateTime?
-  created_at    DateTime  @default(now())
-  updated_at    DateTime  @updatedAt
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
 
-  couple        Couple       @relation(fields: [couple_id], references: [id], onDelete: Cascade)
-  conversations Conversation[]
-  voice_sessions VoiceSession[]
-  notifications Notification[]
+  couple Couple @relation(fields: [couple_id], references: [id], onDelete: Cascade)
 
   @@map("users")
-}
-
-// Conversation sessions for AI coaching
-model Conversation {
-  id              String   @id @default(cuid())
-  couple_id       String
-  user_id         String
-  title           String?
-  messages        Json     // JSON array of messages
-  session_summary Json?
-  duration        Int      // in seconds
-  sentiment       String?  // 'positive', 'negative', 'neutral'
-  topics          Json?    // JSON array of topics
-  insights        Json?    // JSON array of insights
-  completed_at    DateTime?
-  created_at      DateTime @default(now())
-  updated_at      DateTime @updatedAt
-
-  couple Couple @relation(fields: [couple_id], references: [id], onDelete: Cascade)
-  user   User   @relation(fields: [user_id], references: [id], onDelete: Cascade)
-
-  @@map("conversations")
-}
-
-// Voice interaction sessions
-model VoiceSession {
-  id              String   @id @default(cuid())
-  couple_id       String
-  user_id         String
-  transcript      String?
-  commands        Json     @default("[]") // JSON array of voice commands
-  duration        Int      // in seconds
-  sentiment       String?  // 'positive', 'negative', 'neutral'
-  emotions        Json?    // JSON array of detected emotions
-  session_data    Json?    // Additional session data
-  created_at      DateTime @default(now())
-
-  couple Couple @relation(fields: [couple_id], references: [id], onDelete: Cascade)
-  user   User   @relation(fields: [user_id], references: [id], onDelete: Cascade)
-
-  @@map("voice_sessions")
-}
-
-// Analytics and insights data
-model Analytics {
-  id                 String   @id @default(cuid())
-  couple_id          String
-  metric_type        String   // 'relationship_health', 'communication', 'engagement', etc.
-  metric_value       Float
-  target_value       Float?
-  trend              String?  // 'up', 'down', 'stable'
-  context_data       Json?    // Additional context data
-  recorded_at        DateTime @default(now())
-
-  couple Couple @relation(fields: [couple_id], references: [id], onDelete: Cascade)
-
-  @@map("analytics")
-}
-
-// Cultural preferences and settings
-model CulturalPreference {
-  id                    String   @id @default(cuid())
-  couple_id             String
-  region                String   @default("north-india")
-  language              String   @default("hindi")
-  interests             Json     @default("[]") // JSON array of interests
-  festival_notifications Boolean  @default(true)
-  cultural_tips         Boolean  @default(true)
-  regional_content      Boolean  @default(true)
-  created_at            DateTime @default(now())
-  updated_at            DateTime @updatedAt
-
-  couple Couple @relation(fields: [couple_id], references: [id], onDelete: Cascade)
-
-  @@unique([couple_id])
-  @@map("cultural_preferences")
-}
-
-// Shared goals between couples
-model SharedGoal {
-  id              String   @id @default(cuid())
-  couple_id       String
-  title           String
-  description     String
-  category        String   // 'romance', 'finance', 'home', 'family', 'health', 'personal'
-  target_date     DateTime
-  progress        Int      @default(0) // 0-100 percentage
-  completed       Boolean  @default(false)
-  milestones      Json     @default("[]") // JSON array of milestones
-  created_at      DateTime @default(now())
-  updated_at      DateTime @updatedAt
-
-  couple Couple @relation(fields: [couple_id], references: [id], onDelete: Cascade)
-
-  @@map("shared_goals")
-}
-
-// Notification system
-model Notification {
-  id          String   @id @default(cuid())
-  couple_id   String
-  user_id     String?
-  type        String   // 'sync_reminder', 'task_update', 'goal_achievement', 'festival', 'insight', etc.
-  title       String
-  message     String
-  data        Json?    // Additional notification data
-  is_read     Boolean  @default(false)
-  is_delivered Boolean @default(false)
-  delivered_at DateTime?
-  created_at  DateTime @default(now())
-
-  couple Couple @relation(fields: [couple_id], references: [id], onDelete: Cascade)
-  user   User?  @relation(fields: [user_id], references: [id], onDelete: Cascade)
-
-  @@map("notifications")
 }

@@ -4,11 +4,13 @@ import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import dynamic from 'next/dynamic';
+
+// Importing components directly to avoid dynamic import issues
 import { DailySyncCard } from '@/components/DailySyncCard';
 import { AISuggestionCard } from '@/components/AISuggestionCard';
 import { CoinStreakAnimation } from '@/components/CoinStreakAnimation';
 import { AchievementCelebration } from '@/components/AchievementCelebration';
-import { RewardModal, LevelUpModal, MilestoneModal } from '@/components/PremiumModal';
 import { MemoryJukebox } from '@/components/MemoryJukebox';
 import { StreakCelebration } from '@/components/StreakCelebration';
 import { RelationshipInsights } from '@/components/RelationshipInsights';
@@ -105,8 +107,8 @@ export function HomeDashboard({ streak, coins }: HomeDashboardProps) {
   ];
 
   const aiSuggestion = {
-    type: 'ritual',
-    archetype: 'radha_krishna',
+    type: 'ritual' as const,
+    archetype: 'radha_krishna' as const,
     title: 'Evening Connection Ritual',
     description: 'Reignite your romance with a 15-minute tech-free evening ritual that deepens your emotional bond.',
     actionSteps: [
@@ -342,10 +344,15 @@ export function HomeDashboard({ streak, coins }: HomeDashboardProps) {
       {/* Achievement Celebration */}
       {showAchievement && (
         <AchievementCelebration 
-          title="Daily Sync Complete!"
-          description="You've earned 50 Lakshmi Coins"
-          coins={50}
+          isOpen={showAchievement}
           onClose={() => setShowAchievement(false)}
+          achievement={{
+            title: "Daily Sync Complete!",
+            description: "You've earned 50 Lakshmi Coins",
+            icon: "🎉",
+            rarity: "common" as const,
+            coins: 50
+          }}
         />
       )}
     </div>

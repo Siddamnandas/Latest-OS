@@ -1,33 +1,159 @@
 name: CI
+
 on:
   pull_request:
   push:
     branches:
       - main
       - production
+
 jobs:
   lint-and-test:
     name: Lint and Test
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/testdb
+      REDIS_URL: redis://localhost:6379
+      NEXTAUTH_SECRET: test-secret-for-ci
+      NEXTAUTH_URL: http://localhost:3000
+      SENTRY_DSN: ""
+      NODE_ENV: test
+      CI: true
+      NEXT_PUBLIC_VAPID_PUBLIC_KEY: "BCM3SzUBuqJH0UgCwumoryYD0_k2SKfXluVKT79rbN-D0zwwnhYpERxRjAV6diqGR2t41HCx2y_oakOMl0WgYX0"
+      VAPID_PRIVATE_KEY: "urlN0nhki1jP75PtgTB4Ac0M1GiB3X79zmVU2fSLPZY"
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: testdb
+          POSTGRES_HOST_AUTH_METHOD: trust
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+          --health-start-period 10s
+        ports:
+          - 5432:5432
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+          --health-start-period 10s
+        ports:
+          - 6379:6379
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: 'npm'
-      - run: npm install
-      - run: npm run lint
-      - run: npm test
+          cache-dependency-path: package-lock.json
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client redis-tools
+      - name: Wait for services
+        run: |
+          timeout 30 bash -c 'until pg_isready -h localhost -p 5432; do sleep 1; done'
+          timeout 30 bash -c 'until redis-cli -h localhost -p 6379 ping; do sleep 1; done'
+      - name: Clear npm cache
+        run: npm cache clean --force
+      - name: Verify package files sync
+        run: |
+          echo "Checking package.json and package-lock.json sync..."
+          npm ci --dry-run
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+      - name: Setup CI database
+        run: node scripts/setup-ci-db.js setup
+      - name: Generate Prisma client
+        run: npx prisma generate
+      - name: Push database schema
+        run: npx prisma db push --accept-data-loss
+      - name: Run linting
+        run: npm run lint
+      - name: Run tests
+        run: npm test
+
   build:
     name: Build
     runs-on: ubuntu-latest
     if: github.event_name == 'push'
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/testdb
+      REDIS_URL: redis://localhost:6379
+      NEXTAUTH_SECRET: test-secret-for-ci
+      NEXTAUTH_URL: http://localhost:3000
+      SENTRY_DSN: ""
+      NODE_ENV: production
+      CI: true
+      NEXT_PUBLIC_VAPID_PUBLIC_KEY: "BCM3SzUBuqJH0UgCwumoryYD0_k2SKfXluVKT79rbN-D0zwwnhYpERxRjAV6diqGR2t41HCx2y_oakOMl0WgYX0"
+      VAPID_PRIVATE_KEY: "urlN0nhki1jP75PtgTB4Ac0M1GiB3X79zmVU2fSLPZY"
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: testdb
+          POSTGRES_HOST_AUTH_METHOD: trust
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+          --health-start-period 10s
+        ports:
+          - 5432:5432
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+          --health-start-period 10s
+        ports:
+          - 6379:6379
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: 'npm'
-      - run: npm install
-      - run: npm run build
+          cache-dependency-path: package-lock.json
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client redis-tools
+      - name: Wait for services
+        run: |
+          timeout 30 bash -c 'until pg_isready -h localhost -p 5432; do sleep 1; done'
+          timeout 30 bash -c 'until redis-cli -h localhost -p 6379 ping; do sleep 1; done'
+      - name: Clear npm cache
+        run: npm cache clean --force
+      - name: Verify package files sync
+        run: |
+          echo "Checking package.json and package-lock.json sync..."
+          npm ci --dry-run
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+      - name: Setup CI database
+        run: node scripts/setup-ci-db.js setup
+      - name: Generate Prisma client
+        run: npx prisma generate
+      - name: Push database schema
+        run: npx prisma db push --accept-data-loss
+      - name: Build application
+        run: npm run build
+      - name: Health check
+        run: |
+          npm start &
+          SERVER_PID=$!
+          npx wait-on http://localhost:3000/health
+          curl -f http://localhost:3000/health
+          kill $SERVER_PID

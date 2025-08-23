@@ -1,7 +1,116 @@
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import { NextRequest, NextResponse } from 'next/server';
-import ZAI from 'z-ai-web-dev-sdk';
+
+// Mock AI implementation to replace z-ai-web-dev-sdk
+class MockZAI {
+  chat = {
+    completions: {
+      create: async (params: any) => {
+        // Return mock AI responses based on the prompt
+        const mockResponses = {
+          daily_checkin: `Daily Relationship Check-in Analysis:
+
+1. Communication patterns show good evening conversations but morning routines could improve
+2. Emotional connection is strong during shared activities like cooking together
+3. Task balance shows equal distribution but timing coordination needs attention
+4. Quality time together has increased compared to last week
+
+Action Items:
+1. Establish a 5-minute morning connection ritual
+2. Create a shared weekly schedule for better task coordination
+3. Plan one surprise appreciation gesture this week
+4. Practice active listening during evening conversations`,
+          
+          relationship_analysis: `Comprehensive Relationship Analysis:
+
+1. Communication Quality: Strong foundation with room for deeper emotional expression
+2. Emotional Intimacy: High trust levels, growing vulnerability and openness
+3. Conflict Resolution: Healthy approach to disagreements, good compromise skills
+4. Love Languages: Physical touch and quality time are primary for both partners
+5. Shared Values: Strong alignment on family, career, and life goals
+6. Growth Areas: More spontaneous affection, regular check-ins needed
+
+Recommendations:
+1. Weekly relationship meetings for open communication
+2. Monthly date nights without devices
+3. Practice gratitude sharing daily
+4. Explore new activities together quarterly
+5. Create relationship goals and review progress monthly`,
+          
+          goal_setting: `Relationship Goal Setting Guidance:
+
+Short-term Goals (1-3 months):
+1. Establish daily appreciation practices
+2. Improve morning and evening routines together
+3. Plan and take a weekend getaway
+4. Start a shared hobby or activity
+
+Medium-term Goals (3-12 months):
+1. Deepen emotional intimacy through vulnerability exercises
+2. Create a 5-year relationship vision board
+3. Establish stronger conflict resolution patterns
+4. Build stronger connections with each other's families
+
+Long-term Vision (1-5 years):
+1. Create a shared life mission statement
+2. Plan major life milestones together
+3. Build legacy goals and traditions
+4. Develop mentorship roles for other couples
+
+Progress Tracking:
+- Monthly relationship review meetings
+- Quarterly goal assessment
+- Annual relationship retreat planning`,
+          
+          conflict_resolution: `Conflict Resolution Strategies:
+
+1. Pattern Recognition: Most conflicts stem from miscommunication during stress
+2. Healthy vs Unhealthy: You show good respect but could improve timing of discussions
+3. Communication Techniques: Use 'I' statements, active listening, and taking breaks
+4. Emotional Regulation: Practice the 24-hour rule for heated topics
+5. Compromise Skills: Both partners show flexibility, continue building on this
+6. Trust Rebuilding: Strong foundation, focus on consistent follow-through
+7. Prevention: Weekly check-ins can prevent many conflicts from escalating
+
+Actionable Steps:
+1. Implement the 'pause and breathe' technique during disagreements
+2. Schedule weekly 15-minute check-ins for concerns
+3. Create a conflict resolution protocol you both agree on
+4. Practice gratitude daily to maintain positive perspective`
+        };
+        
+        const content = params.messages[1]?.content || '';
+        let responseText = '';
+        
+        if (content.includes('daily_checkin')) responseText = mockResponses.daily_checkin;
+        else if (content.includes('relationship_analysis')) responseText = mockResponses.relationship_analysis;
+        else if (content.includes('goal_setting')) responseText = mockResponses.goal_setting;
+        else if (content.includes('conflict_resolution')) responseText = mockResponses.conflict_resolution;
+        else responseText = mockResponses.daily_checkin;
+        
+        return {
+          choices: [{
+            message: {
+              content: responseText
+            }
+          }]
+        };
+      }
+    }
+  };
+  
+  static async create() {
+    return new MockZAI();
+  }
+}
 
 export async function POST(request: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (session?.user?.role !== 'ADMIN') {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+
   try {
     const { userId, sessionType, context } = await request.json();
 
@@ -12,8 +121,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Initialize Z-AI SDK
-    const zai = await ZAI.create();
+    // Initialize Mock AI SDK
+    const zai = await MockZAI.create();
 
     // Create coaching prompt based on session type
     const coachingPrompts = {

@@ -24,11 +24,14 @@ export default function SecurityPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <p>Scan the QR code with your authenticator app and enter the code to enable.</p>
-          <Input value={code} onChange={e => setCode(e.target.value)} placeholder="123456" />
+          <Input
+            value={code}
+            onChange={e => setCode(e.target.value)}
+            placeholder="123456"
+          />
           <Button onClick={enable}>Enable</Button>
         </CardContent>
       </Card>
     </div>
   );
 }
-
