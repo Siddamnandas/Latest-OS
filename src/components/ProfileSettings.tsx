@@ -535,15 +535,6 @@ export function ProfileSettings({ streak, coins }: ProfileSettingsProps) {
                 </div>
                 
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div>
-                      <div className="font-medium">Language</div>
-                      <div className="text-sm text-gray-600">App display language</div>
-                    </div>
-                    <Button size="sm" variant="outline">
-                      English
-                    </Button>
-                  </div>
                   
                   <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                     <div>

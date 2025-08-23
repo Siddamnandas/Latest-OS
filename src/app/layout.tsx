@@ -1,7 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
-import { cookies } from "next/headers";
-import { NextIntlClientProvider } from "next-intl";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
@@ -9,9 +7,6 @@ import { QueryProvider } from "@/lib/query-provider";
 import { AuthProvider } from "@/lib/auth-context";
 import { UpdateNotifier } from "@/lib/update-notifier";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import enMessages from "@/messages/en.json";
-import hiMessages from "@/messages/hi.json";
-import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import React from "react";
 
 const geistSans = Inter({
@@ -53,19 +48,16 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const cookieStore = await cookies();
-  const locale = cookieStore.get('locale')?.value || 'en';
-  const messages = locale === 'hi' ? hiMessages : enMessages;
   
   const themeScript = `(function(){try{var t=localStorage.getItem('theme');var m=window.matchMedia('(prefers-color-scheme: dark)').matches;if(t==='dark'||(!t&&m)){document.documentElement.classList.add('dark');}else{document.documentElement.classList.remove('dark');}}catch(e){}})();`;
 
   return (
-    <html lang={locale} className={`${geistSans.variable} ${geistMono.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`} suppressHydrationWarning>
       <head>
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
@@ -80,14 +72,9 @@ export default async function RootLayout({
         <ErrorBoundary>
           <AuthProvider>
             <QueryProvider>
-              <NextIntlClientProvider locale={locale} messages={messages}>
                 <UpdateNotifier />
-                <div className="fixed top-4 right-4 z-50">
-                  <LanguageSwitcher />
-                </div>
                 {children}
                 <Toaster />
-              </NextIntlClientProvider>
             </QueryProvider>
           </AuthProvider>
         </ErrorBoundary>
