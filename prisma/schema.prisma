@@ -1,4 +1,4 @@
-// Development schema using SQLite
+// Production schema using PostgreSQL
 generator client {
   provider = "prisma-client-js"
 }
@@ -221,12 +221,30 @@ model User {
   last_login    DateTime?
   totp_enabled      Boolean  @default(false)
   totp_secret       String?
-  totp_recovery_codes String @default("[]") // JSON as String for SQLite
+  totp_recovery_codes String @default("[]") // JSON as String for compatibility
   created_at        DateTime @default(now())
 
   couple Couple @relation(fields: [couple_id], references: [id], onDelete: Cascade)
+  push_subscriptions PushSubscription[]
 
   @@map("users")
+}
+
+model PushSubscription {
+  id         String   @id @default(cuid())
+  userId     String
+  endpoint   String
+  p256dhKey  String
+  authKey    String
+  userAgent  String?
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, endpoint])
+  @@map("push_subscriptions")
 }
 
 model Conversation {
