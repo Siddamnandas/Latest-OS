@@ -21,6 +21,7 @@ variable "domain_name" {
   type        = string
   default     = ""
 }
+
 variable "datadog_api_key" {
   description = "Datadog API key"
   type        = string
@@ -29,4 +30,41 @@ variable "datadog_api_key" {
 variable "datadog_app_key" {
   description = "Datadog application key"
   type        = string
+}
+
+variable "vpc_cidr" {
+  type = string
+}
+
+variable "public_subnets" {
+  type = list(string)
+}
+
+variable "private_subnets" {
+  type = list(string)
+}
+
+variable "azs" {
+  type = list(string)
+}
+
+variable "db_username" {
+  type = string
+}
+
+variable "db_password" {
+  type      = string
+  sensitive = true
+}
+
+variable "db_name" {
+  type = string
+}
+
+variable "db_instance_class" {
+  type = string
+}
+
+variable "db_allocated_storage" {
+  type = number
 }
