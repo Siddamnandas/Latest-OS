@@ -21,3 +21,12 @@ variable "domain_name" {
   type        = string
   default     = ""
 }
+variable "datadog_api_key" {
+  description = "Datadog API key"
+  type        = string
+}
+
+variable "datadog_app_key" {
+  description = "Datadog application key"
+  type        = string
+}
