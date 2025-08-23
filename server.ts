@@ -85,7 +85,7 @@ async function createCustomServer() {
       }
     });
 
-    setupSocket(io);
+    await setupSocket(io);
 
     // Start the server
     server.listen(currentPort, hostname, () => {
