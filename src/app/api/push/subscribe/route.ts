@@ -1,7 +1,9 @@
+import { getServerSession } from 'next-auth';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
+import { authOptions } from '@/lib/auth';
 
 const subscriptionSchema = z.object({
   subscription: z.object({
@@ -19,30 +21,19 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { subscription, userAgent } = subscriptionSchema.parse(body);
 
-    // For now, we'll use a demo user ID since auth is bypassed in development
-    // In production, get user ID from session
-    const userId = 'demo-user-1'; // TODO: Get from authenticated session
-
-    // Check if user exists, create if needed
-    let user = await db.user.findUnique({
-      where: { id: userId },
-    });
-
-    if (!user) {
-      user = await db.user.create({
-        data: {
-          id: userId,
-          email: 'demo@latest-os.com',
-          name: 'Demo User',
-          password_hash: 'demo-hash',
-        },
-      });
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
     }
+    const userId = session.user.id;
 
     // Store or update push subscription
     const existingSubscription = await db.pushSubscription.findFirst({
       where: {
-        userId: user.id,
+        userId: userId,
         endpoint: subscription.endpoint,
       },
     });
@@ -63,7 +54,7 @@ export async function POST(request: NextRequest) {
       // Create new subscription
       await db.pushSubscription.create({
         data: {
-          userId: user.id,
+          userId: userId,
           endpoint: subscription.endpoint,
           p256dhKey: subscription.keys.p256dh,
           authKey: subscription.keys.auth,
@@ -73,10 +64,13 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    logger.info({
-      userId: user.id,
-      endpoint: subscription.endpoint,
-    }, 'Push subscription created/updated');
+    logger.info(
+      {
+        userId: userId,
+        endpoint: subscription.endpoint,
+      },
+      'Push subscription created/updated'
+    );
 
     return NextResponse.json({ 
       success: true, 
