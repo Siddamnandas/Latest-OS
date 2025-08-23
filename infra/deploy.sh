@@ -25,6 +25,8 @@ case $ACTION in
         ;;
     apply)
         terraform apply -var-file="environments/${ENV}.tfvars" -auto-approve
+        echo "RDS endpoint: $(terraform output -raw db_endpoint)"
+        echo "S3 bucket: $(terraform output -raw s3_bucket_name)"
         ;;
     destroy)
         terraform destroy -var-file="environments/${ENV}.tfvars" -auto-approve
