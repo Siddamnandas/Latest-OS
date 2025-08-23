@@ -19,6 +19,8 @@ jobs:
       SENTRY_DSN: ""
       NODE_ENV: test
       CI: true
+      NEXT_PUBLIC_VAPID_PUBLIC_KEY: "BCM3SzUBuqJH0UgCwumoryYD0_k2SKfXluVKT79rbN-D0zwwnhYpERxRjAV6diqGR2t41HCx2y_oakOMl0WgYX0"
+      VAPID_PRIVATE_KEY: "urlN0nhki1jP75PtgTB4Ac0M1GiB3X79zmVU2fSLPZY"
     services:
       postgres:
         image: postgres:15
@@ -50,6 +52,7 @@ jobs:
         with:
           node-version: 20
           cache: 'npm'
+          cache-dependency-path: package-lock.json
       - name: Install system dependencies
         run: |
           sudo apt-get update
@@ -58,6 +61,12 @@ jobs:
         run: |
           timeout 30 bash -c 'until pg_isready -h localhost -p 5432; do sleep 1; done'
           timeout 30 bash -c 'until redis-cli -h localhost -p 6379 ping; do sleep 1; done'
+      - name: Clear npm cache
+        run: npm cache clean --force
+      - name: Verify package files sync
+        run: |
+          echo "Checking package.json and package-lock.json sync..."
+          npm ci --dry-run
       - name: Install dependencies
         run: npm ci --legacy-peer-deps
       - name: Setup CI database
@@ -83,6 +92,8 @@ jobs:
       SENTRY_DSN: ""
       NODE_ENV: production
       CI: true
+      NEXT_PUBLIC_VAPID_PUBLIC_KEY: "BCM3SzUBuqJH0UgCwumoryYD0_k2SKfXluVKT79rbN-D0zwwnhYpERxRjAV6diqGR2t41HCx2y_oakOMl0WgYX0"
+      VAPID_PRIVATE_KEY: "urlN0nhki1jP75PtgTB4Ac0M1GiB3X79zmVU2fSLPZY"
     services:
       postgres:
         image: postgres:15
@@ -114,6 +125,7 @@ jobs:
         with:
           node-version: 20
           cache: 'npm'
+          cache-dependency-path: package-lock.json
       - name: Install system dependencies
         run: |
           sudo apt-get update
@@ -122,6 +134,12 @@ jobs:
         run: |
           timeout 30 bash -c 'until pg_isready -h localhost -p 5432; do sleep 1; done'
           timeout 30 bash -c 'until redis-cli -h localhost -p 6379 ping; do sleep 1; done'
+      - name: Clear npm cache
+        run: npm cache clean --force
+      - name: Verify package files sync
+        run: |
+          echo "Checking package.json and package-lock.json sync..."
+          npm ci --dry-run
       - name: Install dependencies
         run: npm ci --legacy-peer-deps
       - name: Setup CI database
@@ -132,3 +150,10 @@ jobs:
         run: npx prisma db push --accept-data-loss
       - name: Build application
         run: npm run build
+      - name: Health check
+        run: |
+          npm start &
+          SERVER_PID=$!
+          npx wait-on http://localhost:3000/health
+          curl -f http://localhost:3000/health
+          kill $SERVER_PID

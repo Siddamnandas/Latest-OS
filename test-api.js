@@ -64,6 +64,16 @@ async function testEndpoint(endpoint, method = 'GET', data = null) {
 async function runTests() {
   console.log('🚀 Starting Leela OS API Tests...\n');
 
+  // Test 0: Health check
+  console.log('0. Testing health check...');
+  const healthRes = await fetch('http://localhost:3000/health');
+  const healthBody = await healthRes.json().catch(() => ({}));
+  console.log('GET /health:', healthRes.status, healthBody);
+  if (!healthRes.ok) {
+    console.log('❌ Health check failed, stopping tests');
+    return;
+  }
+
   // Test 1: Create a couple
   console.log('1. Testing couple creation...');
   const couple = await testEndpoint('/couples', 'POST', testCouple);
