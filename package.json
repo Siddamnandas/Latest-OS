@@ -17,7 +17,10 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:reset": "prisma migrate reset",
-    "openapi": "tsx scripts/generate-openapi.ts"
+    "openapi": "tsx scripts/generate-openapi.ts",
+    "i18n:sync": "tsx scripts/i18n-sync.ts",
+    "crowdin:upload": "crowdin upload sources --auto-update && crowdin upload translations",
+    "crowdin:download": "crowdin download"
   },
   "dependencies": {
     "@asteasolutions/zod-to-openapi": "^8.1.0",
@@ -101,6 +104,7 @@
     "zod": "^4.0.0"
   },
   "devDependencies": {
+    "@crowdin/cli": "^4.10.0",
     "@eslint/eslintrc": "^3",
     "@sentry/nextjs": "^8.55.0",
     "@storybook/addon-a11y": "^9.1.3",

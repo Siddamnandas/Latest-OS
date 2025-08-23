@@ -1,7 +1,6 @@
 'use client';
 
-import { useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { 
   DropdownMenu, 
@@ -11,44 +10,48 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Languages } from 'lucide-react';
 
-const locales = [
-  { code: 'en', name: 'English', flag: '🇺🇸' },
-  { code: 'hi', name: 'हिन्दी', flag: '🇮🇳' }
-];
-
 export function LanguageSwitcher() {
   const t = useTranslations('LanguageSwitcher');
-  const [currentLocale, setCurrentLocale] = useState('en');
+  const locale = useLocale();
 
-  const handleLanguageChange = (locale: string) => {
+  const locales = [
+    { code: 'en', name: t('en'), flag: '🇺🇸' },
+    { code: 'hi', name: t('hi'), flag: '🇮🇳' }
+  ];
+
+  const handleLanguageChange = (nextLocale: string) => {
     // Set the locale cookie
-    document.cookie = `locale=${locale}; path=/; max-age=${60 * 60 * 24 * 365}`;
-    setCurrentLocale(locale);
+    document.cookie = `locale=${nextLocale}; path=/; max-age=${60 * 60 * 24 * 365}`;
     // Reload the page to apply the new locale
     window.location.reload();
   };
 
-  const currentLanguage = locales.find(locale => locale.code === currentLocale) || locales[0];
+  const currentLanguage = locales.find(l => l.code === locale) || locales[0];
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          className="gap-2"
+          aria-label={t('label')}
+        >
           <Languages className="h-4 w-4" />
           <span className="hidden sm:inline">{currentLanguage.flag}</span>
           <span className="hidden md:inline">{currentLanguage.name}</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        {locales.map((locale) => (
+        {locales.map((l) => (
           <DropdownMenuItem
-            key={locale.code}
-            onClick={() => handleLanguageChange(locale.code)}
+            key={l.code}
+            onClick={() => handleLanguageChange(l.code)}
             className="gap-2"
           >
-            <span>{locale.flag}</span>
-            <span>{locale.name}</span>
-            {currentLocale === locale.code && (
+            <span>{l.flag}</span>
+            <span>{l.name}</span>
+            {locale === l.code && (
               <span className="ml-auto text-xs text-muted-foreground">✓</span>
             )}
           </DropdownMenuItem>
