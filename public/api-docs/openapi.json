@@ -50,39 +50,7 @@
         }
       }
     },
-    "/api/analytics": {
-      "get": {
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      },
-      "post": {
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      }
-    },
     "/api/ai-suggestions": {
-      "get": {
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      },
-      "post": {
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      }
-    },
-    "/api/auth": {
       "get": {
         "responses": {
           "200": {
@@ -115,6 +83,38 @@
       }
     },
     "/api/assign": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
+      "post": {
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/analytics": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
+      "post": {
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/auth": {
       "get": {
         "responses": {
           "200": {
@@ -543,15 +543,6 @@
         }
       }
     },
-    "/api/test-db": {
-      "get": {
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      }
-    },
     "/api/voice-interaction": {
       "get": {
         "responses": {
@@ -561,6 +552,15 @@
         }
       },
       "post": {
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/test-db": {
+      "get": {
         "responses": {
           "200": {
             "description": "Success"

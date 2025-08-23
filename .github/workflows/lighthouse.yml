@@ -44,6 +44,7 @@ jobs:
           node-version: 20
           cache: 'npm'
       - run: npm ci
+      - run: npm install --legacy-peer-deps
       - run: node scripts/setup-ci-db.js setup
       - run: npx prisma generate
       - run: npx prisma db push
