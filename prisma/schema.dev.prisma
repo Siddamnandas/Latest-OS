@@ -206,6 +206,7 @@ model User {
   couple_id String
   name      String
   email     String   @unique
+  onboardedAt DateTime?
   created_at DateTime @default(now())
   
   couple Couple @relation(fields: [couple_id], references: [id], onDelete: Cascade)

@@ -219,6 +219,7 @@ model User {
   role          String   @default("USER") // USER, ADMIN
   partner_role  String? // 'partner_a' or 'partner_b'
   last_login    DateTime?
+  onboardedAt   DateTime?
   totp_enabled      Boolean  @default(false)
   totp_secret       String?
   totp_recovery_codes String @default("[]") // JSON as String for compatibility

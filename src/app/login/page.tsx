@@ -17,6 +17,14 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
+  const redirectAfterLogin = () => {
+    if (typeof window !== 'undefined' && !localStorage.getItem('onboardedAt')) {
+      router.push('/onboarding');
+    } else {
+      router.push('/');
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -35,7 +43,7 @@ export default function LoginPage() {
         // Check if login was successful
         const session = await getSession();
         if (session) {
-          router.push('/');
+          redirectAfterLogin();
         }
       }
     } catch (error) {
@@ -63,7 +71,7 @@ export default function LoginPage() {
       } else {
         const session = await getSession();
         if (session) {
-          router.push('/');
+          redirectAfterLogin();
         }
       }
     } catch (error) {
@@ -76,8 +84,8 @@ export default function LoginPage() {
   const handleSkipSignIn = () => {
     // Set a cookie to indicate demo mode (accessible by middleware)
     document.cookie = 'demo-mode=true; path=/; max-age=' + (60 * 60 * 24 * 7); // 7 days
-    // Redirect to homepage
-    router.push('/');
+    // Redirect based on onboarding state
+    redirectAfterLogin();
   };
 
   return (

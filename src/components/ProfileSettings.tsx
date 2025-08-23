@@ -1,14 +1,15 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { 
-  User, 
-  Heart, 
-  Star, 
-  Settings, 
+import {
+  User,
+  Heart,
+  Star,
+  Settings,
   Crown,
   Award,
   Target,
@@ -24,7 +25,8 @@ import {
   Globe,
   Wifi,
   Lock,
-  Database
+  Database,
+  HelpCircle
 } from 'lucide-react';
 
 interface Achievement {
@@ -446,6 +448,12 @@ export function ProfileSettings({ streak, coins }: ProfileSettingsProps) {
                 <Button variant="outline" className="w-full border-gray-300 text-gray-700 hover:bg-gray-50">
                   <Settings className="w-4 h-4 mr-2" />
                   Privacy Settings
+                </Button>
+                <Button variant="outline" asChild className="w-full border-gray-300 text-gray-700 hover:bg-gray-50">
+                  <Link href="/onboarding" className="flex items-center">
+                    <HelpCircle className="w-4 h-4 mr-2" />
+                    Help
+                  </Link>
                 </Button>
               </div>
             </div>
