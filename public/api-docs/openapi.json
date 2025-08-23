@@ -41,14 +41,7 @@
         }
       }
     },
-    "/api/ai-suggestions": {
-      "get": {
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      },
+    "/api/ai-coaching": {
       "post": {
         "responses": {
           "200": {
@@ -73,7 +66,7 @@
         }
       }
     },
-    "/api/assign": {
+    "/api/ai-suggestions": {
       "get": {
         "responses": {
           "200": {
@@ -121,7 +114,14 @@
         }
       }
     },
-    "/api/ai-coaching": {
+    "/api/assign": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
       "post": {
         "responses": {
           "200": {
@@ -333,6 +333,22 @@
         }
       }
     },
+    "/api/milestones": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
+      "post": {
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
     "/api/notifications": {
       "get": {
         "responses": {
@@ -382,22 +398,6 @@
       }
     },
     "/api/preferences": {
-      "get": {
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      },
-      "post": {
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      }
-    },
-    "/api/milestones": {
       "get": {
         "responses": {
           "200": {
@@ -479,7 +479,7 @@
         }
       }
     },
-    "/api/settings": {
+    "/api/rituals": {
       "get": {
         "responses": {
           "200": {
@@ -495,7 +495,7 @@
         }
       }
     },
-    "/api/rituals": {
+    "/api/settings": {
       "get": {
         "responses": {
           "200": {
@@ -528,6 +528,22 @@
       }
     },
     "/api/tasks": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
+      "post": {
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/test-db": {
       "get": {
         "responses": {
           "200": {
@@ -611,6 +627,15 @@
     },
     "/api/auth/login": {
       "post": {
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/auth/me": {
+      "get": {
         "responses": {
           "200": {
             "description": "Success"
@@ -751,6 +776,13 @@
       }
     },
     "/api/sync/complete": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
       "post": {
         "responses": {
           "200": {
@@ -768,6 +800,22 @@
         }
       },
       "post": {
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/tasks/complete": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
+      "delete": {
         "responses": {
           "200": {
             "description": "Success"

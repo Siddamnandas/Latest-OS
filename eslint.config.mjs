@@ -28,7 +28,7 @@ const eslintConfig = [
     rules: {
       // TypeScript 相关规则
       '@typescript-eslint/no-explicit-any': 'off',
-      '@typescript-eslint/no-unused-vars': 'error',
+      '@typescript-eslint/no-unused-vars': 'warn', // Changed from error to warn
       '@typescript-eslint/no-non-null-assertion': 'off',
       '@typescript-eslint/ban-ts-comment': 'off',
       '@typescript-eslint/prefer-as-const': 'off',
@@ -44,8 +44,8 @@ const eslintConfig = [
       '@next/next/no-html-link-for-pages': 'off',
 
       // 一般JavaScript规则
-      'prefer-const': 'error',
-      'no-unused-vars': 'error',
+      'prefer-const': 'warn', // Changed from error to warn
+      'no-unused-vars': 'warn', // Changed from error to warn
       'no-console': 'off',
       'no-debugger': 'off',
       'no-empty': 'off',

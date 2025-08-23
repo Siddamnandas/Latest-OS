@@ -54,4 +54,4 @@ export function usePerformanceMonitor(componentName: string) {
     recordApiCall: (apiName: string, duration: number) => 
       perfMonitor.recordMetric(`api:${apiName}`, duration)
   };
-}"
+}

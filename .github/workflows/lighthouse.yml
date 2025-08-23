@@ -10,9 +10,11 @@ jobs:
     runs-on: ubuntu-latest
     env:
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/testdb
+      REDIS_URL: redis://localhost:6379
       NEXTAUTH_SECRET: test-secret-for-ci
       NEXTAUTH_URL: http://localhost:3000
       SENTRY_DSN: ""
+      NODE_ENV: production
     services:
       postgres:
         image: postgres:15
@@ -26,6 +28,15 @@ jobs:
           --health-retries 5
         ports:
           - 5432:5432
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

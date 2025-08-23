@@ -52,4 +52,4 @@ export function useOptimizedData<T>(
   }, [fetchData, options.cacheKey]);
 
   return { data, loading, error, refetch };
-}"
+}

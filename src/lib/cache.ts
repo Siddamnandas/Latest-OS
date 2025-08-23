@@ -41,4 +41,4 @@ class ApiCache {
   }
 }
 
-export const apiCache = new ApiCache();"
+export const apiCache = new ApiCache();
