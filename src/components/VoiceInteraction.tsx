@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { logger } from '@/lib/logger';
 import { 
   Mic, MicOff, Volume2, VolumeX, Play, Pause, 
   RotateCcw, Clock, MessageSquare, Brain, Sparkles,
@@ -154,7 +155,7 @@ export function VoiceInteraction({
       setTimeout(simulateVoiceInput, 2000);
 
     } catch (error) {
-      console.error('Error starting voice recognition:', error);
+      logger.error('Error starting voice recognition:', error);
       setIsListening(false);
     }
   };

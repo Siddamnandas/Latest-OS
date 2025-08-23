@@ -1,6 +1,7 @@
 import { db } from '@/lib/db';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import { logger } from '@/lib/logger';
 
 const createTaskSchema = z.object({
   title: z.string().min(1).max(200),
@@ -31,7 +32,7 @@ export async function GET() {
 
     return NextResponse.json(tasks);
   } catch (error) {
-    console.error('Error fetching tasks:', error);
+    logger.error('Error fetching tasks:', error);
     return NextResponse.json({ error: 'Failed to fetch tasks' }, { status: 500 });
   }
 }
@@ -78,7 +79,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(task, { status: 201 });
 
   } catch (error) {
-    console.error('Error creating task:', error);
+    logger.error('Error creating task:', error);
     
     if (error instanceof z.ZodError) {
       return NextResponse.json(

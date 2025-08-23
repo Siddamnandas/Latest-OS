@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import dynamic from 'next/dynamic';
+import { logger } from '@/lib/logger';
 
 // Importing components directly to avoid dynamic import issues
 import { DailySyncCard } from '@/components/DailySyncCard';
@@ -135,7 +136,7 @@ export function HomeDashboard({ streak, coins }: HomeDashboardProps) {
 
   const handleCoinClick = () => {
     // Handle coin click animation
-    console.log('Coin clicked!');
+    logger.info('Coin clicked!');
   };
 
   const handleStreakClick = () => {
@@ -143,7 +144,7 @@ export function HomeDashboard({ streak, coins }: HomeDashboardProps) {
   };
 
   const handleAchievementUnlock = (achievementId: string) => {
-    console.log('Achievement unlocked:', achievementId);
+    logger.info('Achievement unlocked:', achievementId);
     // Handle achievement unlock logic
   };
 
@@ -326,9 +327,9 @@ export function HomeDashboard({ streak, coins }: HomeDashboardProps) {
         
         <AISuggestionCard 
           suggestion={aiSuggestion}
-          onAccept={() => console.log('Suggestion accepted')}
-          onLater={() => console.log('Suggestion postponed')}
-          onTellMe={() => console.log('More info requested')}
+          onAccept={() => logger.info('Suggestion accepted')}
+          onLater={() => logger.info('Suggestion postponed')}
+          onTellMe={() => logger.info('More info requested')}
         />
       </div>
 

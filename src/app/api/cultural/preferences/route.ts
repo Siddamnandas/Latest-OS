@@ -2,6 +2,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { logger } from '@/lib/logger';
 
 // Mock AI implementation to replace z-ai-web-dev-sdk
 class MockZAI {
@@ -123,7 +124,7 @@ export async function GET(request: NextRequest) {
       insights
     });
   } catch (error) {
-    console.error('Error fetching cultural preferences:', error);
+    logger.error('Error fetching cultural preferences:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -159,7 +160,7 @@ export async function PUT(request: NextRequest) {
       personalizedContent
     });
   } catch (error) {
-    console.error('Error updating cultural preferences:', error);
+    logger.error('Error updating cultural preferences:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

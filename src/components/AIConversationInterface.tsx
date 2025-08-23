@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { logger } from '@/lib/logger';
 import { 
   Send, Mic, MicOff, Heart, Brain, Lightbulb, Target, 
   Clock, CheckCircle, Sparkles, MessageCircle, User,
@@ -423,7 +424,7 @@ export function AIConversationInterface({ sessionId, onSessionComplete }: AIConv
   };
 
   const handleVoiceSessionComplete = (session: any) => {
-    console.log('Voice session completed:', session);
+    logger.info('Voice session completed:', session);
     // Add voice session summary to insights if needed
   };
 

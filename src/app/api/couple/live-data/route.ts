@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { redis } from '@/lib/redis';
+import { logger } from '@/lib/logger';
 
 export async function GET() {
   try {
@@ -185,7 +186,7 @@ export async function GET() {
 
     return NextResponse.json(liveData);
   } catch (error) {
-    console.error('Error fetching live data:', error);
+    logger.error('Error fetching live data:', error);
     
     // Return fallback demo data on error
     return NextResponse.json({

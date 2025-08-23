@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
+import { logger } from '@/lib/logger';
 
 interface FeedbackDialogProps {
   open: boolean;
@@ -34,7 +35,7 @@ export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps) {
       setScreenshot(null);
       onOpenChange(false);
     } catch (err) {
-      console.error('Failed to submit feedback', err);
+      logger.error('Failed to submit feedback', err);
     } finally {
       setSubmitting(false);
     }

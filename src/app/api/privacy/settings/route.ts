@@ -2,6 +2,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { logger } from '@/lib/logger';
 
 export async function GET(request: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -38,7 +39,7 @@ export async function GET(request: NextRequest) {
       securityScore
     });
   } catch (error) {
-    console.error('Error fetching privacy settings:', error);
+    logger.error('Error fetching privacy settings:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -81,7 +82,7 @@ export async function PUT(request: NextRequest) {
 
     return NextResponse.json({ settings: updatedSettings });
   } catch (error) {
-    console.error('Error updating privacy settings:', error);
+    logger.error('Error updating privacy settings:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

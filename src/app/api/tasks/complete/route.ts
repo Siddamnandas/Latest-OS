@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { z } from 'zod';
+import { logger } from '@/lib/logger';
 
 const completeTaskSchema = z.object({
   task_id: z.string().cuid()
@@ -112,7 +113,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Error completing task:', error);
+    logger.error('Error completing task:', error);
     
     if (error instanceof z.ZodError) {
       return NextResponse.json(
@@ -168,7 +169,7 @@ export async function DELETE(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Error uncompleting task:', error);
+    logger.error('Error uncompleting task:', error);
     return NextResponse.json(
       { error: 'Failed to mark task as incomplete' },
       { status: 500 }

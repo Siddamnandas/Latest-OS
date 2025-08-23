@@ -107,9 +107,9 @@ export default async function RootLayout({
                     }
                   }
                 } catch (err) {
-                  console.error('Push subscription failed', err);
+                  (window.logger || console).error('Push subscription failed', err);
                 }
-              }).catch(err => console.error('Service worker registration failed', err));
+              }).catch(err => (window.logger || console).error('Service worker registration failed', err));
             }
 
             function urlBase64ToUint8Array(base64String) {

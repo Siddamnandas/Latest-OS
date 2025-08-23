@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { logger } from '@/lib/logger';
 import { 
   Calendar, 
   Clock, 
@@ -119,7 +120,7 @@ export function LiveKidsActivities() {
       setActivities(sampleActivities);
       setLoading(false);
     } catch (error) {
-      console.error('Error fetching activities:', error);
+      logger.error('Error fetching activities:', error);
       setLoading(false);
     }
   };

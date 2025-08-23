@@ -1,6 +1,7 @@
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { NextRequest, NextResponse } from 'next/server';
+import { logger } from '@/lib/logger';
 
 // Mock AI implementation to replace z-ai-web-dev-sdk
 class MockZAI {
@@ -267,7 +268,7 @@ export async function POST(request: NextRequest) {
     }, { status: 400 });
 
   } catch (error) {
-    console.error('Wellness Programs API Error:', error);
+    logger.error('Wellness Programs API Error:', error);
     return NextResponse.json(
       { 
         success: false, 

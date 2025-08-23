@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { logger } from '@/lib/logger';
 import { 
   RefreshCw, 
   Heart, 
@@ -102,7 +103,7 @@ export function LiveCoupleSync() {
       
       setRecentSyncs(sampleSyncs);
     } catch (error) {
-      console.error('Error fetching syncs:', error);
+      logger.error('Error fetching syncs:', error);
     }
   };
 

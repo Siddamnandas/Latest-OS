@@ -4,6 +4,8 @@
 import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
 
+import { logger } from '@/lib/logger';
+
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
@@ -14,7 +16,7 @@ Notifications.setNotificationHandler({
 
 export async function registerForExpoPush() {
   if (!Device.isDevice) {
-    console.warn('Must use physical device for Push Notifications');
+    logger.warn('Must use physical device for Push Notifications');
     return null;
   }
 
@@ -25,7 +27,7 @@ export async function registerForExpoPush() {
     finalStatus = status;
   }
   if (finalStatus !== 'granted') {
-    console.warn('Failed to get push token for push notification!');
+    logger.warn('Failed to get push token for push notification!');
     return null;
   }
 

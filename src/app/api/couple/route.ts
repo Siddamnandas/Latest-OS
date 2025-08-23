@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { NextResponse } from 'next/server';
+import { logger } from '@/lib/logger';
 
 export async function GET() {
   try {
@@ -16,7 +17,7 @@ export async function GET() {
 
     return NextResponse.json(couple);
   } catch (error) {
-    console.error('Error fetching couple:', error);
+    logger.error('Error fetching couple:', error);
     return NextResponse.json({ error: 'Failed to fetch couple data' }, { status: 500 });
   }
 }

@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { logger } from '@/lib/logger';
 import { 
   Home, 
   List, 
@@ -150,32 +151,32 @@ export default function Home() {
 
   const handleAddTask = () => {
     // Placeholder for add task functionality
-    console.log('Add task clicked');
+    logger.info('Add task clicked');
   };
 
   const handleCompleteSync = (data: any) => {
     setDailySyncCompleted(true);
-    console.log('Daily sync completed:', data);
+    logger.info('Daily sync completed:', data);
   };
 
   const handleAcceptSuggestion = () => {
-    console.log('Suggestion accepted');
+    logger.info('Suggestion accepted');
   };
 
   const handleLaterSuggestion = () => {
-    console.log('Suggestion postponed');
+    logger.info('Suggestion postponed');
   };
 
   const handleTellMeMore = () => {
-    console.log('Tell me more clicked');
+    logger.info('Tell me more clicked');
   };
 
   const handleRebalance = () => {
-    console.log('Rebalance clicked');
+    logger.info('Rebalance clicked');
   };
 
   const handleStartRitual = (ritualId: string) => {
-    console.log('Starting ritual:', ritualId);
+    logger.info('Starting ritual:', ritualId);
   };
 
   const handleCompleteRitual = (ritualId: string) => {

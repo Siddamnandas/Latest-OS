@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { logger } from '@/lib/logger';
 import { 
   Target, 
   TrendingUp, 
@@ -152,7 +153,7 @@ export function LiveGoalsSystem() {
       setGoals(sampleGoals);
       setLoading(false);
     } catch (error) {
-      console.error('Error fetching goals:', error);
+      logger.error('Error fetching goals:', error);
       setLoading(false);
     }
   };

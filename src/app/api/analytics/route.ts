@@ -2,6 +2,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { logger } from '@/lib/logger';
 
 export async function GET(request: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -136,7 +137,7 @@ export async function GET(request: NextRequest) {
     }, { status: 200 });
 
   } catch (error) {
-    console.error('Error fetching analytics:', error);
+    logger.error('Error fetching analytics:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -177,7 +178,7 @@ export async function POST(request: NextRequest) {
     }, { status: 201 });
 
   } catch (error) {
-    console.error('Error creating analytic:', error);
+    logger.error('Error creating analytic:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

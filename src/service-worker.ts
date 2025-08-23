@@ -1,6 +1,8 @@
 // Service Worker for Latest-OS
 // Handles caching, offline support, and push notifications
 
+import { logger } from '@/lib/logger';
+
 const CACHE_NAME = 'latest-os-v2';
 const OFFLINE_CACHE = 'latest-os-offline-v2';
 const RUNTIME_CACHE = 'latest-os-runtime-v2';
@@ -39,18 +41,18 @@ const NETWORK_TIMEOUT = 5000;
 
 // Install event - Cache critical resources
 self.addEventListener('install', (event: ExtendableEvent) => {
-  console.log('🔧 Service Worker installing...');
+  logger.info('🔧 Service Worker installing...');
   event.waitUntil(
     Promise.all([
       // Cache critical static resources
       caches.open(CACHE_NAME).then((cache) => {
-        console.log('📦 Caching critical static resources');
+        logger.info('📦 Caching critical static resources');
         return cache.addAll(criticalUrlsToCache);
       }),
       
       // Pre-cache critical API data for offline access
       caches.open(CRITICAL_CACHE).then(async (cache) => {
-        console.log('🗄️ Pre-caching critical API data');
+        logger.info('🗄️ Pre-caching critical API data');
         try {
           // Cache essential API responses
           for (const endpoint of criticalApiEndpoints) {
@@ -61,18 +63,18 @@ self.addEventListener('install', (event: ExtendableEvent) => {
               });
               if (response.ok) {
                 await cache.put(endpoint, response.clone());
-                console.log(`✅ Cached API: ${endpoint}`);
+                logger.info(`✅ Cached API: ${endpoint}`);
               }
             } catch (apiError) {
-              console.log(`⚠️ Failed to pre-cache API: ${endpoint}`);
+              logger.warn(`⚠️ Failed to pre-cache API: ${endpoint}`);
             }
           }
         } catch (error) {
-          console.log('⚠️ Some API pre-caching failed, continuing...');
+          logger.warn('⚠️ Some API pre-caching failed, continuing...');
         }
       })
     ]).then(() => {
-      console.log('✅ All critical resources cached');
+      logger.info('✅ All critical resources cached');
       return self.skipWaiting();
     })
   );
@@ -80,7 +82,7 @@ self.addEventListener('install', (event: ExtendableEvent) => {
 
 // Activate event - Clean up old caches
 self.addEventListener('activate', (event: ExtendableEvent) => {
-  console.log('🔄 Service Worker activating...');
+  logger.info('🔄 Service Worker activating...');
   event.waitUntil(
     Promise.all([
       // Clean up old caches
@@ -89,7 +91,7 @@ self.addEventListener('activate', (event: ExtendableEvent) => {
         return Promise.all(
           cacheNames.map((cacheName) => {
             if (!validCaches.includes(cacheName)) {
-              console.log('🗑️ Deleting old cache:', cacheName);
+              logger.info('🗑️ Deleting old cache:', cacheName);
               return caches.delete(cacheName);
             }
             return undefined;
@@ -100,7 +102,7 @@ self.addEventListener('activate', (event: ExtendableEvent) => {
       // Update critical API cache on activation
       updateCriticalApiCache()
     ]).then(() => {
-      console.log('✅ Service Worker activated and ready');
+      logger.info('✅ Service Worker activated and ready');
       return self.clients.claim();
     })
   );
@@ -110,7 +112,7 @@ self.addEventListener('activate', (event: ExtendableEvent) => {
 async function updateCriticalApiCache() {
   try {
     const cache = await caches.open(CRITICAL_CACHE);
-    console.log('🔄 Updating critical API cache...');
+    logger.info('🔄 Updating critical API cache...');
     
     for (const endpoint of criticalApiEndpoints) {
       try {
@@ -122,11 +124,11 @@ async function updateCriticalApiCache() {
           await cache.put(endpoint, response.clone());
         }
       } catch (error) {
-        console.log(`⚠️ Failed to update cache for: ${endpoint}`);
+        logger.warn(`⚠️ Failed to update cache for: ${endpoint}`);
       }
     }
   } catch (error) {
-    console.log('⚠️ Critical API cache update failed');
+    logger.warn('⚠️ Critical API cache update failed');
   }
 }
 
@@ -192,13 +194,13 @@ async function handleApiRequest(request: Request): Promise<Response> {
     
     throw new Error(`Network response not ok: ${networkResponse.status}`);
   } catch (networkError) {
-    console.log(`😳 Network failed for ${url.pathname}, trying cache...`);
+    logger.warn(`😳 Network failed for ${url.pathname}, trying cache...`);
     
     // For GET requests, try cache
     if (request.method === 'GET') {
       const cachedResponse = await caches.match(request);
       if (cachedResponse) {
-        console.log(`📋 Serving ${url.pathname} from cache`);
+        logger.info(`📋 Serving ${url.pathname} from cache`);
         return cachedResponse;
       }
       
@@ -206,7 +208,7 @@ async function handleApiRequest(request: Request): Promise<Response> {
       const criticalCache = await caches.open(CRITICAL_CACHE);
       const criticalResponse = await criticalCache.match(request);
       if (criticalResponse) {
-        console.log(`🔴 Serving ${url.pathname} from critical cache`);
+        logger.info(`🔴 Serving ${url.pathname} from critical cache`);
         return criticalResponse;
       }
     }
@@ -392,7 +394,7 @@ async function retryOfflineRequests(): Promise<void> {
       });
       store.delete(key);
     } catch (err) {
-      console.error('Failed to retry offline request:', err);
+      logger.error('Failed to retry offline request:', err);
       // Leave the request in the queue if it fails
     }
   }
@@ -435,6 +437,6 @@ self.addEventListener('notificationclick', (event: NotificationEvent) => {
 
 // Listen for online event to retry offline requests
 self.addEventListener('online', () => {
-  console.log('Network back online, retrying offline requests...');
-  retryOfflineRequests().catch(console.error);
+  logger.info('Network back online, retrying offline requests...');
+  retryOfflineRequests().catch((err) => logger.error('Failed to retry offline requests', err));
 });

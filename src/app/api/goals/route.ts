@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { NextResponse } from 'next/server';
+import { logger } from '@/lib/logger';
 
 export async function GET() {
   try {
@@ -21,7 +22,7 @@ export async function GET() {
 
     return NextResponse.json(goals);
   } catch (error) {
-    console.error('Error fetching goals:', error);
+    logger.error('Error fetching goals:', error);
     return NextResponse.json({ error: 'Failed to fetch goals' }, { status: 500 });
   }
 }

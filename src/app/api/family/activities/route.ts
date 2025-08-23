@@ -2,6 +2,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { logger } from '@/lib/logger';
 
 // Mock AI implementation to replace z-ai-web-dev-sdk
 class MockZAI {
@@ -193,7 +194,7 @@ export async function POST(request: NextRequest) {
       nextMilestones: recommendationData.nextMilestones || []
     });
   } catch (error) {
-    console.error('Error logging activity:', error);
+    logger.error('Error logging activity:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -285,7 +286,7 @@ export async function GET(request: NextRequest) {
       suggestions: suggestionsData.suggestions || []
     });
   } catch (error) {
-    console.error('Error fetching activities:', error);
+    logger.error('Error fetching activities:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

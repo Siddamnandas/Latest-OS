@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { logger } from '@/lib/logger';
 import { 
   Heart, 
   Clock, 
@@ -125,7 +126,7 @@ export function LiveRitualSystem() {
       setRituals(sampleRituals);
       setLoading(false);
     } catch (error) {
-      console.error('Error fetching rituals:', error);
+      logger.error('Error fetching rituals:', error);
       setLoading(false);
     }
   };

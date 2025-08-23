@@ -7,6 +7,7 @@ import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { RasaBalanceWheel } from '@/components/RasaBalanceWheel';
+import { logger } from '@/lib/logger';
 import { 
   Heart, 
   Clock, 
@@ -212,7 +213,7 @@ export function RitualSystem() {
 
   const handleRebalance = () => {
     // Handle rasa rebalance logic
-    console.log('Rasa rebalance requested');
+    logger.info('Rasa rebalance requested');
     // Update balance based on ritual completions or other factors
     const playIncrease = Math.random() * 10;
     const dutyIncrease = Math.random() * 10;
