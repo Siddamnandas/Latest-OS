@@ -30,9 +30,27 @@ cd infra
 ./deploy.sh prod destroy # Destroy resources
 ```
 
+## Monitoring
+
+Datadog monitors and dashboards are managed via `datadog.tf`.
+
+Set the following variables before applying:
+
+- `datadog_api_key`
+- `datadog_app_key`
+
+Example:
+
+```bash
+export TF_VAR_datadog_api_key=...
+export TF_VAR_datadog_app_key=...
+./deploy.sh dev apply
+```
+
 ## Structure
 
 - `main.tf` - Main Terraform configuration
+- `datadog.tf` - Datadog monitors and dashboards
 - `variables.tf` - Input variables
 - `outputs.tf` - Output values
 - `environments/` - Environment-specific configurations

@@ -22,6 +22,16 @@ variable "domain_name" {
   default     = ""
 }
 
+variable "datadog_api_key" {
+  description = "Datadog API key"
+  type        = string
+}
+
+variable "datadog_app_key" {
+  description = "Datadog application key"
+  type        = string
+}
+
 variable "vpc_cidr" {
   type = string
 }

@@ -45,3 +45,8 @@ On the first business day of each month:
 3. Document the test results for audit purposes.
 
 Regular recovery tests ensure backups are valid and the restore process is reliable.
+
+## Additional Resources
+
+- [Outage Runbook](./outage-runbook.md)
+- [On-call & Incident Response](./on-call.md)
