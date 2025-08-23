@@ -24,7 +24,11 @@ export default function RecoveryPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <p>Enter one of your recovery codes if you cannot access your authenticator app.</p>
-          <Input value={code} onChange={e => setCode(e.target.value)} placeholder="recovery code" />
+          <Input
+            value={code}
+            onChange={e => setCode(e.target.value)}
+            placeholder="recovery code"
+          />
           <Button onClick={recover}>Verify</Button>
         </CardContent>
       </Card>

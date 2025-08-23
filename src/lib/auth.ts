@@ -49,22 +49,22 @@ export const authOptions: NextAuthOptions = {
           id: user.id,
           email: user.email,
           name: user.name,
-          role: user.role,
-          couple: user.couple,
-        } as any;
+          coupleId: user.couple_id,
+        };
       },
     }),
   ],
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.user = user;
+        token.coupleId = user.coupleId;
       }
       return token;
     },
     async session({ session, token }) {
-      if (token.user) {
-        session.user = token.user as any;
+      if (token) {
+        session.user.id = token.sub;
+        session.user.coupleId = token.coupleId;
       }
       return session;
     },
