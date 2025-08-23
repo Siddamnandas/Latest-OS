@@ -19,6 +19,8 @@ jobs:
       SENTRY_DSN: ""
       NODE_ENV: test
       CI: true
+      NEXT_PUBLIC_VAPID_PUBLIC_KEY: "BCM3SzUBuqJH0UgCwumoryYD0_k2SKfXluVKT79rbN-D0zwwnhYpERxRjAV6diqGR2t41HCx2y_oakOMl0WgYX0"
+      VAPID_PRIVATE_KEY: "urlN0nhki1jP75PtgTB4Ac0M1GiB3X79zmVU2fSLPZY"
     services:
       postgres:
         image: postgres:15
@@ -90,6 +92,8 @@ jobs:
       SENTRY_DSN: ""
       NODE_ENV: production
       CI: true
+      NEXT_PUBLIC_VAPID_PUBLIC_KEY: "BCM3SzUBuqJH0UgCwumoryYD0_k2SKfXluVKT79rbN-D0zwwnhYpERxRjAV6diqGR2t41HCx2y_oakOMl0WgYX0"
+      VAPID_PRIVATE_KEY: "urlN0nhki1jP75PtgTB4Ac0M1GiB3X79zmVU2fSLPZY"
     services:
       postgres:
         image: postgres:15

@@ -50,6 +50,22 @@
         }
       }
     },
+    "/api/assign": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
+      "post": {
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
     "/api/analytics": {
       "get": {
         "responses": {
@@ -82,7 +98,7 @@
         }
       }
     },
-    "/api/assign": {
+    "/api/children": {
       "get": {
         "responses": {
           "200": {
@@ -99,22 +115,6 @@
       }
     },
     "/api/auth": {
-      "get": {
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      },
-      "post": {
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      }
-    },
-    "/api/children": {
       "get": {
         "responses": {
           "200": {
@@ -527,15 +527,6 @@
         }
       }
     },
-    "/api/test-db": {
-      "get": {
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      }
-    },
     "/api/tasks": {
       "get": {
         "responses": {
@@ -545,6 +536,15 @@
         }
       },
       "post": {
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/test-db": {
+      "get": {
         "responses": {
           "200": {
             "description": "Success"
@@ -585,22 +585,6 @@
       }
     },
     "/api/wellness-programs": {
-      "post": {
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      }
-    },
-    "/api/ai-suggestions/generate": {
-      "get": {
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      },
       "post": {
         "responses": {
           "200": {
@@ -677,23 +661,7 @@
         }
       }
     },
-    "/api/family/activities": {
-      "get": {
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      },
-      "post": {
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      }
-    },
-    "/api/family/children": {
+    "/api/ai-suggestions/generate": {
       "get": {
         "responses": {
           "200": {
@@ -725,7 +693,14 @@
         }
       }
     },
-    "/api/notifications/push": {
+    "/api/family/children": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
       "post": {
         "responses": {
           "200": {
@@ -735,6 +710,15 @@
       }
     },
     "/api/notifications/subscribe": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/notifications/push": {
       "post": {
         "responses": {
           "200": {
@@ -827,6 +811,22 @@
         }
       }
     },
+    "/api/family/activities": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
+      "post": {
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
     "/api/tasks/assign": {
       "get": {
         "responses": {
@@ -835,6 +835,15 @@
           }
         }
       },
+      "post": {
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/user/delete": {
       "post": {
         "responses": {
           "200": {
@@ -852,15 +861,6 @@
         }
       },
       "delete": {
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      }
-    },
-    "/api/user/delete": {
-      "post": {
         "responses": {
           "200": {
             "description": "Success"
