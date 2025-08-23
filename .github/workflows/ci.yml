@@ -150,3 +150,10 @@ jobs:
         run: npx prisma db push --accept-data-loss
       - name: Build application
         run: npm run build
+      - name: Health check
+        run: |
+          npm start &
+          SERVER_PID=$!
+          npx wait-on http://localhost:3000/health
+          curl -f http://localhost:3000/health
+          kill $SERVER_PID
