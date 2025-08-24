@@ -29,6 +29,21 @@ const rawEnv = envsafe({
     allowEmpty: true,
     default: '',
   }),
+  ANALYTICS_PROVIDER: str({
+    desc: 'Analytics provider (segment or snowplow)',
+    default: '',
+    allowEmpty: true,
+  }),
+  SEGMENT_WRITE_KEY: str({
+    desc: 'Segment write key',
+    default: '',
+    allowEmpty: true,
+  }),
+  SNOWPLOW_COLLECTOR_URL: str({
+    desc: 'Snowplow collector URL',
+    default: '',
+    allowEmpty: true,
+  }),
 });
 
 const envSchema = z.object({
@@ -37,6 +52,9 @@ const envSchema = z.object({
   UNLEASH_URL: z.string().optional(),
   UNLEASH_CLIENT_KEY: z.string().optional(),
   SENTRY_DSN: z.string().optional().or(z.literal('')),
+  ANALYTICS_PROVIDER: z.string().optional(),
+  SEGMENT_WRITE_KEY: z.string().optional(),
+  SNOWPLOW_COLLECTOR_URL: z.string().optional(),
 });
 
 export const env = envSchema.parse(rawEnv);
