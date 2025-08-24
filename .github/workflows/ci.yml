@@ -61,8 +61,6 @@ jobs:
         run: |
           timeout 30 bash -c 'until pg_isready -h localhost -p 5432; do sleep 1; done'
           timeout 30 bash -c 'until redis-cli -h localhost -p 6379 ping; do sleep 1; done'
-      - name: Clear npm cache
-        run: npm cache clean --force
       - name: Verify package files sync
         run: |
           echo "Checking package.json and package-lock.json sync..."
@@ -136,8 +134,6 @@ jobs:
         run: |
           timeout 30 bash -c 'until pg_isready -h localhost -p 5432; do sleep 1; done'
           timeout 30 bash -c 'until redis-cli -h localhost -p 6379 ping; do sleep 1; done'
-      - name: Clear npm cache
-        run: npm cache clean --force
       - name: Verify package files sync
         run: |
           echo "Checking package.json and package-lock.json sync..."
