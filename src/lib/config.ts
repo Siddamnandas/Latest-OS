@@ -44,6 +44,21 @@ const rawEnv = envsafe({
     default: '',
     allowEmpty: true,
   }),
+  KAFKA_BROKERS: str({
+    desc: 'Comma separated list of Kafka brokers',
+    default: '',
+    allowEmpty: true,
+  }),
+  KAFKA_CLIENT_ID: str({
+    desc: 'Kafka client ID',
+    default: 'latest-os',
+    allowEmpty: true,
+  }),
+  KAFKA_USER_EVENTS_TOPIC: str({
+    desc: 'Kafka topic for user analytics events',
+    default: 'user-events',
+    allowEmpty: true,
+  }),
 });
 
 const envSchema = z.object({
@@ -55,6 +70,9 @@ const envSchema = z.object({
   ANALYTICS_PROVIDER: z.string().optional(),
   SEGMENT_WRITE_KEY: z.string().optional(),
   SNOWPLOW_COLLECTOR_URL: z.string().optional(),
+  KAFKA_BROKERS: z.string().optional(),
+  KAFKA_CLIENT_ID: z.string().optional(),
+  KAFKA_USER_EVENTS_TOPIC: z.string().optional(),
 });
 
 export const env = envSchema.parse(rawEnv);
