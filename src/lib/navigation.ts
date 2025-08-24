@@ -6,8 +6,8 @@ export const DEEP_LINK_SCHEME = 'latestos'
 export function parseDeepLink(url: string, scheme: string = DEEP_LINK_SCHEME): string {
   const prefix = `${scheme}://`
   if (url.startsWith(prefix)) {
-    const path = url.slice(prefix.length)
-    return path.startsWith('/') ? path : `/${path}`
+    const strippedPath = url.slice(prefix.length)
+    return strippedPath.startsWith('/') ? strippedPath : `/${strippedPath}`
   }
   return url
 }
@@ -21,6 +21,5 @@ export function handleDeepLink(
   router: { push: (path: string) => void },
   scheme: string = DEEP_LINK_SCHEME
 ) {
-  const path = parseDeepLink(url, scheme)
-  router.push(path)
+  router.push(parseDeepLink(url, scheme))
 }

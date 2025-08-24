@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Remove password from response
-    const { password_hash, ...userWithoutPassword } = user;
+    const userWithoutPassword = (({ password_hash, ...rest }) => rest)(user);
 
     return NextResponse.json({
       message: 'User registered successfully',
