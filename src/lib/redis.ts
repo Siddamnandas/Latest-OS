@@ -33,7 +33,7 @@ export const isRedisAvailable = async (): Promise<boolean> => {
   try {
     await redis.ping();
     return true;
-  } catch (error) {
+  } catch {
     return false;
   }
 };

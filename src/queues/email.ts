@@ -1,5 +1,5 @@
 import { Queue, Worker } from 'bullmq';
-import { redis, isRedisAvailable } from '@/lib/redis';
+import { isRedisAvailable } from '@/lib/redis';
 import { logger } from '@/lib/logger';
 
 export interface EmailJob {
