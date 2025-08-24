@@ -75,6 +75,8 @@ jobs:
         run: npx prisma generate
       - name: Push database schema
         run: npx prisma db push --accept-data-loss
+      - name: Check error budget
+        run: npm run check-error-budget
       - name: Run linting
         run: npm run lint
       - name: Run tests
@@ -148,6 +150,8 @@ jobs:
         run: npx prisma generate
       - name: Push database schema
         run: npx prisma db push --accept-data-loss
+      - name: Check error budget
+        run: npm run check-error-budget
       - name: Build application
         run: npm run build
       - name: Health check

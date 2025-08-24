@@ -1,6 +1,7 @@
 // server.ts - Next.js Standalone + Socket.IO
 import { setupSocket } from '@/lib/socket';
 import { logger } from '@/lib/logger';
+import { requestLatency, requestErrors } from '@/lib/metrics';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import next from 'next';
@@ -40,6 +41,8 @@ async function createCustomServer() {
 
     // Create HTTP server that will handle both Next.js and Socket.IO
     const server = createServer(async (req, res) => {
+      const start = process.hrtime.bigint();
+
       // Health check endpoint
       if (req.url === '/health') {
         const services: Record<string, boolean> = {};
@@ -74,6 +77,22 @@ async function createCustomServer() {
         return;
       }
       handle(req, res);
+
+      res.on('finish', () => {
+        const durationNs = Number(process.hrtime.bigint() - start);
+        requestLatency.record(durationNs / 1_000_000, {
+          route: req.url ?? 'unknown',
+          method: req.method ?? 'GET',
+          status: res.statusCode,
+        });
+        if (res.statusCode >= 500) {
+          requestErrors.add(1, {
+            route: req.url ?? 'unknown',
+            method: req.method ?? 'GET',
+            status: res.statusCode,
+          });
+        }
+      });
     });
 
     // Setup Socket.IO

@@ -15,7 +15,7 @@ enable error monitoring.
 
 ## Metrics & Dashboards
 
-Operational metrics and alerts are managed in Datadog. Terraform configuration
-for monitors and dashboards lives in `infra/datadog.tf`. Apply it with the
-`datadog_api_key` and `datadog_app_key` variables to provision dashboards and
-alerting rules.
+Operational metrics (request latency and error rate) are collected via
+OpenTelemetry and exported to Datadog. Terraform configuration for monitors and
+dashboards lives in `infra/datadog.tf`. Apply it with the `datadog_api_key` and
+`datadog_app_key` variables to provision dashboards and alerting rules.
