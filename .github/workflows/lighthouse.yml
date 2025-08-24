@@ -72,7 +72,7 @@ jobs:
           npx wait-on http://localhost:3000 --timeout=60000
           echo "Server started with PID: $SERVER_PID"
       - name: Run Lighthouse CI
-        uses: treosh/lighthouse-ci-action@v11
+        uses: treosh/lighthouse-ci-action@v12
         with:
           urls: http://localhost:3000
           configPath: ./lighthouserc.json
