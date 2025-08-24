@@ -10,6 +10,12 @@ variable "aws_region" {
   default     = "us-east-1"
 }
 
+variable "secondary_region" {
+  description = "Secondary AWS region for disaster recovery"
+  type        = string
+  default     = "us-west-2"
+}
+
 variable "app_name" {
   description = "Application name"
   type        = string
