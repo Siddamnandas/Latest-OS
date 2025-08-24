@@ -1,4 +1,5 @@
 import { env } from './config';
+import { Kafka, Producer } from 'kafkajs';
 
 export const EVENTS = {
   USER_SIGNED_UP: 'user_signed_up',
@@ -49,17 +50,39 @@ async function sendToSnowplow(event: EventPayloads) {
   });
 }
 
+let kafkaProducer: Producer | null = null;
+
+async function sendToKafka(event: EventPayloads) {
+  if (!env.KAFKA_BROKERS) return;
+  if (!kafkaProducer) {
+    const kafka = new Kafka({
+      clientId: env.KAFKA_CLIENT_ID ?? 'latest-os',
+      brokers: env.KAFKA_BROKERS.split(',').map((b) => b.trim()),
+    });
+    kafkaProducer = kafka.producer();
+    await kafkaProducer.connect();
+  }
+  await kafkaProducer.send({
+    topic: env.KAFKA_USER_EVENTS_TOPIC ?? 'user-events',
+    messages: [{ value: JSON.stringify(event) }],
+  });
+}
+
 export async function trackEvent(event: EventPayloads) {
+  const tasks: Promise<unknown>[] = [sendToKafka(event)];
   switch (env.ANALYTICS_PROVIDER) {
     case 'segment':
-      return sendToSegment(event);
+      tasks.push(sendToSegment(event));
+      break;
     case 'snowplow':
-      return sendToSnowplow(event);
+      tasks.push(sendToSnowplow(event));
+      break;
     default:
       if (process.env.NODE_ENV !== 'production') {
         console.debug('analytics event', event);
       }
   }
+  await Promise.all(tasks);
 }
 
 export type { EventPayloads as AnalyticsEvent };
