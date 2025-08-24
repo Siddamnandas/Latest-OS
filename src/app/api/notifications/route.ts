@@ -2,6 +2,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { addNotificationJob } from '@/queues/notifications';
 
 export async function GET(request: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -13,6 +14,8 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const coupleId = searchParams.get('coupleId');
     const userId = searchParams.get('userId');
+    const userGroup = searchParams.get('group');
+    const locale = searchParams.get('locale');
     const unreadOnly = searchParams.get('unreadOnly') === 'true';
 
     if (!coupleId) {
@@ -28,6 +31,17 @@ export async function GET(request: NextRequest) {
     }
     if (unreadOnly) {
       where.is_read = false;
+    }
+    if (userGroup || locale) {
+      where.user = {};
+      if (userGroup) {
+        // @ts-ignore - dynamic field for segmentation
+        where.user.group = userGroup;
+      }
+      if (locale) {
+        // @ts-ignore - dynamic field for segmentation
+        where.user.locale = locale;
+      }
     }
 
     const notifications = await db.notification.findMany({
@@ -58,7 +72,17 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { coupleId, userId, type, title, message, data } = await request.json();
+    const {
+      coupleId,
+      userId,
+      type,
+      title,
+      message,
+      data,
+      userGroup,
+      locale,
+      sendAt
+    } = await request.json();
 
     if (!coupleId || !type || !title || !message) {
       return NextResponse.json(
@@ -67,22 +91,58 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const notification = await db.notification.create({
-      data: {
-        couple_id: coupleId,
-        user_id: userId || null,
-        type,
-        title,
-        message,
-        data: data || null,
-        is_delivered: false
+    const targetUserIds: string[] = [];
+    if (userId) {
+      targetUserIds.push(userId);
+    } else if (userGroup || locale) {
+      const userWhere: any = { couple_id: coupleId };
+      if (userGroup) {
+        // @ts-ignore
+        userWhere.group = userGroup;
       }
-    });
+      if (locale) {
+        // @ts-ignore
+        userWhere.locale = locale;
+      }
+      const users = await db.user.findMany({ where: userWhere, select: { id: true } });
+      targetUserIds.push(...users.map(u => u.id));
+    }
 
-    return NextResponse.json({
-      message: 'Notification created successfully',
-      notification
-    }, { status: 201 });
+    if (targetUserIds.length === 0) {
+      return NextResponse.json(
+        { error: 'No target users found' },
+        { status: 400 }
+      );
+    }
+
+    const notifications = await Promise.all(
+      targetUserIds.map((uid) =>
+        db.notification.create({
+          data: {
+            couple_id: coupleId,
+            user_id: uid,
+            type,
+            title,
+            message,
+            data: data || null,
+            is_delivered: false
+          }
+        })
+      )
+    );
+
+    const scheduleDate = sendAt ? new Date(sendAt) : undefined;
+    for (const n of notifications) {
+      await addNotificationJob({ notificationId: n.id }, scheduleDate);
+    }
+
+    return NextResponse.json(
+      {
+        message: 'Notification(s) created successfully',
+        notifications
+      },
+      { status: 201 }
+    );
 
   } catch (error) {
     console.error('Error creating notification:', error);
