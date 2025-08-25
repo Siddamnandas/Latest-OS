@@ -1,7 +1,4 @@
->>>>>>> a802de832ecf0303d3f0d22f51e388794e994d46
 import type { NextConfig } from "next";
-=======
->>>>>>> a802de832ecf0303d3f0d22f51e388794e994d46
 
 const nextConfig: NextConfig = {
   /* config options here */
@@ -27,8 +24,3 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
->>>>>>> a802de832ecf0303d3f0d22f51e388794e994d46
-export default nextConfig;
-=======
-export default nextConfig;
->>>>>>> a802de832ecf0303d3f0d22f51e388794e994d46

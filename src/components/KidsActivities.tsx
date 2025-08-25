@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -47,499 +47,267 @@ import { InteractiveConfetti } from '@/components/InteractiveConfetti';
 import { MagicButton } from '@/components/MagicButton';
 import { FloatingEmoji } from '@/components/FloatingEmoji';
 import { KidsMobileActions } from '@/components/KidsMobileActions';
+import { useKidsActivities } from '@/hooks/use-kids-activities';
 
-interface EmotionScenario {
-  id: string;
-  title: string;
-  description: string;
-  character: string;
-  situation: string;
-  emotions: string[];
-  emojis: string[];
-  difficulty: 'easy' | 'medium' | 'hard';
-}
-
-interface KindnessMoment {
-  id: string;
-  date: Date;
-  description: string;
-  category: string;
-  points: number;
-  verified: boolean;
-}
-
-interface MythologicalQuestion {
-  id: string;
-  character: string;
-  question: string;
-  answer: string;
-  context: string;
-  difficulty: 'easy' | 'medium' | 'hard';
-}
-
-interface ThemedDay {
-  id: string;
-  name: string;
-  character: string;
-  essence: string;
-  color: string;
-  icon: React.ReactNode;
-  description: string;
-  parentRole: string;
-}
-
-interface KrishnaPrank {
-  id: string;
-  title: string;
-  helperParent: string;
-  targetParent: string;
-  prompt: string;
-  instructions: string[];
-  difficulty: 'easy' | 'medium' | 'hard';
-  estimatedTime: string;
-}
-
-interface HanumanTask {
-  id: string;
-  title: string;
-  description: string;
-  category: string;
-  difficulty: 'easy' | 'medium' | 'hard';
-  estimatedTime: string;
-  materials: string[];
-  celebrationPrompt: string;
-}
-
-interface SaraswatiCreative {
-  id: string;
-  title: string;
-  description: string;
-  category: string;
-  materials: string[];
-  prompts: string[];
-  estimatedTime: string;
-  reflectionQuestions: string[];
-}
-
-interface FamilyStorybookEntry {
-  id: string;
-  date: Date;
-  type: 'krishna' | 'hanuman' | 'saraswati';
-  title: string;
-  description: string;
-  photo?: string;
-  video?: string;
-  notes?: string;
-  participants: string[];
-}
+// Import types from centralized location
+import { 
+  EmotionScenario, 
+  KindnessMoment, 
+  MythologicalQuestion, 
+  ThemedDay, 
+  KrishnaPrank, 
+  HanumanTask, 
+  SaraswatiCreative, 
+  StorybookEntry as FamilyStorybookEntry 
+} from '@/types/kids-activities';
 
 export function KidsActivities() {
-  const [emotionScenarios, setEmotionScenarios] = useState<EmotionScenario[]>([]);
-  const [kindnessMoments, setKindnessMoments] = useState<KindnessMoment[]>([]);
-  const [mythologicalQuestions, setMythologicalQuestions] = useState<MythologicalQuestion[]>([]);
-  const [themedDays, setThemedDays] = useState<ThemedDay[]>([]);
-  const [krishnaPranks, setKrishnaPranks] = useState<KrishnaPrank[]>([]);
-  const [hanumanTasks, setHanumanTasks] = useState<HanumanTask[]>([]);
-  const [saraswatiCreatives, setSaraswatiCreatives] = useState<SaraswatiCreative[]>([]);
-  const [storybookEntries, setStorybookEntries] = useState<FamilyStorybookEntry[]>([]);
-  const [selectedEmotion, setSelectedEmotion] = useState<string | null>(null);
-  const [kindnessPoints, setKindnessPoints] = useState(0);
-  const [currentDay, setCurrentDay] = useState('');
-  const [activeTab, setActiveTab] = useState('activities');
-  const [loading, setLoading] = useState(true);
-  const [showConfetti, setShowConfetti] = useState(false);
-  const [showFloatingEmoji, setShowFloatingEmoji] = useState(false);
-  const [showSecondaryActivities, setShowSecondaryActivities] = useState(false);
-  const [celebrationEmoji, setCelebrationEmoji] = useState('🎉');
+  // Use production-ready state management
+  const {
+    state,
+    activities,
+    progress,
+    kindnessMoments,
+    storybookEntries,
+    celebrationEmoji,
+    showFloatingEmoji,
+    showConfetti,
+    activeTab,
+    setActiveTab,
+    addKindnessMoment,
+    addStorybookEntry,
+    triggerCelebration,
+    setCelebrationEmoji,
+    setShowFloatingEmoji,
+    setShowConfetti,
+    isLoading,
+    totalKindnessPoints,
+    totalMemories,
+    kindnessLevel,
+    weeklyStats
+  } = useKidsActivities();
+  
   const { toast } = useToast();
-
-  useEffect(() => {
-    // Initialize all data
-    initializeData();
-  }, []);
-
-  const initializeData = () => {
-    // Emotion Explorers Scenarios
-    const emotionScenariosData: EmotionScenario[] = [
-      {
-        id: '1',
-        title: 'The Lost Toy',
-        description: 'A little bear lost his favorite toy',
-        character: 'Bear',
-        situation: 'Lost favorite toy',
-        emotions: ['Sad', 'Upset', 'Disappointed', 'Worried'],
-        emojis: ['😢', '😞', '😔', '😟'],
-        difficulty: 'easy'
+  
+  // Local state for UI elements that don't need persistence
+  const [selectedEmotion, setSelectedEmotion] = useState<string | null>(null);
+  const [showSecondaryActivities, setShowSecondaryActivities] = useState(false);
+  
+  // Static data that doesn't change (could be moved to a config file)
+  const emotionScenarios: EmotionScenario[] = [
+    {
+      id: '1',
+      title: 'The Lost Toy',
+      description: 'A little bear lost his favorite toy',
+      character: {
+        name: 'Bear',
+        description: 'A friendly teddy bear',
+        traits: ['kind', 'gentle'],
+        stories: [],
+        lessons: ['Perseverance'],
+        visualRepresentation: '🧸'
       },
-      {
-        id: '2',
-        title: 'The Birthday Surprise',
-        description: 'Rabbit gets a surprise birthday party',
-        character: 'Rabbit',
-        situation: 'Surprise party',
-        emotions: ['Happy', 'Excited', 'Surprised', 'Grateful'],
-        emojis: ['😊', '😄', '😲', '🙏'],
-        difficulty: 'easy'
+      situation: 'Lost favorite toy',
+      emotions: [
+        { name: 'Sad', emoji: '😢', description: 'Feeling down when something is lost', triggers: ['loss'], copingStrategies: ['seek help'], bodySignals: ['tears'] },
+        { name: 'Upset', emoji: '😞', description: 'Feeling disturbed', triggers: ['disappointment'], copingStrategies: ['talk it out'], bodySignals: ['frown'] },
+        { name: 'Disappointed', emoji: '😔', description: 'When expectations are not met', triggers: ['unmet expectations'], copingStrategies: ['acceptance'], bodySignals: ['slumped shoulders'] },
+        { name: 'Worried', emoji: '😟', description: 'Feeling anxious about something', triggers: ['uncertainty'], copingStrategies: ['problem solving'], bodySignals: ['tension'] }
+      ],
+      correctResponses: ['It\'s okay to feel sad when we lose something important'],
+      discussionPrompts: ['How would you help the bear feel better?'],
+      followUpActivities: ['Draw a picture of the toy'],
+      type: 'emotion',
+      difficulty: 'easy',
+      ageRange: { min: 3, max: 6 },
+      estimatedDuration: 10,
+      tags: ['emotions', 'animals', 'empathy'],
+      instructions: [{
+        step: 1,
+        title: 'Meet the Bear',
+        description: 'Look at the bear and guess how it feels',
+        interactionType: 'tap'
+      }],
+      materials: [],
+      learningObjectives: ['Emotion recognition', 'Empathy development'],
+      accessibility: {
+        screenReaderSupport: true,
+        voiceNavigation: true,
+        largeText: true,
+        highContrast: true,
+        reducedMotion: false,
+        audioDescriptions: true
       },
-      {
-        id: '3',
-        title: 'The Rainy Day',
-        description: 'Fox cannot play outside because of rain',
-        character: 'Fox',
-        situation: 'Cannot play outside',
-        emotions: ['Bored', 'Disappointed', 'Sad', 'Frustrated'],
-        emojis: ['😑', '😞', '😢', '😤'],
-        difficulty: 'medium'
-      }
-    ];
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }
+  ];
+  
+  const mythologicalQuestions: MythologicalQuestion[] = [
+    {
+      id: '1',
+      character: {
+        name: 'Krishna',
+        description: 'The playful and wise deity known for his flute',
+        traits: ['playful', 'wise', 'loving'],
+        stories: ['The Butter Thief', 'The Flute Player'],
+        lessons: ['Joy in simplicity', 'Love for all beings'],
+        visualRepresentation: '🪈'
+      },
+      question: 'Why did Krishna love to play the flute?',
+      answer: 'Because music brings joy and happiness to everyone',
+      context: 'Krishna\'s flute music made all the cows and villagers happy',
+      difficulty: 'easy',
+      type: 'mythology',
+      title: 'Krishna\'s Flute',
+      description: 'Learn about Krishna\'s musical wisdom',
+      ageRange: { min: 4, max: 8 },
+      estimatedDuration: 5,
+      tags: ['mythology', 'music', 'Krishna'],
+      instructions: [{
+        step: 1,
+        title: 'Listen to the Story',
+        description: 'Learn about Krishna\'s magical flute',
+        interactionType: 'read'
+      }],
+      materials: [],
+      learningObjectives: ['Cultural knowledge', 'Musical appreciation'],
+      accessibility: {
+        screenReaderSupport: true,
+        voiceNavigation: true,
+        largeText: true,
+        highContrast: true,
+        reducedMotion: false,
+        audioDescriptions: true
+      },
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }
+  ];
+  
+  const themedDays: ThemedDay[] = [
+    {
+      id: 'krishna',
+      name: 'Krishna Prank Day',
+      character: 'Krishna',
+      essence: 'Play & joy',
+      color: 'from-purple-500 to-pink-500',
+      icon: <Smile className="w-5 h-5" />,
+      description: 'The child becomes Krishna and does pranks with parents',
+      parentRole: 'Help or be the target'
+    },
+    {
+      id: 'hanuman',
+      name: 'Hanuman Helper Day',
+      character: 'Hanuman',
+      essence: 'Service & contribution',
+      color: 'from-orange-500 to-red-500',
+      icon: <CheckCircle className="w-5 h-5" />,
+      description: 'The child takes responsibility and does helpful tasks',
+      parentRole: 'Encourage task'
+    },
+    {
+      id: 'saraswati',
+      name: 'Saraswati Creative Day',
+      character: 'Saraswati',
+      essence: 'Creativity & curiosity',
+      color: 'from-blue-500 to-indigo-500',
+      icon: <Brush className="w-5 h-5" />,
+      description: 'Parents and child do creative activities together',
+      parentRole: 'Facilitate & engage'
+    }
+  ];
+  
+  const currentDay = 'krishna'; // This could be randomized or based on the day
 
-    // Kindness Moments (Sample)
-    const kindnessMomentsData: KindnessMoment[] = [
-      {
-        id: '1',
-        date: new Date(),
-        description: 'Shared toys with friend',
-        category: 'Sharing',
-        points: 5,
-        verified: true
-      },
-      {
-        id: '2',
-        date: new Date(),
-        description: 'Helped mom with dishes',
-        category: 'Helping',
-        points: 8,
-        verified: true
-      }
-    ];
-
-    // Mythological Questions
-    const mythologicalQuestionsData: MythologicalQuestion[] = [
-      {
-        id: '1',
-        character: 'Krishna',
-        question: 'Why did Krishna love to play the flute?',
-        answer: 'Because music brings joy and happiness to everyone',
-        context: 'Krishna\'s flute music made all the cows and villagers happy',
-        difficulty: 'easy'
-      },
-      {
-        id: '2',
-        character: 'Hanuman',
-        question: 'Why was Hanuman so strong?',
-        answer: 'Because he had unwavering faith and devotion',
-        context: 'Hanuman\'s strength came from his pure heart and devotion to Rama',
-        difficulty: 'medium'
-      },
-      {
-        id: '3',
-        character: 'Saraswati',
-        question: 'Why does Saraswati hold a veena?',
-        answer: 'Because music and knowledge create harmony in the world',
-        context: 'Saraswati\'s veena represents the music of knowledge and wisdom',
-        difficulty: 'medium'
-      }
-    ];
-
-    // Themed Days
-    const themedDaysData: ThemedDay[] = [
-      {
-        id: 'krishna',
-        name: 'Krishna Prank Day',
-        character: 'Krishna',
-        essence: 'Play & joy',
-        color: 'from-purple-500 to-pink-500',
-        icon: <Smile className="w-5 h-5" />,
-        description: 'The child becomes Krishna and does pranks with parents',
-        parentRole: 'Help or be the target'
-      },
-      {
-        id: 'hanuman',
-        name: 'Hanuman Helper Day',
-        character: 'Hanuman',
-        essence: 'Service & contribution',
-        color: 'from-orange-500 to-red-500',
-        icon: <CheckCircle className="w-5 h-5" />,
-        description: 'The child takes responsibility and does helpful tasks',
-        parentRole: 'Encourage task'
-      },
-      {
-        id: 'saraswati',
-        name: 'Saraswati Creative Day',
-        character: 'Saraswati',
-        essence: 'Creativity & curiosity',
-        color: 'from-blue-500 to-indigo-500',
-        icon: <Brush className="w-5 h-5" />,
-        description: 'Parents and child do creative activities together',
-        parentRole: 'Facilitate & engage'
-      }
-    ];
-
-    // Krishna Pranks
-    const krishnaPranksData: KrishnaPrank[] = [
-      {
-        id: '1',
-        title: 'The Mysterious Note',
-        helperParent: 'Mom',
-        targetParent: 'Dad',
-        prompt: 'Help your child write a mysterious note and hide it for Dad to find',
-        instructions: [
-          'Write a fun, mysterious message together',
-          'Hide it where Dad will find it during the day',
-          'Keep it light and fun',
-          'Enjoy Dad\'s surprised reaction together'
-        ],
-        difficulty: 'easy',
-        estimatedTime: '15 minutes'
-      },
-      {
-        id: '2',
-        title: 'The Sock Swap',
-        helperParent: 'Dad',
-        targetParent: 'Mom',
-        prompt: 'Help your child swap a few pairs of socks in Mom\'s drawer',
-        instructions: [
-          'Choose colorful, fun socks',
-          'Swap 2-3 pairs in Mom\'s drawer',
-          'Be there when Mom discovers it',
-          'Laugh together about the fun mix-up'
-        ],
-        difficulty: 'easy',
-        estimatedTime: '10 minutes'
-      }
-    ];
-
-    // Hanuman Tasks
-    const hanumanTasksData: HanumanTask[] = [
-      {
-        id: '1',
-        title: 'Book Organization Mission',
-        description: 'Organize your books like a true Hanuman helper',
-        category: 'Organization',
-        difficulty: 'easy',
-        estimatedTime: '20 minutes',
-        materials: ['Books', 'Shelf space'],
-        celebrationPrompt: 'Great job organizing! You\'re as helpful as Hanuman!'
-      },
-      {
-        id: '2',
-        title: 'Toy Tidy Up',
-        description: 'Help organize the toys in the living room',
-        category: 'Cleaning',
-        difficulty: 'easy',
-        estimatedTime: '15 minutes',
-        materials: ['Toys', 'Storage containers'],
-        celebrationPrompt: 'Wonderful work! You\'re a true helper like Hanuman!'
-      }
-    ];
-
-    // Saraswati Creatives
-    const saraswatiCreativesData: SaraswatiCreative[] = [
-      {
-        id: '1',
-        title: 'Dream House Drawing',
-        description: 'Draw your dream house and tell your parent about it',
-        category: 'Drawing',
-        materials: ['Paper', 'Colors', 'Pencils'],
-        prompts: [
-          'What rooms would you have?',
-          'What special features would make it fun?',
-          'Who would live there with you?'
-        ],
-        estimatedTime: '30 minutes',
-        reflectionQuestions: [
-          'What was the most fun part of your dream house?',
-          'What would you do if you lived there?'
-        ]
-      },
-      {
-        id: '2',
-        title: 'Story Creation',
-        description: 'Create a story together with your child',
-        category: 'Storytelling',
-        materials: ['Paper', 'Pencils', 'Imagination'],
-        prompts: [
-          'Who would be the main character?',
-          'What adventure would they go on?',
-          'How would the story end?'
-        ],
-        estimatedTime: '25 minutes',
-        reflectionQuestions: [
-          'What was your favorite part of the story?',
-          'What would you like to create a story about next time?'
-        ]
-      }
-    ];
-
-    // Family Storybook Entries
-    const storybookEntriesData: FamilyStorybookEntry[] = [
-      {
-        id: '1',
-        date: new Date(),
-        type: 'krishna',
-        title: 'The Great Note Adventure',
-        description: 'Had fun writing mysterious notes and hiding them',
-        participants: ['Child', 'Mom']
-      },
-      {
-        id: '2',
-        date: new Date(),
-        type: 'hanuman',
-        title: 'Book Organization Mission',
-        description: 'Successfully organized all books on the shelf',
-        participants: ['Child', 'Dad']
-      }
-    ];
-
-    setEmotionScenarios(emotionScenariosData);
-    setKindnessMoments(kindnessMomentsData);
-    setMythologicalQuestions(mythologicalQuestionsData);
-    setThemedDays(themedDaysData);
-    setKrishnaPranks(krishnaPranksData);
-    setHanumanTasks(hanumanTasksData);
-    setSaraswatiCreatives(saraswatiCreativesData);
-    setStorybookEntries(storybookEntriesData);
-    
-    // Calculate kindness points
-    const totalPoints = kindnessMomentsData.reduce((sum, moment) => sum + moment.points, 0);
-    setKindnessPoints(totalPoints);
-    
-    // Set current day (randomized daily selection)
-    const availableDays = ['krishna', 'hanuman', 'saraswati'];
-    const randomDay = availableDays[Math.floor(Math.random() * availableDays.length)];
-    setCurrentDay(randomDay);
-    
-    setLoading(false);
-  };
-
+  // Activity Handlers - Updated to use new state management
   const handleEmotionSelect = (emotion: string, emoji: string) => {
     setSelectedEmotion(emotion);
-    setCelebrationEmoji(emoji);
-    setShowFloatingEmoji(true);
+    triggerCelebration(emoji, false, 3000);
     toast({
       title: "Emotion Selected! 🎭",
       description: `You chose ${emoji} ${emotion} - Great emotional vocabulary building!`,
       duration: 3000,
     });
-    setTimeout(() => setShowFloatingEmoji(false), 2000);
   };
 
-  const handleKindnessMoment = (description: string, category: string) => {
-    const newMoment: KindnessMoment = {
-      id: Date.now().toString(),
-      date: new Date(),
-      description,
-      category,
-      points: Math.floor(Math.random() * 10) + 1,
-      verified: true
-    };
+  const handleKindnessMoment = async (description: string, category: string) => {
+    const points = Math.floor(Math.random() * 10) + 1;
+    const moment = await addKindnessMoment(description, category, points);
     
-    setKindnessMoments(prev => [...prev, newMoment]);
-    setKindnessPoints(prev => prev + newMoment.points);
-    setCelebrationEmoji('💖');
-    setShowFloatingEmoji(true);
-    
-    toast({
-      title: "Kindness Recorded! 🌟",
-      description: `Great job! You earned ${newMoment.points} kindness points.`,
-      duration: 3000,
-    });
-    setTimeout(() => setShowFloatingEmoji(false), 2000);
+    if (moment) {
+      toast({
+        title: "Kindness Recorded! 🌟",
+        description: `Great job! You earned ${points} kindness points.`,
+        duration: 3000,
+      });
+    }
   };
 
   const handleMythologicalAnswer = (questionId: string, answer: string) => {
     const question = mythologicalQuestions.find(q => q.id === questionId);
     if (question) {
-      setCelebrationEmoji('📚');
-      setShowFloatingEmoji(true);
+      triggerCelebration('📚', false, 4000);
       toast({
         title: "Great Answer! 📚",
-        description: `You know about ${question.character}! ${question.answer}`,
+        description: `You know about ${question.character.name}! ${question.answer}`,
         duration: 4000,
       });
-      setTimeout(() => setShowFloatingEmoji(false), 2000);
     }
   };
 
-  const handlePrankComplete = (prankId: string) => {
-    const prank = krishnaPranks.find(p => p.id === prankId);
-    if (prank) {
-      const newEntry: FamilyStorybookEntry = {
-        id: Date.now().toString(),
-        date: new Date(),
-        type: 'krishna',
-        title: prank.title,
-        description: `Had fun with ${prank.helperParent} and ${prank.targetParent}`,
-        participants: ['Child', prank.helperParent, prank.targetParent]
-      };
-      
-      setStorybookEntries(prev => [...prev, newEntry]);
-      setCelebrationEmoji('😄');
-      setShowFloatingEmoji(true);
-      setShowConfetti(true);
-      
+  const handlePrankComplete = async (prankId: string) => {
+    const entry = await addStorybookEntry(
+      'Krishna Prank Adventure',
+      'Had fun with a playful Krishna-style prank!',
+      'activity',
+      ['Child', 'Parent']
+    );
+    
+    if (entry) {
       toast({
         title: "Prank Complete! 😄",
         description: "What a fun Krishna-style adventure!",
         duration: 3000,
       });
-      setTimeout(() => setShowFloatingEmoji(false), 2000);
-      setTimeout(() => setShowConfetti(false), 3000);
     }
   };
 
-  const handleTaskComplete = (taskId: string) => {
-    const task = hanumanTasks.find(t => t.id === taskId);
-    if (task) {
-      const newEntry: FamilyStorybookEntry = {
-        id: Date.now().toString(),
-        date: new Date(),
-        type: 'hanuman',
-        title: task.title,
-        description: task.description,
-        participants: ['Child', 'Parent']
-      };
-      
-      setStorybookEntries(prev => [...prev, newEntry]);
-      setCelebrationEmoji('🎉');
-      setShowFloatingEmoji(true);
-      
+  const handleTaskComplete = async (taskId: string) => {
+    const entry = await addStorybookEntry(
+      'Hanuman Helper Task',
+      'Completed a helpful task like Hanuman!',
+      'activity',
+      ['Child', 'Parent']
+    );
+    
+    if (entry) {
       toast({
         title: "Task Complete! 🎉",
-        description: task.celebrationPrompt,
+        description: "Great job being helpful like Hanuman!",
         duration: 3000,
       });
-      setTimeout(() => setShowFloatingEmoji(false), 2000);
     }
   };
 
-  const handleCreativeComplete = (creativeId: string) => {
-    const creative = saraswatiCreatives.find(c => c.id === creativeId);
-    if (creative) {
-      const newEntry: FamilyStorybookEntry = {
-        id: Date.now().toString(),
-        date: new Date(),
-        type: 'saraswati',
-        title: creative.title,
-        description: creative.description,
-        participants: ['Child', 'Parent']
-      };
-      
-      setStorybookEntries(prev => [...prev, newEntry]);
-      setCelebrationEmoji('🎨');
-      setShowFloatingEmoji(true);
-      setShowConfetti(true);
-      
+  const handleCreativeComplete = async (creativeId: string) => {
+    const entry = await addStorybookEntry(
+      'Saraswati Creative Time',
+      'Created something beautiful inspired by Saraswati!',
+      'activity',
+      ['Child', 'Parent']
+    );
+    
+    if (entry) {
       toast({
         title: "Creation Complete! 🎨",
         description: "Beautiful Saraswati-inspired creativity!",
         duration: 3000,
       });
-      setTimeout(() => setShowFloatingEmoji(false), 2000);
-      setTimeout(() => setShowConfetti(false), 3000);
     }
   };
 
+  // Helper functions updated for new state management
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
       case 'easy': return 'bg-green-100 text-green-700';
@@ -549,19 +317,17 @@ export function KidsActivities() {
     }
   };
 
-  // Add new activity handlers
+  // New activity handlers using state management
   const startDailyGame = () => {
     const games = emotionScenarios;
     const randomGame = games[Math.floor(Math.random() * games.length)];
     setSelectedEmotion(null);
-    setCelebrationEmoji('🎲');
-    setShowFloatingEmoji(true);
+    triggerCelebration('🎲', false, 4000);
     toast({
       title: "Game Started! 🎲",
-      description: `Let's play "${randomGame.title}" - Help ${randomGame.character} with their emotions!`,
+      description: `Let's play "${randomGame.title}" - Help ${randomGame.character.name} with their emotions!`,
       duration: 4000,
     });
-    setTimeout(() => setShowFloatingEmoji(false), 2000);
   };
 
   const startKindnessChallenge = () => {
@@ -573,96 +339,80 @@ export function KidsActivities() {
       "Clean up without being asked"
     ];
     const randomChallenge = challenges[Math.floor(Math.random() * challenges.length)];
-    setCelebrationEmoji('💖');
-    setShowFloatingEmoji(true);
+    triggerCelebration('💖', false, 5000);
     toast({
       title: "Kindness Challenge! 💖",
       description: `Today's challenge: ${randomChallenge}`,
       duration: 5000,
     });
-    setTimeout(() => setShowFloatingEmoji(false), 2000);
   };
 
   const readMythologicalStory = () => {
     const stories = mythologicalQuestions;
     const randomStory = stories[Math.floor(Math.random() * stories.length)];
-    setCelebrationEmoji('📚');
-    setShowFloatingEmoji(true);
+    triggerCelebration('📚', false, 6000);
     toast({
       title: "Story Time! 📚",
-      description: `Let's learn about ${randomStory.character}: ${randomStory.context}`,
+      description: `Let's learn about ${randomStory.character.name}: ${randomStory.context}`,
       duration: 6000,
     });
-    setTimeout(() => setShowFloatingEmoji(false), 2000);
   };
 
-  const startCreativeActivity = () => {
-    const activities = saraswatiCreatives;
-    const randomActivity = activities[Math.floor(Math.random() * activities.length)];
-    setCelebrationEmoji('🎨');
-    setShowFloatingEmoji(true);
-    toast({
-      title: "Creative Time! 🎨",
-      description: `Let's create: ${randomActivity.title}`,
-      duration: 5000,
-    });
-    setTimeout(() => setShowFloatingEmoji(false), 2000);
+  const startCreativeActivity = async () => {
+    const entry = await addStorybookEntry(
+      'Creative Adventure',
+      'Started a wonderful creative activity!',
+      'activity',
+      ['Child', 'Parent']
+    );
+    
+    if (entry) {
+      triggerCelebration('🎨', false, 5000);
+      toast({
+        title: "Creative Time! 🎨",
+        description: "Let's create something beautiful together!",
+        duration: 5000,
+      });
+    }
   };
 
   const startDevelopmentTracking = () => {
-    setCelebrationEmoji('🧠');
-    setShowFloatingEmoji(true);
+    triggerCelebration('🧠', false, 4000);
     toast({
       title: "Development Tracking! 🧠",
       description: "Let's track your child's amazing growth and milestones!",
       duration: 4000,
     });
-    setTimeout(() => setShowFloatingEmoji(false), 2000);
   };
 
   const startAICoaching = () => {
-    setCelebrationEmoji('✨');
-    setShowFloatingEmoji(true);
+    triggerCelebration('✨', false, 4000);
     toast({
       title: "AI Coach Ready! ✨",
       description: "Your personal parenting assistant is here to help!",
       duration: 4000,
     });
-    setTimeout(() => setShowFloatingEmoji(false), 2000);
   };
 
   const viewFamilyMilestones = () => {
-    setCelebrationEmoji('🏆');
-    setShowFloatingEmoji(true);
+    triggerCelebration('🏆', false, 4000);
     toast({
       title: "Family Milestones! 🏆",
       description: "Celebrating all your family's amazing achievements!",
       duration: 4000,
     });
-    setTimeout(() => setShowFloatingEmoji(false), 2000);
   };
 
-  const saveKindnessMemory = () => {
-    const newMoment: KindnessMoment = {
-      id: Date.now().toString(),
-      date: new Date(),
-      description: "Custom kindness memory",
-      category: "Custom",
-      points: 10,
-      verified: true
-    };
+  const saveKindnessMemory = async () => {
+    const moment = await addKindnessMoment('Custom kindness memory', 'Custom');
     
-    setKindnessMoments(prev => [...prev, newMoment]);
-    setKindnessPoints(prev => prev + newMoment.points);
-    setCelebrationEmoji('📸');
-    setShowFloatingEmoji(true);
-    
-    toast({
-      title: "Memory Saved! 📸",
-      description: "Your special kindness moment has been added to the family story!",
-      duration: 3000,
-    });
-    setTimeout(() => setShowFloatingEmoji(false), 2000);
+    if (moment) {
+      toast({
+        title: "Memory Saved! 📸",
+        description: "Your special kindness moment has been added to the family story!",
+        duration: 3000,
+      });
+    }
   };
 
   const handleQuickAction = (action: string) => {
@@ -684,28 +434,21 @@ export function KidsActivities() {
     }
   };
 
-  const addFirstMemory = () => {
-    const newEntry: FamilyStorybookEntry = {
-      id: Date.now().toString(),
-      date: new Date(),
-      type: 'krishna',
-      title: 'Our First Adventure',
-      description: 'Started our mythology-inspired family journey!',
-      participants: ['Family']
-    };
+  const addFirstMemory = async () => {
+    const entry = await addStorybookEntry(
+      'Our First Adventure',
+      'Started our mythology-inspired family journey!',
+      'milestone',
+      ['Family']
+    );
     
-    setStorybookEntries(prev => [...prev, newEntry]);
-    setCelebrationEmoji('📚');
-    setShowFloatingEmoji(true);
-    setShowConfetti(true);
-    
-    toast({
-      title: "First Memory Added! 📚",
-      description: "Welcome to your family's mythology-inspired storybook!",
-      duration: 4000,
-    });
-    setTimeout(() => setShowFloatingEmoji(false), 2000);
-    setTimeout(() => setShowConfetti(false), 3000);
+    if (entry) {
+      toast({
+        title: "First Memory Added! 📚",
+        description: "Welcome to your family's mythology-inspired storybook!",
+        duration: 4000,
+      });
+    }
   };
 
   const getCharacterColor = (type: 'krishna' | 'hanuman' | 'saraswati') => {
@@ -721,7 +464,7 @@ export function KidsActivities() {
     }
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-100 to-blue-100 p-3 sm:p-4">
         <div className="max-w-lg mx-auto space-y-4">
@@ -870,12 +613,12 @@ export function KidsActivities() {
               {/* Progress Summary - Condensed */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-gradient-to-r from-pink-200 to-rose-200 rounded-xl p-4 text-center border border-pink-300">
-                  <div className="text-2xl font-bold text-pink-600 mb-1">{kindnessPoints}</div>
+                  <div className="text-2xl font-bold text-pink-600 mb-1">{totalKindnessPoints}</div>
                   <div className="text-sm text-pink-700 font-semibold">Kindness Stars ⭐</div>
                 </div>
-                <div className="bg-gradient-to-r from-yellow-200 to-amber-200 rounded-xl p-4 text-center border border-yellow-300">
-                  <div className="text-2xl font-bold text-yellow-600 mb-1">{storybookEntries.length}</div>
-                  <div className="text-sm text-yellow-700 font-semibold">Memories 📚</div>
+                <div className="bg-white/80 backdrop-blur-sm rounded-xl p-3 text-center border border-orange-200">
+                  <div className="text-2xl font-bold text-orange-600">{totalMemories}</div>
+                  <div className="text-xs text-gray-600">Memories 📚</div>
                 </div>
               </div>
             </CardContent>
@@ -886,7 +629,7 @@ export function KidsActivities() {
             <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-none">
               <CardContent className="p-6 sm:p-8 relative overflow-hidden">
                 {/* Celebration Effects */}
-                {kindnessPoints >= 10 && (
+                {totalKindnessPoints >= 10 && (
                   <>
                     <div className="absolute top-2 right-2 animate-bounce">
                       <div className="text-3xl opacity-60">🎆</div>
@@ -916,15 +659,15 @@ export function KidsActivities() {
                   </div>
                   
                   {/* Achievement Display with Celebration */}
-                  <div className="bg-gradient-to-r from-emerald-200 to-teal-200 rounded-2xl p-6 border border-emerald-300 transform hover:scale-105 transition-all duration-300">
-                    <div className="text-4xl sm:text-5xl font-bold text-emerald-600 animate-pulse mb-2">{kindnessPoints}</div>
+                  <div className="flex items-center justify-between bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-emerald-300 transform hover:scale-105 transition-all duration-300">
+                    <div className="text-4xl sm:text-5xl font-bold text-emerald-600 animate-pulse mb-2">{totalKindnessPoints}</div>
                     <div className="text-lg text-emerald-700 font-semibold mb-3">Kindness Stars</div>
                     <div className="flex justify-center space-x-1 mb-2">
-                      {[...Array(Math.min(Math.floor(kindnessPoints / 3), 5))].map((_, i) => (
+                      {[...Array(Math.min(Math.floor(totalKindnessPoints / 3), 5))].map((_, i) => (
                         <span key={i} className="text-2xl animate-bounce" style={{animationDelay: `${i * 0.2}s`}}>⭐</span>
                       ))}
                     </div>
-                    {kindnessPoints >= 10 && (
+                    {totalKindnessPoints >= 10 && (
                       <div className="text-emerald-700 font-bold animate-pulse">
                         🎉 Amazing! You're a Kindness Champion!
                       </div>
@@ -937,11 +680,11 @@ export function KidsActivities() {
                   <div className="relative bg-emerald-200 rounded-full h-6 overflow-hidden shadow-inner border border-emerald-300">
                     <div 
                       className="absolute top-0 left-0 h-full bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 rounded-full transition-all duration-1000 ease-out shadow-lg"
-                      style={{ width: `${Math.min((kindnessPoints / 15) * 100, 100)}%` }}
+                      style={{ width: `${Math.min((totalKindnessPoints / 15) * 100, 100)}%` }}
                     >
                       <div className="h-full bg-gradient-to-r from-white/30 to-transparent rounded-full animate-pulse"></div>
                     </div>
-                    {kindnessPoints >= 15 && (
+                    {totalKindnessPoints >= 15 && (
                       <div className="absolute inset-0 flex items-center justify-center">
                         <span className="text-white font-bold text-sm animate-bounce">🎆 Full!</span>
                       </div>
@@ -949,7 +692,7 @@ export function KidsActivities() {
                   </div>
                   <div className="flex justify-between text-sm text-gray-600 mt-2">
                     <span>Keep spreading love! 🌟</span>
-                    <span className="font-semibold">{Math.min((kindnessPoints / 15) * 100, 100).toFixed(0)}% to Kindness Master</span>
+                    <span className="font-semibold">{Math.min((totalKindnessPoints / 15) * 100, 100).toFixed(0)}% to Kindness Master</span>
                   </div>
                 </div>
                 
@@ -1008,7 +751,7 @@ export function KidsActivities() {
                       <div className="flex flex-wrap gap-1 mt-1">
                         {scenario.emotions.slice(0, 3).map((emotion, index) => (
                           <span key={index} className="text-xs bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-700 px-2 py-1 rounded-full hover:scale-105 transition-transform">
-                            {scenario.emojis[index]} {emotion}
+                            {emotion.emoji} {emotion.name}
                           </span>
                         ))}
                       </div>
@@ -1067,18 +810,14 @@ export function KidsActivities() {
                   <div className="relative flex-shrink-0">
                     <div className="absolute inset-0 bg-purple-300 rounded-full blur-lg opacity-50 animate-pulse"></div>
                     <div className="relative w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center transform hover:scale-110 transition-all duration-200 animate-bounce">
-                      {currentDay === 'krishna' && <Smile className="w-5 h-5 sm:w-6 sm:h-6 text-white" />}
-                      {currentDay === 'hanuman' && <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-white" />}
-                      {currentDay === 'saraswati' && <Brush className="w-5 h-5 sm:w-6 sm:h-6 text-white" />}
+                      <Smile className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                     </div>
                   </div>
                 </div>
                 
                 <div className="bg-gradient-to-r from-purple-100 to-pink-100 rounded-lg p-3 mb-3">
                   <p className="text-xs sm:text-sm text-purple-800 font-medium">
-                    {currentDay === 'krishna' && '🎭 Playful pranks and joyful moments!'}
-                    {currentDay === 'hanuman' && '💪 Strong helper tasks for family!'}
-                    {currentDay === 'saraswati' && '🎨 Creative expression and learning!'}
+                    🎭 Playful pranks and joyful moments!
                   </p>
                 </div>
                 
@@ -1137,15 +876,13 @@ export function KidsActivities() {
                             <div className="flex items-center gap-3 mb-3">
                               <div className="w-12 h-12 bg-gradient-to-r from-indigo-400 to-purple-400 rounded-full flex items-center justify-center shadow-lg">
                                 <span className="text-lg">
-                                  {entry.type === 'krishna' ? '🎭' : 
-                                   entry.type === 'hanuman' ? '💪' : '🎨'}
+                                  🎭
                                 </span>
                               </div>
                               <div>
                                 <h4 className="font-semibold text-gray-900">{entry.title}</h4>
                                 <Badge className="bg-gradient-to-r from-indigo-100 to-purple-100 text-indigo-700 border-indigo-200">
-                                  {entry.type === 'krishna' ? '👦 Krishna' : 
-                                   entry.type === 'hanuman' ? '🐒 Hanuman' : '👩 Saraswati'}
+                                  📚 Story
                                 </Badge>
                               </div>
                             </div>
@@ -1457,6 +1194,27 @@ export function KidsActivities() {
                     <span className="text-3xl animate-bounce delay-700">😄</span>
                     <span className="text-sm font-semibold">Just for Fun</span>
                   </Button>
+                  
+                  <Button 
+                    className="bg-gradient-to-r from-purple-400 to-indigo-400 hover:from-purple-500 hover:to-indigo-500 text-white rounded-2xl p-6 h-auto flex flex-col items-center gap-3 shadow-lg transform hover:scale-105 transition-all duration-300 active:scale-95 sm:col-span-2"
+                    onClick={() => {
+                      setCelebrationEmoji('📝');
+                      setShowFloatingEmoji(true);
+                      setShowConfetti(true);
+                      toast({ 
+                        title: "Homework Helper Leela! 📝", 
+                        description: "Don't worry! Every question is a chance to grow smarter. Let's solve this together step by step! I believe in you! 🌟" 
+                      });
+                      setTimeout(() => {
+                        setShowFloatingEmoji(false);
+                        setShowConfetti(false);
+                      }, 4000);
+                    }}
+                  >
+                    <span className="text-4xl animate-bounce delay-900">📝</span>
+                    <span className="text-lg font-bold">Help with Homework</span>
+                    <span className="text-xs opacity-90">Math, Reading, Science & More!</span>
+                  </Button>
                 </div>
               </div>
             </CardContent>
@@ -1550,7 +1308,7 @@ export function KidsActivities() {
                 <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-4 border border-yellow-200 shadow-lg transform hover:scale-105 transition-all duration-200">
                   <div className="text-3xl mb-2 animate-bounce">🌟</div>
                   <div className="text-sm sm:text-base font-bold text-yellow-700">Kindness Stars</div>
-                  <div className="text-xl sm:text-2xl font-bold text-yellow-800 mt-1">{kindnessPoints}</div>
+                  <div className="text-xl sm:text-2xl font-bold text-yellow-800 mt-1">{totalKindnessPoints}</div>
                   <div className="text-xs text-gray-600">acts of kindness</div>
                 </div>
                 <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-4 border border-orange-200 shadow-lg transform hover:scale-105 transition-all duration-200">
@@ -1576,7 +1334,7 @@ export function KidsActivities() {
                   setShowFloatingEmoji(true);
                   toast({ 
                     title: "You're Amazing! 🎉", 
-                    description: `Look at all your ${kindnessPoints + storybookEntries.length + 8} achievements! You're a superstar!` 
+                    description: `Look at all your ${totalKindnessPoints + totalMemories + 8} achievements! You're a superstar!` 
                   });
                   setTimeout(() => {
                     setShowFloatingEmoji(false);
