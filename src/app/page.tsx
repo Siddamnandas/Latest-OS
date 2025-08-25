@@ -13,7 +13,6 @@ import { useToast } from '@/hooks/use-toast';
 import { useLiveData } from '@/hooks/useLiveData';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
-import { useTranslations } from 'next-intl';
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState('home');
@@ -21,7 +20,6 @@ export default function Home() {
   const [isDemoMode, setIsDemoMode] = useState(false);
   const { toast } = useToast();
   const { data: liveData, loading, error } = useLiveData();
-  const t = useTranslations('Home');
 
   // Use live data or fallback to default values
   const streak = liveData?.stats.streak || 7;
@@ -58,14 +56,14 @@ export default function Home() {
       // In a real app, this would call an API to update coins
       setShowCelebration(true);
       toast({
-        title: t('dailyBonusTitle'),
-        description: t('dailyBonusDescription'),
+        title: "Daily Bonus! 🎉",
+        description: "You earned 50 Lakshmi Coins for logging in today!",
         duration: 3000,
       });
       
       setTimeout(() => setShowCelebration(false), 3000);
     }
-  }, [toast, liveData, t]);
+  }, [toast, liveData]);
 
   const renderContent = () => {
     switch (activeTab) {

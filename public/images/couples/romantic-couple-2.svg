@@ -1,0 +1,102 @@
+<svg width="300" height="200" viewBox="0 0 300 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background gradient -->
+  <defs>
+    <linearGradient id="bgGradient2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#fef3c7;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#fde68a;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#f59e0b;stop-opacity:0.3" />
+    </linearGradient>
+    <radialGradient id="heartGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#f472b6;stop-opacity:0.8" />
+      <stop offset="100%" style="stop-color:#f472b6;stop-opacity:0.2" />
+    </radialGradient>
+    <linearGradient id="skinToneM" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#fdba74;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#fb923c;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="skinToneF" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#fed7aa;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#fdba74;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="300" height="200" fill="url(#bgGradient2)"/>
+  
+  <!-- Romantic atmosphere with floating elements -->
+  <g opacity="0.4">
+    <!-- Rose petals -->
+    <ellipse cx="70" cy="30" rx="3" ry="6" fill="#f472b6" transform="rotate(45 70 30)"/>
+    <ellipse cx="230" cy="50" rx="4" ry="8" fill="#ec4899" transform="rotate(-30 230 50)"/>
+    <ellipse cx="40" cy="120" rx="3" ry="5" fill="#f472b6" transform="rotate(60 40 120)"/>
+    <ellipse cx="260" cy="140" rx="3" ry="6" fill="#ec4899" transform="rotate(-45 260 140)"/>
+    
+    <!-- Stars -->
+    <path d="M100 25 L102 30 L107 32 L102 34 L100 39 L98 34 L93 32 L98 30 Z" fill="#fbbf24"/>
+    <path d="M250 25 L251 28 L254 29 L251 30 L250 33 L249 30 L246 29 L249 28 Z" fill="#fbbf24"/>
+  </g>
+  
+  <!-- Central heart glow -->
+  <circle cx="150" cy="100" r="40" fill="url(#heartGlow)"/>
+  
+  <!-- Male figure (embracing from behind) -->
+  <g transform="translate(110, 60)">
+    <!-- Head -->
+    <ellipse cx="20" cy="20" rx="16" ry="18" fill="url(#skinToneM)"/>
+    <!-- Hair -->
+    <path d="M4 15 Q8 3, 20 5 Q32 3, 36 15 Q36 20, 32 25 Q25 30, 20 28 Q15 30, 8 25 Q4 20, 4 15 Z" fill="#1f2937"/>
+    <!-- Eyes (closed, peaceful) -->
+    <path d="M14 17 Q16 19, 18 17" stroke="#374151" stroke-width="1.5" fill="none"/>
+    <path d="M22 17 Q24 19, 26 17" stroke="#374151" stroke-width="1.5" fill="none"/>
+    <!-- Nose -->
+    <ellipse cx="20" cy="22" rx="1" ry="1.5" fill="#ea580c"/>
+    <!-- Mouth (gentle smile) -->
+    <path d="M17 26 Q20 28, 23 26" stroke="#7c2d12" stroke-width="1" fill="none"/>
+    <!-- Body -->
+    <rect x="8" y="35" width="24" height="35" rx="12" fill="#6366f1"/>
+    <!-- Arms (embracing) -->
+    <ellipse cx="35" cy="50" rx="6" ry="20" fill="url(#skinToneM)" transform="rotate(60 35 50)"/>
+    <ellipse cx="5" cy="50" rx="6" ry="20" fill="url(#skinToneM)" transform="rotate(-60 5 50)"/>
+  </g>
+  
+  <!-- Female figure (being embraced) -->
+  <g transform="translate(130, 70)">
+    <!-- Head -->
+    <ellipse cx="20" cy="18" rx="15" ry="16" fill="url(#skinToneF)"/>
+    <!-- Hair (long, flowing) -->
+    <path d="M5 12 Q3 2, 12 0 Q20 -2, 28 0 Q37 2, 35 12 Q37 25, 32 35 Q25 40, 20 38 Q15 40, 8 35 Q3 25, 5 12 Z" fill="#92400e"/>
+    <!-- Hair strands -->
+    <path d="M8 35 Q5 45, 2 55" stroke="#92400e" stroke-width="2" fill="none"/>
+    <path d="M32 35 Q35 45, 38 55" stroke="#92400e" stroke-width="2" fill="none"/>
+    <!-- Eyes (closed, blissful) -->
+    <path d="M13 15 Q15 17, 17 15" stroke="#374151" stroke-width="1.5" fill="none"/>
+    <path d="M23 15 Q25 17, 27 15" stroke="#374151" stroke-width="1.5" fill="none"/>
+    <!-- Eyelashes -->
+    <path d="M12 14 L10 12" stroke="#374151" stroke-width="0.5"/>
+    <path d="M17 14 L18 12" stroke="#374151" stroke-width="0.5"/>
+    <path d="M23 14 L22 12" stroke="#374151" stroke-width="0.5"/>
+    <path d="M28 14 L30 12" stroke="#374151" stroke-width="0.5"/>
+    <!-- Nose -->
+    <ellipse cx="20" cy="20" rx="1" ry="1.5" fill="#ea580c"/>
+    <!-- Mouth (content smile) -->
+    <path d="M17 24 Q20 26, 23 24" stroke="#7c2d12" stroke-width="1" fill="none"/>
+    <!-- Body -->
+    <rect x="10" y="30" width="20" height="30" rx="10" fill="#ec4899"/>
+    <!-- Arms (resting) -->
+    <ellipse cx="6" cy="42" rx="5" ry="15" fill="url(#skinToneF)" transform="rotate(-20 6 42)"/>
+    <ellipse cx="34" cy="42" rx="5" ry="15" fill="url(#skinToneF)" transform="rotate(20 34 42)"/>
+  </g>
+  
+  <!-- Love energy emanating -->
+  <g opacity="0.3">
+    <circle cx="150" cy="100" r="60" stroke="#f472b6" stroke-width="1" fill="none"/>
+    <circle cx="150" cy="100" r="80" stroke="#ec4899" stroke-width="0.5" fill="none"/>
+  </g>
+  
+  <!-- Sparkles of connection -->
+  <g opacity="0.7">
+    <path d="M180 70 L181 73 L184 74 L181 75 L180 78 L179 75 L176 74 L179 73 Z" fill="#fbbf24"/>
+    <path d="M120 120 L121 122 L123 123 L121 124 L120 126 L119 124 L117 123 L119 122 Z" fill="#fbbf24"/>
+    <path d="M200 130 L201 132 L203 133 L201 134 L200 136 L199 134 L197 133 L199 132 Z" fill="#fbbf24"/>
+  </g>
+</svg>

@@ -61,7 +61,20 @@ const removeCoupleRoom = async (coupleId: string) => {
 
 export const setupSocket = async (io: Server) => {
   const subClient = redis.duplicate();
-  await Promise.all([redis.connect(), subClient.connect()]);
+  
+  // Connect Redis clients only if they aren't already connected
+  const connections = [];
+  if (redis.status !== 'ready' && redis.status !== 'connecting') {
+    connections.push(redis.connect());
+  }
+  if (subClient.status !== 'ready' && subClient.status !== 'connecting') {
+    connections.push(subClient.connect());
+  }
+  
+  if (connections.length > 0) {
+    await Promise.all(connections);
+  }
+  
   io.adapter(createAdapter(redis, subClient));
 
   // Helper function to emit to couple room

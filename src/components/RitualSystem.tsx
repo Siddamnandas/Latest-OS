@@ -26,6 +26,7 @@ import {
   Activity,
   TrendingUp
 } from 'lucide-react';
+import Image from 'next/image';
 
 interface Ritual {
   id: string;
@@ -96,7 +97,7 @@ export function RitualSystem() {
 
   const [activeRitual, setActiveRitual] = useState<string | null>(null);
   const [currentStep, setCurrentStep] = useState(0);
-  const [activeTab, setActiveTab] = useState('balance');
+  const [activeTab, setActiveTab] = useState('rituals');
   
   // Rasa Balance state
   const [rasaBalance, setRasaBalance] = useState({
@@ -242,12 +243,22 @@ export function RitualSystem() {
     <div className="p-4 space-y-6">
       {/* Header with stats */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-pink-600 via-purple-600 to-pink-600 p-6 shadow-xl">
+        {/* Romantic couple silhouette in header */}
+        <div className="absolute top-4 right-6 opacity-20">
+          <Image
+            src="/images/couples/couple-silhouette.svg"
+            alt="Romantic couple"
+            width={60}
+            height={40}
+            className="filter invert"
+          />
+        </div>
         <div className="absolute inset-0 bg-white/10 backdrop-blur-sm"></div>
         <div className="relative z-10">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h1 className="text-2xl font-bold text-white mb-1">Sacred Rituals</h1>
-              <p className="text-white/80 text-sm">Ancient wisdom for modern love</p>
+              <p className="text-white/80 text-sm">Ancient wisdom for modern love ❤️</p>
             </div>
             <div className="flex items-center gap-3">
               <div className="flex flex-col items-center bg-white/20 backdrop-blur-lg rounded-xl p-3 min-w-[80px]">
@@ -385,11 +396,29 @@ export function RitualSystem() {
                     </div>
                     
                     <div className="text-center">
+                      {/* Small romantic couple image for intimacy */}
+                      <div className="mb-3">
+                        <Image
+                          src="/images/couples/romantic-couple-2.svg"
+                          alt="Intimate connection"
+                          width={120}
+                          height={80}
+                          className="mx-auto opacity-80 rounded-lg"
+                        />
+                      </div>
+                      
                       <div className={`w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br ${archetypeInfo.color} flex items-center justify-center text-white shadow-lg mb-3`}>
                         <span className="text-2xl">{archetypeInfo.emoji}</span>
                       </div>
                       <h4 className="text-lg font-bold text-gray-900">{ritual.title}</h4>
                       <p className="text-sm text-gray-600 mb-2">{ritual.description}</p>
+                      
+                      {/* Intimacy emphasis */}
+                      <div className="flex items-center justify-center gap-1 mb-2">
+                        <Heart className="w-4 h-4 text-pink-500" />
+                        <span className="text-sm text-pink-600 font-medium">Intimacy & Connection Ritual</span>
+                      </div>
+                      
                       <Badge className={archetypeInfo.bgColor + ' ' + archetypeInfo.textColor}>
                         {archetypeInfo.name} - {archetypeInfo.description}
                       </Badge>
@@ -473,6 +502,19 @@ export function RitualSystem() {
         </TabsList>
 
         <TabsContent value="rituals" className="space-y-4">
+          {/* Romantic couple illustration for intimacy emphasis */}
+          <div className="text-center mb-6">
+            <Image
+              src="/images/couples/romantic-couple-1.svg"
+              alt="Romantic couple connecting"
+              width={280}
+              height={160}
+              className="mx-auto mb-3 opacity-90"
+            />
+            <h3 className="text-lg font-semibold text-gray-800 mb-1">Sacred Intimacy Rituals</h3>
+            <p className="text-sm text-gray-600">Deepen your emotional and spiritual connection through sacred practices</p>
+          </div>
+          
           {/* Ritual List */}
           <div className="space-y-4">
         {rituals.map((ritual) => {
@@ -488,8 +530,15 @@ export function RitualSystem() {
               <div className="p-4">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-start gap-3 flex-1">
-                    <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${archetypeInfo.color} flex items-center justify-center text-white shadow-lg`}>
-                      <span className="text-xl">{archetypeInfo.emoji}</span>
+                    {/* Add contextual couple image based on archetype */}
+                    <div className="relative">
+                      <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${archetypeInfo.color} flex items-center justify-center text-white shadow-lg`}>
+                        <span className="text-xl">{archetypeInfo.emoji}</span>
+                      </div>
+                      {/* Small couple icon overlay for intimacy */}
+                      <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-pink-500 rounded-full flex items-center justify-center">
+                        <Heart className="w-3 h-3 text-white" />
+                      </div>
                     </div>
                     
                     <div className="flex-1">
@@ -508,6 +557,14 @@ export function RitualSystem() {
                         )}
                       </div>
                       <p className="text-sm text-gray-600 mb-2">{ritual.description}</p>
+                      
+                      {/* Intimacy indicator */}
+                      <div className="flex items-center gap-1 mb-2">
+                        <span className="text-xs text-pink-600 font-medium flex items-center gap-1">
+                          <Heart className="w-3 h-3" />
+                          Intimacy & Connection Ritual
+                        </span>
+                      </div>
                       
                       <div className="flex items-center gap-2 flex-wrap">
                         <Badge className={getDifficultyColor(ritual.difficulty)}>
@@ -565,6 +622,19 @@ export function RitualSystem() {
         </TabsContent>
 
         <TabsContent value="balance" className="space-y-4">
+          {/* Couple dancing illustration for balance */}
+          <div className="text-center mb-6">
+            <Image
+              src="/images/couples/romantic-couple-3.svg"
+              alt="Couple dancing in harmony"
+              width={250}
+              height={150}
+              className="mx-auto mb-3 opacity-90"
+            />
+            <h3 className="text-lg font-semibold text-gray-800 mb-1">Relationship Balance & Harmony</h3>
+            <p className="text-sm text-gray-600">Find perfect balance in your love through ancient wisdom</p>
+          </div>
+          
           {/* Rasa Balance Section */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
@@ -583,16 +653,19 @@ export function RitualSystem() {
               onRebalance={handleRebalance}
             />
             
-            {/* Balance Insights */}
+            {/* Romantic emphasis in balance cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Card className="bg-gradient-to-br from-pink-50 to-purple-50 border-pink-200">
                 <CardContent className="p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-lg">🎨</span>
-                    <h4 className="font-medium text-gray-900">Radha-Krishna Energy</h4>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">🎨</span>
+                      <h4 className="font-medium text-gray-900">Radha-Krishna Energy</h4>
+                    </div>
+                    <Heart className="w-4 h-4 text-pink-500" />
                   </div>
                   <p className="text-sm text-gray-700 mb-2">
-                    Focus on play, romance, and creative expression to strengthen this aspect.
+                    Focus on play, romance, and creative expression to strengthen your intimate bond.
                   </p>
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-gray-600">Current: {rasaBalance.play}%</span>
@@ -661,6 +734,19 @@ export function RitualSystem() {
         </TabsContent>
 
         <TabsContent value="wellness" className="space-y-4">
+          {/* Meditation couple for wellness */}
+          <div className="text-center mb-6">
+            <Image
+              src="/images/couples/couple-meditation.svg"
+              alt="Couple meditating together"
+              width={260}
+              height={140}
+              className="mx-auto mb-3 opacity-90"
+            />
+            <h3 className="text-lg font-semibold text-gray-800 mb-1">Spiritual Wellness Together</h3>
+            <p className="text-sm text-gray-600">Enhance your relationship wellness through mindful practices</p>
+          </div>
+          
           {/* Wellness Content */}
           <Card>
             <CardHeader>
@@ -706,6 +792,19 @@ export function RitualSystem() {
         </TabsContent>
 
         <TabsContent value="voice" className="space-y-4">
+          {/* Intimate communication couple for voice */}
+          <div className="text-center mb-6">
+            <Image
+              src="/images/couples/couple-voice-communication.svg"
+              alt="Couple communicating intimately"
+              width={220}
+              height={130}
+              className="mx-auto mb-3 opacity-90"
+            />
+            <h3 className="text-lg font-semibold text-gray-800 mb-1">Intimate Voice Connection</h3>
+            <p className="text-sm text-gray-600">Deepen your bond through guided voice interactions and loving communication</p>
+          </div>
+          
           {/* Voice Content */}
           <Card>
             <CardHeader>

@@ -1,0 +1,86 @@
+<svg width="300" height="200" viewBox="0 0 300 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background gradient -->
+  <defs>
+    <linearGradient id="bgGradient1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#fdf2f8;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#fce7f3;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="skinTone1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#fbbf24;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#f59e0b;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="skinTone2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#fcd34d;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#f59e0b;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="300" height="200" fill="url(#bgGradient1)"/>
+  
+  <!-- Floating hearts -->
+  <g opacity="0.3">
+    <path d="M50 30 C45 25, 35 25, 35 35 C35 25, 25 25, 20 30 C15 40, 25 50, 35 60 C45 50, 55 40, 50 30 Z" fill="#f472b6"/>
+    <path d="M250 40 C247 37, 243 37, 243 41 C243 37, 239 37, 236 40 C233 44, 239 48, 243 52 C247 48, 253 44, 250 40 Z" fill="#ec4899"/>
+    <path d="M280 120 C277 117, 273 117, 273 121 C273 117, 269 117, 266 120 C263 124, 269 128, 273 132 C277 128, 283 124, 280 120 Z" fill="#f472b6"/>
+  </g>
+  
+  <!-- Male figure (left) -->
+  <g transform="translate(80, 50)">
+    <!-- Head -->
+    <ellipse cx="25" cy="25" rx="20" ry="22" fill="url(#skinTone1)"/>
+    <!-- Hair -->
+    <path d="M5 20 Q10 5, 25 8 Q40 5, 45 20 Q45 25, 40 30 Q30 35, 25 32 Q20 35, 10 30 Q5 25, 5 20 Z" fill="#374151"/>
+    <!-- Eyes -->
+    <ellipse cx="18" cy="22" rx="2" ry="3" fill="#1f2937"/>
+    <ellipse cx="32" cy="22" rx="2" ry="3" fill="#1f2937"/>
+    <!-- Nose -->
+    <ellipse cx="25" cy="28" rx="1" ry="2" fill="#d97706"/>
+    <!-- Mouth (smile) -->
+    <path d="M20 32 Q25 36, 30 32" stroke="#7c2d12" stroke-width="1.5" fill="none"/>
+    <!-- Body -->
+    <rect x="10" y="45" width="30" height="40" rx="15" fill="#3b82f6"/>
+    <!-- Arms -->
+    <ellipse cx="5" cy="60" rx="8" ry="25" fill="url(#skinTone1)" transform="rotate(-20 5 60)"/>
+    <ellipse cx="45" cy="60" rx="8" ry="25" fill="url(#skinTone1)" transform="rotate(45 45 60)"/>
+    <!-- Hands -->
+    <circle cx="0" cy="75" r="6" fill="url(#skinTone1)"/>
+  </g>
+  
+  <!-- Female figure (right) -->
+  <g transform="translate(140, 45)">
+    <!-- Head -->
+    <ellipse cx="25" cy="25" rx="18" ry="20" fill="url(#skinTone2)"/>
+    <!-- Hair -->
+    <path d="M7 18 Q5 5, 15 3 Q25 0, 35 3 Q45 5, 43 18 Q45 30, 40 40 Q30 45, 25 42 Q20 45, 10 40 Q5 30, 7 18 Z" fill="#7c2d12"/>
+    <!-- Eyes -->
+    <ellipse cx="18" cy="21" rx="2" ry="3" fill="#1f2937"/>
+    <ellipse cx="32" cy="21" rx="2" ry="3" fill="#1f2937"/>
+    <!-- Eyelashes -->
+    <path d="M16 19 L14 17" stroke="#1f2937" stroke-width="1"/>
+    <path d="M20 18 L18 16" stroke="#1f2937" stroke-width="1"/>
+    <path d="M30 18 L32 16" stroke="#1f2937" stroke-width="1"/>
+    <path d="M34 19 L36 17" stroke="#1f2937" stroke-width="1"/>
+    <!-- Nose -->
+    <ellipse cx="25" cy="27" rx="1" ry="2" fill="#d97706"/>
+    <!-- Mouth (smile) -->
+    <path d="M20 31 Q25 35, 30 31" stroke="#7c2d12" stroke-width="1.5" fill="none"/>
+    <!-- Body -->
+    <rect x="12" y="45" width="26" height="40" rx="13" fill="#ec4899"/>
+    <!-- Arms -->
+    <ellipse cx="8" cy="58" rx="7" ry="23" fill="url(#skinTone2)" transform="rotate(-45 8 58)"/>
+    <ellipse cx="42" cy="58" rx="7" ry="23" fill="url(#skinTone2)" transform="rotate(20 42 58)"/>
+    <!-- Hand reaching toward male -->
+    <circle cx="55" cy="70" r="5" fill="url(#skinTone2)"/>
+  </g>
+  
+  <!-- Connection line (holding hands) -->
+  <path d="M135 125 Q145 120, 155 125" stroke="#f472b6" stroke-width="3" fill="none" opacity="0.7"/>
+  
+  <!-- Sparkles around them -->
+  <g opacity="0.6">
+    <path d="M220 80 L222 85 L227 87 L222 89 L220 94 L218 89 L213 87 L218 85 Z" fill="#fbbf24"/>
+    <path d="M90 90 L91 93 L94 94 L91 95 L90 98 L89 95 L86 94 L89 93 Z" fill="#fbbf24"/>
+    <path d="M240 140 L241 142 L243 143 L241 144 L240 146 L239 144 L237 143 L239 142 Z" fill="#fbbf24"/>
+  </g>
+</svg>
