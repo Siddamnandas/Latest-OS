@@ -121,6 +121,127 @@ model Child {
   @@map("children")
 }
 
+// New comprehensive kids activities models
+model ChildProfile {
+  id              String   @id @default(cuid())
+  parentId        String   // References User.id
+  name            String
+  birthDate       DateTime
+  avatar          String?
+  preferences     String   @default("{}") // JSON as String for SQLite
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relationships
+  progress        ChildProgress?
+  achievements    ChildAchievement[]
+  goals           ChildGoal[]
+  completions     ActivityCompletion[]
+  
+  @@map("child_profiles")
+}
+
+model ChildProgress {
+  id                           String   @id @default(cuid())
+  childId                      String   @unique
+  totalActivitiesCompleted     Int      @default(0)
+  currentStreak               Int      @default(0)
+  longestStreak               Int      @default(0)
+  kindnessPoints              Int      @default(0)
+  creativityScore             Int      @default(0)
+  emotionalIntelligenceLevel  Int      @default(1)
+  skillsAcquired              String   @default("[]") // JSON as String for SQLite
+  learningPath                String   @default("{}") // JSON as String for SQLite
+  createdAt                   DateTime @default(now())
+  updatedAt                   DateTime @updatedAt
+
+  child ChildProfile @relation(fields: [childId], references: [id], onDelete: Cascade)
+  
+  @@map("child_progress")
+}
+
+model ChildAchievement {
+  id            String   @id @default(cuid())
+  childId       String
+  achievementId String
+  name          String
+  description   String
+  icon          String
+  rarity        String   // 'common', 'rare', 'epic', 'legendary'
+  earnedAt      DateTime @default(now())
+  requirements  String   @default("[]") // JSON as String for SQLite
+
+  child ChildProfile @relation(fields: [childId], references: [id], onDelete: Cascade)
+  
+  @@unique([childId, achievementId])
+  @@map("child_achievements")
+}
+
+model ChildGoal {
+  id          String    @id @default(cuid())
+  childId     String
+  title       String
+  description String
+  target      Int
+  current     Int       @default(0)
+  deadline    DateTime
+  category    String    // Activity category
+  priority    String    @default("medium") // 'low', 'medium', 'high'
+  completed   Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  child ChildProfile @relation(fields: [childId], references: [id], onDelete: Cascade)
+  
+  @@map("child_goals")
+}
+
+model Activity {
+  id                    String   @id @default(cuid())
+  title                 String
+  description           String
+  type                  String   // 'emotion', 'mythology', 'creativity', etc.
+  difficulty            String   // 'easy', 'medium', 'hard'
+  ageMin                Int
+  ageMax                Int
+  estimatedDuration     Int      // in minutes
+  tags                  String   @default("[]") // JSON as String for SQLite
+  instructions          String   @default("[]") // JSON as String for SQLite
+  materials             String   @default("[]") // JSON as String for SQLite
+  learningObjectives    String   @default("[]") // JSON as String for SQLite
+  parentGuidance        String?
+  safetyNotes           String   @default("[]") // JSON as String for SQLite
+  accessibility         String   @default("{}") // JSON as String for SQLite
+  isActive              Boolean  @default(true)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  // Relationships
+  completions ActivityCompletion[]
+  
+  @@map("activities")
+}
+
+model ActivityCompletion {
+  id              String    @id @default(cuid())
+  childId         String
+  activityId      String
+  startTime       DateTime
+  endTime         DateTime
+  completed       Boolean   @default(false)
+  score           Int?
+  answers         String    @default("{}") // JSON as String for SQLite
+  reflection      String?
+  parentFeedback  String?
+  media           String    @default("[]") // JSON as String for SQLite
+  completedAt     DateTime  @default(now())
+
+  child    ChildProfile @relation(fields: [childId], references: [id], onDelete: Cascade)
+  activity Activity     @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  
+  @@map("activity_completions")
+}
+
 model FamilyActivity {
   id              String        @id @default(cuid())
   child_id        String

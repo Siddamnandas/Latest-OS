@@ -1,15 +1,19 @@
 // Kids Activities Profile API Route
-// Production-ready API with error handling, validation, and security
+// Production-ready API with authentication, error handling, validation, and security
+// Parent-managed system: Parents authenticate and manage their children's profiles
 
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
 import { z } from 'zod';
 import { KidsProfile } from '@/types/kids-activities';
+import { authOptions } from '@/lib/auth';
+import { logger } from '@/lib/logger';
+import { prisma } from '@/lib/prisma';
 
 // Validation schemas
 const CreateProfileSchema = z.object({
   name: z.string().min(1).max(50),
-  age: z.number().min(3).max(18),
-  ageGroup: z.enum(['toddler', 'preschool', 'elementary', 'preteen']),
+  birthDate: z.string().datetime(),
   avatar: z.string().url().optional(),
   preferences: z.object({
     learningStyle: z.enum(['visual', 'auditory', 'kinesthetic', 'mixed']),
@@ -29,6 +33,10 @@ const CreateProfileSchema = z.object({
       textToSpeechEnabled: z.boolean()
     })
   }).optional()
+});
+
+const GetProfileSchema = z.object({
+  childId: z.string().uuid('Invalid child ID format').optional()
 });
 
 const UpdateProfileSchema = CreateProfileSchema.partial();
@@ -91,235 +99,482 @@ function createDefaultProfile(data: any): KidsProfile {
   };
 }
 
-// GET - Retrieve profile
+// GET /api/kids/profile - Retrieve child profile(s) (parent-authenticated)
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const profileId = searchParams.get('id') || 'current';
-
-    // In production, this would query the database
-    const profile = mockProfiles.get(profileId);
-    
-    if (!profile) {
+    // Authenticate parent user
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      logger.warn('Unauthorized access attempt to kids profile API');
       return NextResponse.json(
-        { 
-          success: false, 
-          error: { 
-            code: 'PROFILE_NOT_FOUND', 
-            message: 'Profile not found' 
-          } 
-        },
-        { status: 404 }
+        { error: 'Authentication required. Parents must be logged in to access child profiles.' },
+        { status: 401 }
       );
     }
 
-    return NextResponse.json({
-      success: true,
-      data: profile,
-      timestamp: new Date()
-    });
-  } catch (error) {
-    console.error('Profile GET error:', error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: {
-          code: 'INTERNAL_ERROR',
-          message: 'Failed to retrieve profile'
+    const { searchParams } = new URL(request.url);
+    const childId = searchParams.get('childId');
+    
+    const validationResult = GetProfileSchema.safeParse({ childId });
+    if (!validationResult.success) {
+      logger.warn('Invalid profile request parameters', { errors: validationResult.error.errors });
+      return NextResponse.json(
+        {
+          error: 'Invalid request parameters',
+          details: validationResult.error.errors
+        },
+        { status: 400 }
+      );
+    }
+
+    try {
+      if (childId) {
+        // Get specific child profile
+        const child = await prisma.childProfile.findFirst({
+          where: {
+            id: childId,
+            parentId: session.user.id
+          },
+          include: {
+            progress: true,
+            achievements: true,
+            goals: true
+          }
+        });
+
+        if (!child) {
+          logger.warn('Parent attempted to access unauthorized child profile', {
+            parentId: session.user.id,
+            childId
+          });
+          return NextResponse.json(
+            { error: 'Child profile not found or access denied.' },
+            { status: 404 }
+          );
         }
-      },
+
+        // Calculate age from birth date
+        const age = Math.floor((Date.now() - child.birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000));
+        const ageGroup = age <= 4 ? 'toddler' : age <= 6 ? 'preschool' : age <= 12 ? 'elementary' : 'preteen';
+
+        logger.info('Child profile retrieved successfully', {
+          parentId: session.user.id,
+          childId
+        });
+
+        return NextResponse.json({
+          child: {
+            ...child,
+            age,
+            ageGroup
+          }
+        });
+      } else {
+        // Get all children for this parent
+        const children = await prisma.childProfile.findMany({
+          where: {
+            parentId: session.user.id
+          },
+          include: {
+            progress: true,
+            achievements: {
+              orderBy: {
+                earnedAt: 'desc'
+              },
+              take: 5 // Latest 5 achievements per child
+            }
+          },
+          orderBy: {
+            createdAt: 'asc'
+          }
+        });
+
+        const childrenWithAge = children.map(child => {
+          const age = Math.floor((Date.now() - child.birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000));
+          const ageGroup = age <= 4 ? 'toddler' : age <= 6 ? 'preschool' : age <= 12 ? 'elementary' : 'preteen';
+          return {
+            ...child,
+            age,
+            ageGroup
+          };
+        });
+
+        logger.info('All children profiles retrieved successfully', {
+          parentId: session.user.id,
+          childrenCount: children.length
+        });
+
+        return NextResponse.json({
+          children: childrenWithAge,
+          total: children.length
+        });
+      }
+
+    } catch (dbError) {
+      logger.error('Database error retrieving child profile', {
+        error: dbError,
+        parentId: session.user.id,
+        childId
+      });
+      return NextResponse.json(
+        { error: 'Database error occurred while retrieving profile' },
+        { status: 500 }
+      );
+    }
+
+  } catch (error) {
+    logger.error('Unexpected error in kids profile GET endpoint', { error });
+    return NextResponse.json(
+      { error: 'An unexpected error occurred' },
       { status: 500 }
     );
   }
 }
 
-// POST - Create new profile
+// POST /api/kids/profile - Create new child profile (parent-authenticated)
 export async function POST(request: NextRequest) {
   try {
+    // Authenticate parent user
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      logger.warn('Unauthorized access attempt to create child profile');
+      return NextResponse.json(
+        { error: 'Authentication required. Parents must be logged in to create child profiles.' },
+        { status: 401 }
+      );
+    }
+
     const body = await request.json();
     
     // Validate input
     const validationResult = CreateProfileSchema.safeParse(body);
     if (!validationResult.success) {
+      logger.warn('Invalid profile creation data', { errors: validationResult.error.errors });
       return NextResponse.json(
         {
-          success: false,
-          error: {
-            code: 'VALIDATION_ERROR',
-            message: 'Invalid profile data',
-            details: validationResult.error.errors
-          }
+          error: 'Invalid profile data',
+          details: validationResult.error.errors
         },
         { status: 400 }
       );
     }
 
     const profileData = validationResult.data;
-    const newProfile = createDefaultProfile(profileData);
-    
-    // Store in mock database
-    mockProfiles.set(newProfile.id, newProfile);
-    mockProfiles.set('current', newProfile); // Also store as current user
 
-    return NextResponse.json({
-      success: true,
-      data: newProfile,
-      timestamp: new Date()
-    }, { status: 201 });
-  } catch (error) {
-    console.error('Profile POST error:', error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: {
-          code: 'INTERNAL_ERROR',
-          message: 'Failed to create profile'
+    try {
+      // Check if parent already has maximum number of children (e.g., 10)
+      const existingChildrenCount = await prisma.childProfile.count({
+        where: {
+          parentId: session.user.id
         }
-      },
+      });
+
+      if (existingChildrenCount >= 10) {
+        logger.warn('Parent attempted to create too many child profiles', {
+          parentId: session.user.id,
+          currentCount: existingChildrenCount
+        });
+        return NextResponse.json(
+          { error: 'Maximum number of child profiles reached (10). Please contact support if you need more.' },
+          { status: 400 }
+        );
+      }
+
+      // Create child profile in database
+      const newChild = await prisma.childProfile.create({
+        data: {
+          name: profileData.name,
+          birthDate: new Date(profileData.birthDate),
+          avatar: profileData.avatar,
+          parentId: session.user.id,
+          preferences: profileData.preferences || {
+            learningStyle: 'mixed',
+            favoriteActivities: ['emotion', 'kindness'],
+            difficulty: 'easy',
+            parentalControls: {
+              screenTimeLimit: 60,
+              allowedTimeSlots: [
+                { start: '09:00', end: '17:00', days: [1, 2, 3, 4, 5] },
+                { start: '10:00', end: '18:00', days: [0, 6] }
+              ],
+              contentFilters: ['age-appropriate'],
+              requireParentApproval: true,
+              accessibilityEnabled: false,
+              highContrastMode: false,
+              textToSpeechEnabled: false
+            }
+          }
+        }
+      });
+
+      // Create initial progress record
+      await prisma.childProgress.create({
+        data: {
+          childId: newChild.id,
+          totalActivitiesCompleted: 0,
+          currentStreak: 0,
+          longestStreak: 0,
+          kindnessPoints: 0,
+          creativityScore: 0,
+          emotionalIntelligenceLevel: 1
+        }
+      });
+
+      // Calculate age and age group
+      const age = Math.floor((Date.now() - newChild.birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000));
+      const ageGroup = age <= 4 ? 'toddler' : age <= 6 ? 'preschool' : age <= 12 ? 'elementary' : 'preteen';
+
+      logger.info('Child profile created successfully', {
+        parentId: session.user.id,
+        childId: newChild.id,
+        childName: newChild.name,
+        age
+      });
+
+      return NextResponse.json({
+        child: {
+          ...newChild,
+          age,
+          ageGroup
+        },
+        message: 'Child profile created successfully'
+      }, { status: 201 });
+
+    } catch (dbError) {
+      logger.error('Database error creating child profile', {
+        error: dbError,
+        parentId: session.user.id
+      });
+      return NextResponse.json(
+        { error: 'Database error occurred while creating profile' },
+        { status: 500 }
+      );
+    }
+
+  } catch (error) {
+    logger.error('Unexpected error in kids profile POST endpoint', { error });
+    return NextResponse.json(
+      { error: 'An unexpected error occurred' },
       { status: 500 }
     );
   }
 }
 
-// PUT - Update profile
+// PUT /api/kids/profile - Update child profile (parent-authenticated)
 export async function PUT(request: NextRequest) {
   try {
+    // Authenticate parent user
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      logger.warn('Unauthorized access attempt to update child profile');
+      return NextResponse.json(
+        { error: 'Authentication required. Parents must be logged in to update child profiles.' },
+        { status: 401 }
+      );
+    }
+
     const body = await request.json();
     const { searchParams } = new URL(request.url);
-    const profileId = searchParams.get('id') || 'current';
+    const childId = searchParams.get('childId');
+
+    if (!childId) {
+      return NextResponse.json(
+        { error: 'Child ID is required' },
+        { status: 400 }
+      );
+    }
 
     // Validate input
+    const UpdateProfileSchema = CreateProfileSchema.partial();
     const validationResult = UpdateProfileSchema.safeParse(body);
     if (!validationResult.success) {
+      logger.warn('Invalid profile update data', { errors: validationResult.error.errors });
       return NextResponse.json(
         {
-          success: false,
-          error: {
-            code: 'VALIDATION_ERROR',
-            message: 'Invalid profile data',
-            details: validationResult.error.errors
-          }
+          error: 'Invalid profile data',
+          details: validationResult.error.errors
         },
         { status: 400 }
       );
     }
 
-    const existingProfile = mockProfiles.get(profileId);
-    if (!existingProfile) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: {
-            code: 'PROFILE_NOT_FOUND',
-            message: 'Profile not found'
-          }
+    const updates = validationResult.data;
+
+    try {
+      // Verify parent-child relationship
+      const existingChild = await prisma.childProfile.findFirst({
+        where: {
+          id: childId,
+          parentId: session.user.id
+        }
+      });
+
+      if (!existingChild) {
+        logger.warn('Parent attempted to update unauthorized child profile', {
+          parentId: session.user.id,
+          childId
+        });
+        return NextResponse.json(
+          { error: 'Child profile not found or access denied.' },
+          { status: 404 }
+        );
+      }
+
+      // Prepare update data
+      const updateData: any = {};
+      if (updates.name) updateData.name = updates.name;
+      if (updates.birthDate) updateData.birthDate = new Date(updates.birthDate);
+      if (updates.avatar) updateData.avatar = updates.avatar;
+      if (updates.preferences) {
+        // Merge preferences with existing ones
+        updateData.preferences = {
+          ...existingChild.preferences,
+          ...updates.preferences
+        };
+      }
+      updateData.updatedAt = new Date();
+
+      // Update child profile in database
+      const updatedChild = await prisma.childProfile.update({
+        where: {
+          id: childId
         },
-        { status: 404 }
+        data: updateData,
+        include: {
+          progress: true,
+          achievements: true
+        }
+      });
+
+      // Calculate age and age group
+      const age = Math.floor((Date.now() - updatedChild.birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000));
+      const ageGroup = age <= 4 ? 'toddler' : age <= 6 ? 'preschool' : age <= 12 ? 'elementary' : 'preteen';
+
+      logger.info('Child profile updated successfully', {
+        parentId: session.user.id,
+        childId,
+        updatedFields: Object.keys(updates)
+      });
+
+      return NextResponse.json({
+        child: {
+          ...updatedChild,
+          age,
+          ageGroup
+        },
+        message: 'Child profile updated successfully'
+      });
+
+    } catch (dbError) {
+      logger.error('Database error updating child profile', {
+        error: dbError,
+        parentId: session.user.id,
+        childId
+      });
+      return NextResponse.json(
+        { error: 'Database error occurred while updating profile' },
+        { status: 500 }
       );
     }
 
-    // Merge updates with existing profile
-    const updatedProfile: KidsProfile = {
-      ...existingProfile,
-      ...validationResult.data,
-      preferences: {
-        ...existingProfile.preferences,
-        ...validationResult.data.preferences
-      },
-      updatedAt: new Date()
-    };
-
-    mockProfiles.set(profileId, updatedProfile);
-    if (profileId === 'current') {
-      mockProfiles.set(updatedProfile.id, updatedProfile);
-    }
-
-    return NextResponse.json({
-      success: true,
-      data: updatedProfile,
-      timestamp: new Date()
-    });
   } catch (error) {
-    console.error('Profile PUT error:', error);
+    logger.error('Unexpected error in kids profile PUT endpoint', { error });
     return NextResponse.json(
-      {
-        success: false,
-        error: {
-          code: 'INTERNAL_ERROR',
-          message: 'Failed to update profile'
-        }
-      },
+      { error: 'An unexpected error occurred' },
       { status: 500 }
     );
   }
 }
 
-// DELETE - Delete profile (with safety checks)
+// DELETE /api/kids/profile - Delete child profile (parent-authenticated)
 export async function DELETE(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const profileId = searchParams.get('id');
-    
-    if (!profileId || profileId === 'current') {
+    // Authenticate parent user
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      logger.warn('Unauthorized access attempt to delete child profile');
       return NextResponse.json(
-        {
-          success: false,
-          error: {
-            code: 'INVALID_REQUEST',
-            message: 'Profile ID required and cannot be "current"'
-          }
-        },
+        { error: 'Authentication required. Parents must be logged in to delete child profiles.' },
+        { status: 401 }
+      );
+    }
+
+    const { searchParams } = new URL(request.url);
+    const childId = searchParams.get('childId');
+
+    if (!childId) {
+      return NextResponse.json(
+        { error: 'Child ID is required' },
         { status: 400 }
       );
     }
 
-    const existingProfile = mockProfiles.get(profileId);
-    if (!existingProfile) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: {
-            code: 'PROFILE_NOT_FOUND',
-            message: 'Profile not found'
-          }
-        },
-        { status: 404 }
-      );
-    }
-
-    // Safety check - require parent approval for deletion
+    // Safety check - require parent confirmation
     const confirmHeader = request.headers.get('x-parent-confirmation');
     if (confirmHeader !== 'confirmed') {
       return NextResponse.json(
-        {
-          success: false,
-          error: {
-            code: 'PARENT_APPROVAL_REQUIRED',
-            message: 'Parent confirmation required for profile deletion'
-          }
-        },
+        { error: 'Parent confirmation required for profile deletion. Add x-parent-confirmation: confirmed header.' },
         { status: 403 }
       );
     }
 
-    mockProfiles.delete(profileId);
-
-    return NextResponse.json({
-      success: true,
-      message: 'Profile deleted successfully',
-      timestamp: new Date()
-    });
-  } catch (error) {
-    console.error('Profile DELETE error:', error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: {
-          code: 'INTERNAL_ERROR',
-          message: 'Failed to delete profile'
+    try {
+      // Verify parent-child relationship
+      const existingChild = await prisma.childProfile.findFirst({
+        where: {
+          id: childId,
+          parentId: session.user.id
         }
-      },
+      });
+
+      if (!existingChild) {
+        logger.warn('Parent attempted to delete unauthorized child profile', {
+          parentId: session.user.id,
+          childId
+        });
+        return NextResponse.json(
+          { error: 'Child profile not found or access denied.' },
+          { status: 404 }
+        );
+      }
+
+      // Delete child profile and all related data (cascade delete)
+      await prisma.childProfile.delete({
+        where: {
+          id: childId
+        }
+      });
+
+      logger.info('Child profile deleted successfully', {
+        parentId: session.user.id,
+        childId,
+        childName: existingChild.name
+      });
+
+      return NextResponse.json({
+        message: 'Child profile deleted successfully'
+      });
+
+    } catch (dbError) {
+      logger.error('Database error deleting child profile', {
+        error: dbError,
+        parentId: session.user.id,
+        childId
+      });
+      return NextResponse.json(
+        { error: 'Database error occurred while deleting profile' },
+        { status: 500 }
+      );
+    }
+
+  } catch (error) {
+    logger.error('Unexpected error in kids profile DELETE endpoint', { error });
+    return NextResponse.json(
+      { error: 'An unexpected error occurred' },
       { status: 500 }
+    );
+  }
+} }
     );
   }
 }
