@@ -7,7 +7,6 @@ import { TaskManagement } from '@/components/TaskManagement';
 import { RitualSystem } from '@/components/RitualSystem';
 import { GoalsHub } from '@/components/GoalsHub';
 import { KidsActivities } from '@/components/KidsActivities';
-import { ProfileSettings } from '@/components/ProfileSettings';
 import { FloatingActionButton } from '@/components/FloatingActionButton';
 import { useToast } from '@/hooks/use-toast';
 import { useLiveData } from '@/hooks/useLiveData';

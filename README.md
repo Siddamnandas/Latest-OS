@@ -36,8 +36,7 @@ This scaffold provides a robust foundation built with:
 - **📊 Recharts** - Redefined chart library built with React and D3
 - **🖼️ Sharp** - High performance image processing
 
-### 🌍 Internationalization & Utilities
-- **🌍 Next Intl** - Internationalization library for Next.js
+### 🛠️ Utilities
 - **📅 Date-fns** - Modern JavaScript date utility library
 - **🪝 ReactUse** - Collection of essential React hooks for modern development
 
@@ -50,7 +49,6 @@ This scaffold provides a robust foundation built with:
 - **🗄️ Database Ready** - Prisma ORM configured for rapid backend development
 - **🔐 Auth Included** - NextAuth.js for secure authentication flows
 - **📊 Data Visualization** - Charts, tables, and drag-and-drop functionality
-- **🌍 i18n Ready** - Multi-language support with Next Intl
 - **🚀 Production Ready** - Optimized build and deployment settings
 - **🤖 AI-Friendly** - Structured codebase perfect for AI assistance
 
@@ -146,7 +144,6 @@ This scaffold includes a comprehensive set of modern web development tools:
 - **State Management**: Simple and scalable with Zustand
 
 ### 🌍 Production Features
-- **Internationalization**: Multi-language support with Next Intl
 - **Image Optimization**: Automatic image processing with Sharp
 - **Type Safety**: End-to-end TypeScript with Zod validation
 - **Essential Hooks**: 100+ useful React hooks with ReactUse for common patterns

@@ -34,6 +34,16 @@ Use the scripts in the `scripts/` directory to automate deployment tasks:
 
 Ensure Docker and Node.js are installed on your deployment machine.
 
+## Docker Image Build
+
+The multi-stage `Dockerfile` installs dependencies, builds the application, and prunes development packages for a slimmer image. To build the production image locally:
+
+```bash
+docker build -t latest-os .
+```
+
+The builder stage executes `npm ci && npm run build` followed by `npm prune --omit=dev`. The runner stage copies only the `.next` directory, `package.json`, and the pruned `node_modules`, then runs the application as the non-root `node` user.
+
 ## OTA Updates & Release Channels
 
 The CI workflow publishes over-the-air updates with Expo EAS. Commits to

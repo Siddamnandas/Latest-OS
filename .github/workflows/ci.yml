@@ -1,5 +1,9 @@
 name: CI
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 on:
   pull_request:
   push:
@@ -47,7 +51,7 @@ jobs:
         ports:
           - 6379:6379
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -61,16 +65,16 @@ jobs:
         run: |
           timeout 30 bash -c 'until pg_isready -h localhost -p 5432; do sleep 1; done'
           timeout 30 bash -c 'until redis-cli -h localhost -p 6379 ping; do sleep 1; done'
-      - name: Clear npm cache
-        run: npm cache clean --force
       - name: Verify package files sync
         run: |
           echo "Checking package.json and package-lock.json sync..."
           npm ci --dry-run
       - name: Install dependencies
         run: npm ci --legacy-peer-deps
-      - name: Setup CI database
-        run: node scripts/setup-ci-db.js setup
+      - name: Run security audit
+        run: npm audit --audit-level=high
+      - name: Use PostgreSQL schema
+        run: cp prisma/schema.postgres.prisma prisma/schema.prisma
       - name: Generate Prisma client
         run: npx prisma generate
       - name: Push database schema
@@ -83,7 +87,7 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' || github.event_name == 'pull_request'
     env:
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/testdb
       REDIS_URL: redis://localhost:6379
@@ -120,7 +124,7 @@ jobs:
         ports:
           - 6379:6379
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -134,16 +138,16 @@ jobs:
         run: |
           timeout 30 bash -c 'until pg_isready -h localhost -p 5432; do sleep 1; done'
           timeout 30 bash -c 'until redis-cli -h localhost -p 6379 ping; do sleep 1; done'
-      - name: Clear npm cache
-        run: npm cache clean --force
       - name: Verify package files sync
         run: |
           echo "Checking package.json and package-lock.json sync..."
           npm ci --dry-run
       - name: Install dependencies
         run: npm ci --legacy-peer-deps
-      - name: Setup CI database
-        run: node scripts/setup-ci-db.js setup
+      - name: Run security audit
+        run: npm audit --audit-level=high
+      - name: Use PostgreSQL schema
+        run: cp prisma/schema.postgres.prisma prisma/schema.prisma
       - name: Generate Prisma client
         run: npx prisma generate
       - name: Push database schema

@@ -52,7 +52,13 @@ export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
+  
+>>>>>>> a802de832ecf0303d3f0d22f51e388794e994d46
 }) {
+  
+=======
+  
+>>>>>>> a802de832ecf0303d3f0d22f51e388794e994d46
   const themeScript = `(function(){try{var t=localStorage.getItem('theme');var m=window.matchMedia('(prefers-color-scheme: dark)').matches;if(t==='dark'||(!t&&m)){document.documentElement.classList.add('dark');}else{document.documentElement.classList.remove('dark');}}catch(e){}})();`;
 
   return (
@@ -70,10 +76,19 @@ export default function RootLayout({
       <body>
         <ErrorBoundary>
           <AuthProvider>
+                <UpdateNotifier />
+                {children}
+                <Toaster />
+>>>>>>> a802de832ecf0303d3f0d22f51e388794e994d46
             <QueryProvider>
               <UpdateNotifier />
               {children}
               <Toaster />
+=======
+                <UpdateNotifier />
+                {children}
+                <Toaster />
+>>>>>>> a802de832ecf0303d3f0d22f51e388794e994d46
             </QueryProvider>
           </AuthProvider>
         </ErrorBoundary>

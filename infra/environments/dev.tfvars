@@ -1,6 +1,7 @@
-env        = "dev"
-aws_region = "us-east-1"
-app_name   = "latest-os"
+env              = "dev"
+aws_region       = "us-east-1"
+secondary_region = "us-west-2"
+app_name         = "latest-os"
 
 vpc_cidr        = "10.0.0.0/16"
 public_subnets  = ["10.0.1.0/24", "10.0.2.0/24"]
