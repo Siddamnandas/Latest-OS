@@ -1,12 +1,18 @@
 // Kids Activities API Route
 // Production-ready API for activity management with filtering, pagination, and progress tracking
+// Parent-managed system: Parents authenticate and track children's activities
 
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
 import { z } from 'zod';
 import { BaseActivity, ActivityResult, EmotionScenario, CreativeActivity } from '@/types/kids-activities';
+import { authOptions } from '@/lib/auth';
+import { logger } from '@/lib/logger';
+import { prisma } from '@/lib/prisma';
 
 // Validation schemas
 const ActivityFilterSchema = z.object({
+  childId: z.string().uuid('Invalid child ID format').optional(),
   type: z.array(z.enum(['emotion', 'mythology', 'creativity', 'kindness', 'story', 'music', 'movement'])).optional(),
   difficulty: z.array(z.enum(['easy', 'medium', 'hard'])).optional(),
   ageMin: z.number().min(3).max(18).optional(),
@@ -21,7 +27,7 @@ const ActivityFilterSchema = z.object({
 
 const ActivityResultSchema = z.object({
   activityId: z.string(),
-  userId: z.string(),
+  childId: z.string().uuid('Invalid child ID format'),
   startTime: z.string().datetime(),
   endTime: z.string().datetime(),
   completed: z.boolean(),
@@ -263,13 +269,24 @@ function paginateResults<T>(items: T[], offset: number, limit: number): T[] {
   return items.slice(offset, offset + limit);
 }
 
-// GET - Retrieve activities with filtering and pagination
+// GET /api/kids/activities - Retrieve activities with filtering and pagination (parent-authenticated)
 export async function GET(request: NextRequest) {
   try {
+    // Authenticate parent user
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      logger.warn('Unauthorized access attempt to kids activities API');
+      return NextResponse.json(
+        { error: 'Authentication required. Parents must be logged in to access activities.' },
+        { status: 401 }
+      );
+    }
+
     const { searchParams } = new URL(request.url);
     
-    // Parse query parameters
+    // Parse and validate query parameters
     const filters = {
+      childId: searchParams.get('childId') || undefined,
       type: searchParams.get('type')?.split(','),
       difficulty: searchParams.get('difficulty')?.split(','),
       ageMin: searchParams.get('ageMin') ? parseInt(searchParams.get('ageMin')!) : undefined,
@@ -285,14 +302,11 @@ export async function GET(request: NextRequest) {
     // Validate filters
     const validationResult = ActivityFilterSchema.safeParse(filters);
     if (!validationResult.success) {
+      logger.warn('Invalid activity filter parameters', { filters, errors: validationResult.error.errors });
       return NextResponse.json(
         {
-          success: false,
-          error: {
-            code: 'VALIDATION_ERROR',
-            message: 'Invalid filter parameters',
-            details: validationResult.error.errors
-          }
+          error: 'Invalid filter parameters',
+          details: validationResult.error.errors
         },
         { status: 400 }
       );
@@ -300,37 +314,122 @@ export async function GET(request: NextRequest) {
 
     const validatedFilters = validationResult.data;
     
-    // Filter activities
-    const filteredActivities = filterActivities(mockActivities, validatedFilters);
-    
-    // Apply pagination
-    const paginatedActivities = paginateResults(
-      filteredActivities, 
-      validatedFilters.offset, 
-      validatedFilters.limit
-    );
+    // If childId is specified, verify parent-child relationship
+    if (validatedFilters.childId) {
+      try {
+        const child = await prisma.childProfile.findFirst({
+          where: {
+            id: validatedFilters.childId,
+            parentId: session.user.id
+          }
+        });
 
-    return NextResponse.json({
-      success: true,
-      data: paginatedActivities,
-      meta: {
-        total: filteredActivities.length,
-        offset: validatedFilters.offset,
-        limit: validatedFilters.limit,
-        hasMore: validatedFilters.offset + validatedFilters.limit < filteredActivities.length
-      },
-      timestamp: new Date()
-    });
-  } catch (error) {
-    console.error('Activities GET error:', error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: {
-          code: 'INTERNAL_ERROR',
-          message: 'Failed to retrieve activities'
+        if (!child) {
+          logger.warn('Parent attempted to access unauthorized child activities', {
+            parentId: session.user.id,
+            childId: validatedFilters.childId
+          });
+          return NextResponse.json(
+            { error: 'Child not found or access denied. You can only access activities for your own children.' },
+            { status: 404 }
+          );
         }
-      },
+      } catch (dbError) {
+        logger.error('Database error verifying child access', {
+          error: dbError,
+          parentId: session.user.id,
+          childId: validatedFilters.childId
+        });
+        return NextResponse.json(
+          { error: 'Database error occurred while verifying access' },
+          { status: 500 }
+        );
+      }
+    }
+    
+    try {
+      // Get activities from database (for now using mock data with future DB integration)
+      let filteredActivities = filterActivities(mockActivities, validatedFilters);
+      
+      // Apply age-based filtering if childId is provided
+      if (validatedFilters.childId) {
+        const child = await prisma.childProfile.findUnique({
+          where: { id: validatedFilters.childId },
+          select: { birthDate: true }
+        });
+        
+        if (child?.birthDate) {
+          const childAge = Math.floor((Date.now() - child.birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000));
+          filteredActivities = filteredActivities.filter(activity => 
+            activity.ageRange.min <= childAge && activity.ageRange.max >= childAge
+          );
+        }
+      }
+      
+      // Apply pagination
+      const paginatedActivities = paginateResults(
+        filteredActivities, 
+        validatedFilters.offset, 
+        validatedFilters.limit
+      );
+
+      // Get completion status if childId is provided
+      let activitiesWithProgress = paginatedActivities;
+      if (validatedFilters.childId) {
+        const completions = await prisma.activityCompletion.findMany({
+          where: {
+            childId: validatedFilters.childId,
+            activityId: { in: paginatedActivities.map(a => a.id) }
+          },
+          select: {
+            activityId: true,
+            completed: true,
+            score: true,
+            completedAt: true
+          }
+        });
+
+        activitiesWithProgress = paginatedActivities.map(activity => ({
+          ...activity,
+          completion: completions.find(c => c.activityId === activity.id)
+        }));
+      }
+
+      logger.info('Activities retrieved successfully', {
+        parentId: session.user.id,
+        childId: validatedFilters.childId,
+        totalResults: filteredActivities.length,
+        returnedResults: activitiesWithProgress.length
+      });
+
+      return NextResponse.json({
+        activities: activitiesWithProgress,
+        meta: {
+          total: filteredActivities.length,
+          offset: validatedFilters.offset,
+          limit: validatedFilters.limit,
+          hasMore: validatedFilters.offset + validatedFilters.limit < filteredActivities.length
+        },
+        filters: validatedFilters,
+        timestamp: new Date()
+      });
+      
+    } catch (dbError) {
+      logger.error('Database error retrieving activities', {
+        error: dbError,
+        parentId: session.user.id,
+        childId: validatedFilters.childId
+      });
+      return NextResponse.json(
+        { error: 'Database error occurred while retrieving activities' },
+        { status: 500 }
+      );
+    }
+    
+  } catch (error) {
+    logger.error('Unexpected error in kids activities GET endpoint', { error });
+    return NextResponse.json(
+      { error: 'An unexpected error occurred' },
       { status: 500 }
     );
   }

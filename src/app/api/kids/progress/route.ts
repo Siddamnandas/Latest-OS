@@ -1,12 +1,18 @@
 // Kids Progress Tracking API Route
 // Production-ready API for progress analytics, achievements, and personalized learning paths
+// Parent-managed system: Parents authenticate and manage their children's progress
 
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
 import { z } from 'zod';
 import { UserProgress, Skill, Badge, Goal, Milestone } from '@/types/kids-activities';
+import { authOptions } from '@/lib/auth';
+import { logger } from '@/lib/logger';
+import { prisma } from '@/lib/prisma';
 
 // Validation schemas
 const UpdateProgressSchema = z.object({
+  childId: z.string().uuid('Invalid child ID format'),
   totalActivitiesCompleted: z.number().min(0).optional(),
   skillsAcquired: z.array(z.object({
     id: z.string(),
@@ -24,6 +30,10 @@ const UpdateProgressSchema = z.object({
   emotionalIntelligenceLevel: z.number().min(1).max(10).optional()
 });
 
+const GetProgressSchema = z.object({
+  childId: z.string().uuid('Invalid child ID format')
+});
+
 const CreateGoalSchema = z.object({
   title: z.string().min(1).max(100),
   description: z.string().min(1).max(500),
@@ -33,11 +43,132 @@ const CreateGoalSchema = z.object({
   priority: z.enum(['low', 'medium', 'high']).default('medium')
 });
 
-// Mock progress database
-const mockProgress: Map<string, UserProgress> = new Map();
-const mockAchievements: Map<string, Badge[]> = new Map();
+// GET /api/kids/progress - Retrieve progress for a specific child (parent-authenticated)
+export async function GET(request: NextRequest) {
+  try {
+    // Authenticate parent user
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      logger.warn('Unauthorized access attempt to kids progress API');
+      return NextResponse.json(
+        { error: 'Authentication required. Parents must be logged in to access child progress.' },
+        { status: 401 }
+      );
+    }
 
-// Default progress template
+    // Validate and extract query parameters
+    const { searchParams } = new URL(request.url);
+    const childId = searchParams.get('childId');
+    
+    const validationResult = GetProgressSchema.safeParse({ childId });
+    if (!validationResult.success) {
+      logger.warn('Invalid child ID provided', { childId, errors: validationResult.error.errors });
+      return NextResponse.json(
+        { 
+          error: 'Invalid child ID format',
+          details: validationResult.error.errors
+        },
+        { status: 400 }
+      );
+    }
+
+    const { childId: validatedChildId } = validationResult.data;
+
+    // Verify parent-child relationship
+    try {
+      const child = await prisma.childProfile.findFirst({
+        where: {
+          id: validatedChildId,
+          parentId: session.user.id
+        },
+        include: {
+          progress: true,
+          achievements: true
+        }
+      });
+
+      if (!child) {
+        logger.warn('Parent attempted to access unauthorized child progress', {
+          parentId: session.user.id,
+          childId: validatedChildId
+        });
+        return NextResponse.json(
+          { error: 'Child not found or access denied. You can only view progress for your own children.' },
+          { status: 404 }
+        );
+      }
+
+      // Get or create progress record
+      let progress = child.progress;
+      if (!progress) {
+        progress = await prisma.childProgress.create({
+          data: {
+            childId: validatedChildId,
+            ...createDefaultProgress()
+          }
+        });
+      }
+
+      // Calculate current achievements
+      const achievements = calculateAchievements(validatedChildId, progress);
+
+      // Get recent activity history
+      const recentActivities = await prisma.activityCompletion.findMany({
+        where: {
+          childId: validatedChildId
+        },
+        orderBy: {
+          completedAt: 'desc'
+        },
+        take: 10,
+        include: {
+          activity: {
+            select: {
+              title: true,
+              type: true,
+              difficulty: true
+            }
+          }
+        }
+      });
+
+      logger.info('Child progress retrieved successfully', {
+        parentId: session.user.id,
+        childId: validatedChildId,
+        activitiesCompleted: progress.totalActivitiesCompleted
+      });
+
+      return NextResponse.json({
+        childId: validatedChildId,
+        childName: child.name,
+        progress,
+        achievements,
+        recentActivities,
+        lastUpdated: progress.updatedAt
+      });
+
+    } catch (dbError) {
+      logger.error('Database error retrieving child progress', {
+        error: dbError,
+        parentId: session.user.id,
+        childId: validatedChildId
+      });
+      return NextResponse.json(
+        { error: 'Database error occurred while retrieving progress' },
+        { status: 500 }
+      );
+    }
+
+  } catch (error) {
+    logger.error('Unexpected error in kids progress GET endpoint', { error });
+    return NextResponse.json(
+      { error: 'An unexpected error occurred' },
+      { status: 500 }
+    );
+  }
+}
+
+
 function createDefaultProgress(): UserProgress {
   return {
     totalActivitiesCompleted: 0,
@@ -337,137 +468,230 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// PUT - Update user progress
+// PUT /api/kids/progress - Update child progress (parent-authenticated)
 export async function PUT(request: NextRequest) {
   try {
+    // Authenticate parent user
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      logger.warn('Unauthorized access attempt to update kids progress');
+      return NextResponse.json(
+        { error: 'Authentication required. Parents must be logged in to update child progress.' },
+        { status: 401 }
+      );
+    }
+
     const body = await request.json();
-    const { searchParams } = new URL(request.url);
-    const userId = searchParams.get('userId') || 'current';
     
     // Validate input
     const validationResult = UpdateProgressSchema.safeParse(body);
     if (!validationResult.success) {
+      logger.warn('Invalid progress update data', { errors: validationResult.error.errors });
       return NextResponse.json(
         {
-          success: false,
-          error: {
-            code: 'VALIDATION_ERROR',
-            message: 'Invalid progress data',
-            details: validationResult.error.errors
-          }
+          error: 'Invalid progress data',
+          details: validationResult.error.errors
         },
         { status: 400 }
       );
     }
     
-    const updates = validationResult.data;
-    let currentProgress = mockProgress.get(userId) || createDefaultProgress();
-    
-    // Merge updates
-    const updatedProgress: UserProgress = {
-      ...currentProgress,
-      ...updates,
-      skillsAcquired: updates.skillsAcquired?.map(skill => ({
-        ...skill,
-        dateAcquired: new Date(skill.dateAcquired)
-      })) || currentProgress.skillsAcquired
-    };
-    
-    // Update streak logic
-    if (updates.totalActivitiesCompleted && updates.totalActivitiesCompleted > currentProgress.totalActivitiesCompleted) {
-      updatedProgress.currentStreak = (updatedProgress.currentStreak || 0) + 1;
-      updatedProgress.longestStreak = Math.max(updatedProgress.longestStreak, updatedProgress.currentStreak);
-    }
-    
-    // Optimize learning path with new data
-    updatedProgress.learningPath = optimizeLearningPath(updatedProgress);
-    
-    // Store updated progress
-    mockProgress.set(userId, updatedProgress);
-    
-    // Calculate new achievements
-    const achievements = calculateAchievements(userId, updatedProgress);
-    const newAchievements = achievements.filter(achievement => {
-      const existing = mockAchievements.get(userId) || [];
-      return !existing.some(a => a.id === achievement.id);
-    });
-    mockAchievements.set(userId, achievements);
-    
-    return NextResponse.json({
-      success: true,
-      data: updatedProgress,
-      newAchievements,
-      timestamp: new Date()
-    });
-  } catch (error) {
-    console.error('Progress PUT error:', error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: {
-          code: 'INTERNAL_ERROR',
-          message: 'Failed to update progress'
+    const { childId, ...updates } = validationResult.data;
+
+    // Verify parent-child relationship
+    try {
+      const child = await prisma.childProfile.findFirst({
+        where: {
+          id: childId,
+          parentId: session.user.id
         }
-      },
+      });
+
+      if (!child) {
+        logger.warn('Parent attempted to update unauthorized child progress', {
+          parentId: session.user.id,
+          childId
+        });
+        return NextResponse.json(
+          { error: 'Child not found or access denied. You can only update progress for your own children.' },
+          { status: 404 }
+        );
+      }
+
+      // Update progress in database
+      const updatedProgress = await prisma.childProgress.upsert({
+        where: {
+          childId: childId
+        },
+        update: {
+          ...updates,
+          updatedAt: new Date()
+        },
+        create: {
+          childId: childId,
+          ...createDefaultProgress(),
+          ...updates
+        }
+      });
+
+      // Calculate new achievements
+      const achievements = calculateAchievements(childId, updatedProgress);
+      
+      // Store new achievements in database
+      for (const achievement of achievements) {
+        await prisma.childAchievement.upsert({
+          where: {
+            childId_achievementId: {
+              childId: childId,
+              achievementId: achievement.id
+            }
+          },
+          update: {},
+          create: {
+            childId: childId,
+            achievementId: achievement.id,
+            name: achievement.name,
+            description: achievement.description,
+            icon: achievement.icon,
+            rarity: achievement.rarity,
+            earnedAt: new Date()
+          }
+        });
+      }
+
+      logger.info('Child progress updated successfully', {
+        parentId: session.user.id,
+        childId,
+        updatesApplied: Object.keys(updates)
+      });
+
+      return NextResponse.json({
+        childId,
+        progress: updatedProgress,
+        achievements,
+        lastUpdated: updatedProgress.updatedAt
+      });
+
+    } catch (dbError) {
+      logger.error('Database error updating child progress', {
+        error: dbError,
+        parentId: session.user.id,
+        childId
+      });
+      return NextResponse.json(
+        { error: 'Database error occurred while updating progress' },
+        { status: 500 }
+      );
+    }
+
+  } catch (error) {
+    logger.error('Unexpected error in kids progress PUT endpoint', { error });
+    return NextResponse.json(
+      { error: 'An unexpected error occurred' },
       { status: 500 }
     );
   }
 }
 
-// POST - Create new goal
+// POST /api/kids/progress - Create new goal for child (parent-authenticated)
 export async function POST(request: NextRequest) {
   try {
+    // Authenticate parent user
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      logger.warn('Unauthorized access attempt to create kids goal');
+      return NextResponse.json(
+        { error: 'Authentication required. Parents must be logged in to create goals for children.' },
+        { status: 401 }
+      );
+    }
+
     const body = await request.json();
-    const { searchParams } = new URL(request.url);
-    const userId = searchParams.get('userId') || 'current';
+    
+    // Add childId to the validation schema
+    const CreateGoalWithChildSchema = CreateGoalSchema.extend({
+      childId: z.string().uuid('Invalid child ID format')
+    });
     
     // Validate goal data
-    const validationResult = CreateGoalSchema.safeParse(body);
+    const validationResult = CreateGoalWithChildSchema.safeParse(body);
     if (!validationResult.success) {
+      logger.warn('Invalid goal creation data', { errors: validationResult.error.errors });
       return NextResponse.json(
         {
-          success: false,
-          error: {
-            code: 'VALIDATION_ERROR',
-            message: 'Invalid goal data',
-            details: validationResult.error.errors
-          }
+          error: 'Invalid goal data',
+          details: validationResult.error.errors
         },
         { status: 400 }
       );
     }
     
-    const goalData = validationResult.data;
-    const newGoal: Goal = {
-      id: `goal_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      title: goalData.title,
-      description: goalData.description,
-      target: goalData.target,
-      current: 0,
-      deadline: new Date(goalData.deadline),
-      category: goalData.category
-    };
-    
-    // Add goal to user's progress
-    let progress = mockProgress.get(userId) || createDefaultProgress();
-    progress.weeklyGoals.push(newGoal);
-    mockProgress.set(userId, progress);
-    
-    return NextResponse.json({
-      success: true,
-      data: newGoal,
-      timestamp: new Date()
-    }, { status: 201 });
-  } catch (error) {
-    console.error('Goal POST error:', error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: {
-          code: 'INTERNAL_ERROR',
-          message: 'Failed to create goal'
+    const { childId, ...goalData } = validationResult.data;
+
+    // Verify parent-child relationship
+    try {
+      const child = await prisma.childProfile.findFirst({
+        where: {
+          id: childId,
+          parentId: session.user.id
         }
-      },
+      });
+
+      if (!child) {
+        logger.warn('Parent attempted to create goal for unauthorized child', {
+          parentId: session.user.id,
+          childId
+        });
+        return NextResponse.json(
+          { error: 'Child not found or access denied. You can only create goals for your own children.' },
+          { status: 404 }
+        );
+      }
+
+      // Create new goal in database
+      const newGoal = await prisma.childGoal.create({
+        data: {
+          childId: childId,
+          title: goalData.title,
+          description: goalData.description,
+          target: goalData.target,
+          current: 0,
+          deadline: new Date(goalData.deadline),
+          category: goalData.category,
+          priority: goalData.priority,
+          createdAt: new Date()
+        }
+      });
+
+      logger.info('Child goal created successfully', {
+        parentId: session.user.id,
+        childId,
+        goalId: newGoal.id,
+        category: goalData.category
+      });
+
+      return NextResponse.json({
+        childId,
+        goal: newGoal,
+        message: 'Goal created successfully'
+      }, { status: 201 });
+
+    } catch (dbError) {
+      logger.error('Database error creating child goal', {
+        error: dbError,
+        parentId: session.user.id,
+        childId
+      });
+      return NextResponse.json(
+        { error: 'Database error occurred while creating goal' },
+        { status: 500 }
+      );
+    }
+
+  } catch (error) {
+    logger.error('Unexpected error in kids progress POST endpoint', { error });
+    return NextResponse.json(
+      { error: 'An unexpected error occurred' },
       { status: 500 }
     );
   }
