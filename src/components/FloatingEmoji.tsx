@@ -43,16 +43,16 @@ export function FloatingEmoji({ emoji, count = 5, duration = 2000, trigger }: Fl
       
       const interval = setInterval(() => {
         setEmojis(prev => 
-          prev.map(emoji => ({
-            ...emoji,
-            x: emoji.x + emoji.velocity.x,
-            y: emoji.y + emoji.velocity.y,
-            opacity: Math.max(0, emoji.opacity - 0.02),
+          prev.map(emojiInstance => ({
+            ...emojiInstance,
+            x: emojiInstance.x + emojiInstance.velocity.x,
+            y: emojiInstance.y + emojiInstance.velocity.y,
+            opacity: Math.max(0, emojiInstance.opacity - 0.02),
             velocity: {
-              x: emoji.velocity.x * 0.98,
-              y: emoji.velocity.y + 0.05
+              x: emojiInstance.velocity.x * 0.98,
+              y: emojiInstance.velocity.y + 0.05
             }
-          })).filter(emoji => emoji.opacity > 0 && emoji.y < 150)
+          })).filter(emojiInstance => emojiInstance.opacity > 0 && emojiInstance.y < 150)
         );
       }, 50);
 
@@ -67,16 +67,16 @@ export function FloatingEmoji({ emoji, count = 5, duration = 2000, trigger }: Fl
 
   return (
     <div className="fixed inset-0 pointer-events-none z-40">
-      {emojis.map(emoji => (
+      {emojis.map(emojiInstance => (
         <div
-          key={emoji.id}
+          key={emojiInstance.id}
           className="absolute select-none"
           style={{
-            left: `${emoji.x}%`,
-            top: `${emoji.y}%`,
-            fontSize: `${emoji.size}px`,
-            opacity: emoji.opacity,
-            transform: `rotate(${emoji.x * 2}deg)`,
+            left: `${emojiInstance.x}%`,
+            top: `${emojiInstance.y}%`,
+            fontSize: `${emojiInstance.size}px`,
+            opacity: emojiInstance.opacity,
+            transform: `rotate(${emojiInstance.x * 2}deg)`,
             transition: 'all 0.1s ease-out'
           }}
         >

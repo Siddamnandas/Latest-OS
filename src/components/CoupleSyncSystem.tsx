@@ -594,7 +594,7 @@ export function CoupleSyncSystem() {
                   <div key={session.id} className="p-4 border rounded-lg">
                     <div className="flex items-center justify-between mb-3">
                       <h4 className="font-medium text-gray-900">
-                        {session.date.toLocaleDateString()}
+                        {new Date(session.date).toLocaleDateString()}
                       </h4>
                       <div className="flex items-center gap-2">
                         <Badge className="bg-green-100 text-green-700 text-xs">

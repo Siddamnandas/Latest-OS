@@ -1,0 +1,510 @@
+/* Kids Activities Accessibility Styles */
+/* Production-ready accessibility CSS for inclusive design */
+
+/* Screen reader only content */
+.sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+/* Skip to main content link */
+.skip-to-main {
+  position: absolute;
+  top: -40px;
+  left: 6px;
+  background: #3b82f6;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 4px;
+  text-decoration: none;
+  z-index: 1000;
+  transition: top 0.2s ease-in-out;
+}
+
+.skip-to-main:focus {
+  top: 6px;
+}
+
+/* High contrast mode */
+.high-contrast {
+  --contrast-bg: #000000;
+  --contrast-text: #ffffff;
+  --contrast-primary: #ffff00;
+  --contrast-secondary: #00ffff;
+  --contrast-error: #ff0000;
+  --contrast-success: #00ff00;
+  --contrast-border: #ffffff;
+}
+
+.high-contrast * {
+  background-color: var(--contrast-bg) !important;
+  color: var(--contrast-text) !important;
+  border-color: var(--contrast-border) !important;
+}
+
+.high-contrast .btn-primary,
+.high-contrast .bg-primary {
+  background-color: var(--contrast-primary) !important;
+  color: var(--contrast-bg) !important;
+}
+
+.high-contrast .btn-secondary,
+.high-contrast .bg-secondary {
+  background-color: var(--contrast-secondary) !important;
+  color: var(--contrast-bg) !important;
+}
+
+.high-contrast .text-red-500,
+.high-contrast .text-red-600,
+.high-contrast .border-red-500 {
+  color: var(--contrast-error) !important;
+  border-color: var(--contrast-error) !important;
+}
+
+.high-contrast .text-green-500,
+.high-contrast .text-green-600,
+.high-contrast .border-green-500 {
+  color: var(--contrast-success) !important;
+  border-color: var(--contrast-success) !important;
+}
+
+/* Large text mode */
+.large-text {
+  font-size: 18px;
+}
+
+.large-text h1 { font-size: 3rem; }
+.large-text h2 { font-size: 2.5rem; }
+.large-text h3 { font-size: 2rem; }
+.large-text h4 { font-size: 1.75rem; }
+.large-text h5 { font-size: 1.5rem; }
+.large-text h6 { font-size: 1.25rem; }
+
+.large-text .text-sm { font-size: 1rem; }
+.large-text .text-base { font-size: 1.25rem; }
+.large-text .text-lg { font-size: 1.5rem; }
+.large-text .text-xl { font-size: 1.75rem; }
+.large-text .text-2xl { font-size: 2rem; }
+
+.large-text button,
+.large-text .btn {
+  padding: 12px 24px;
+  font-size: 1.125rem;
+  min-height: 48px;
+}
+
+.large-text input,
+.large-text textarea,
+.large-text select {
+  padding: 12px;
+  font-size: 1.125rem;
+  min-height: 48px;
+}
+
+/* Reduced motion */
+.reduced-motion *,
+.reduced-motion *::before,
+.reduced-motion *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+.reduced-motion .animate-spin,
+.reduced-motion .animate-pulse,
+.reduced-motion .animate-bounce {
+  animation: none !important;
+}
+
+/* Color blind support */
+.colorblind-support {
+  /* Enhanced patterns and textures for color-blind users */
+}
+
+.colorblind-support .bg-red-500,
+.colorblind-support .text-red-500 {
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 2px,
+    rgba(255,255,255,0.3) 2px,
+    rgba(255,255,255,0.3) 4px
+  );
+}
+
+.colorblind-support .bg-green-500,
+.colorblind-support .text-green-500 {
+  background-image: repeating-linear-gradient(
+    90deg,
+    transparent,
+    transparent 2px,
+    rgba(255,255,255,0.3) 2px,
+    rgba(255,255,255,0.3) 4px
+  );
+}
+
+.colorblind-support .bg-blue-500,
+.colorblind-support .text-blue-500 {
+  background-image: repeating-linear-gradient(
+    135deg,
+    transparent,
+    transparent 2px,
+    rgba(255,255,255,0.3) 2px,
+    rgba(255,255,255,0.3) 4px
+  );
+}
+
+/* Focus management */
+.focus-management *:focus {
+  outline: 3px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+.focus-management .focus-visible\:outline-none:focus-visible {
+  outline: 3px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+.focus-management .focus\:ring-2:focus {
+  --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
+  --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(3px + var(--tw-ring-offset-width)) var(--tw-ring-color);
+  box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);
+}
+
+/* Keyboard navigation indicators */
+.keyboard-nav-item {
+  position: relative;
+}
+
+.keyboard-nav-item.active::before,
+.keyboard-nav-item:focus::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border: 2px solid #3b82f6;
+  border-radius: 4px;
+  z-index: 1;
+}
+
+/* Touch target size (minimum 44px) */
+button,
+.btn,
+a,
+input,
+textarea,
+select {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+.large-text button,
+.large-text .btn,
+.large-text a,
+.large-text input,
+.large-text textarea,
+.large-text select {
+  min-height: 48px;
+  min-width: 48px;
+}
+
+/* Loading states accessibility */
+.loading-spinner {
+  animation: spin 1s linear infinite;
+}
+
+.reduced-motion .loading-spinner {
+  animation: none;
+  /* Show static loading indicator instead */
+}
+
+.reduced-motion .loading-spinner::after {
+  content: '⏳';
+  display: block;
+  font-size: 1.5rem;
+}
+
+/* Error states */
+.error-state {
+  border: 2px solid #ef4444;
+  background-color: #fef2f2;
+}
+
+.dark .error-state {
+  background-color: #7f1d1d;
+}
+
+.error-state:focus {
+  outline: 2px solid #ef4444;
+  outline-offset: 2px;
+}
+
+/* Success states */
+.success-state {
+  border: 2px solid #10b981;
+  background-color: #ecfdf5;
+}
+
+.dark .success-state {
+  background-color: #064e3b;
+}
+
+/* Modal accessibility */
+.modal-overlay {
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(2px);
+}
+
+.reduced-motion .modal-overlay {
+  backdrop-filter: none;
+}
+
+.modal-content {
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+/* Tooltip accessibility */
+.tooltip {
+  background-color: #1f2937;
+  color: #ffffff;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 14px;
+  z-index: 1000;
+}
+
+.high-contrast .tooltip {
+  background-color: var(--contrast-bg);
+  color: var(--contrast-text);
+  border: 1px solid var(--contrast-border);
+}
+
+/* Form accessibility */
+input:invalid,
+textarea:invalid,
+select:invalid {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 1px #ef4444;
+}
+
+input:valid,
+textarea:valid,
+select:valid {
+  border-color: #10b981;
+}
+
+.form-field-error {
+  color: #ef4444;
+  font-size: 0.875rem;
+  margin-top: 4px;
+}
+
+.large-text .form-field-error {
+  font-size: 1rem;
+}
+
+/* Table accessibility */
+table {
+  border-collapse: collapse;
+}
+
+th,
+td {
+  border: 1px solid #d1d5db;
+  padding: 8px 12px;
+  text-align: left;
+}
+
+th {
+  background-color: #f9fafb;
+  font-weight: 600;
+}
+
+.dark th {
+  background-color: #374151;
+}
+
+.high-contrast table,
+.high-contrast th,
+.high-contrast td {
+  border-color: var(--contrast-border);
+}
+
+/* Card accessibility */
+.card {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background-color: #ffffff;
+}
+
+.dark .card {
+  border-color: #374151;
+  background-color: #1f2937;
+}
+
+.card:focus-within {
+  box-shadow: 0 0 0 2px #3b82f6;
+}
+
+/* Navigation accessibility */
+.nav-item {
+  position: relative;
+}
+
+.nav-item.current {
+  font-weight: 600;
+}
+
+.nav-item.current::after {
+  content: '(current page)';
+  position: absolute;
+  left: -9999px;
+}
+
+/* Breadcrumb accessibility */
+.breadcrumb {
+  list-style: none;
+  display: flex;
+  align-items: center;
+}
+
+.breadcrumb li:not(:last-child)::after {
+  content: '/';
+  margin: 0 8px;
+  color: #6b7280;
+}
+
+.breadcrumb li:last-child {
+  font-weight: 600;
+}
+
+/* Progress bar accessibility */
+.progress-bar {
+  background-color: #e5e7eb;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background-color: #3b82f6;
+  transition: width 0.3s ease;
+}
+
+.reduced-motion .progress-bar-fill {
+  transition: none;
+}
+
+/* Kids activities specific styles */
+.activity-card {
+  border: 2px solid transparent;
+  transition: border-color 0.2s ease;
+}
+
+.activity-card:hover,
+.activity-card:focus-within {
+  border-color: #3b82f6;
+}
+
+.reduced-motion .activity-card {
+  transition: none;
+}
+
+.activity-difficulty-easy {
+  border-left: 4px solid #10b981;
+}
+
+.activity-difficulty-medium {
+  border-left: 4px solid #f59e0b;
+}
+
+.activity-difficulty-hard {
+  border-left: 4px solid #ef4444;
+}
+
+.colorblind-support .activity-difficulty-easy {
+  border-left-style: solid;
+}
+
+.colorblind-support .activity-difficulty-medium {
+  border-left-style: dashed;
+}
+
+.colorblind-support .activity-difficulty-hard {
+  border-left-style: dotted;
+}
+
+/* Achievement badges */
+.achievement-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 16px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.achievement-badge.common {
+  background-color: #e5e7eb;
+  color: #374151;
+}
+
+.achievement-badge.rare {
+  background-color: #dbeafe;
+  color: #1e40af;
+}
+
+.achievement-badge.epic {
+  background-color: #ede9fe;
+  color: #6b21a8;
+}
+
+.achievement-badge.legendary {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.large-text .achievement-badge {
+  font-size: 1rem;
+  padding: 6px 12px;
+}
+
+/* Responsive text scaling */
+@media (max-width: 640px) {
+  .large-text {
+    font-size: 16px;
+  }
+  
+  .large-text h1 { font-size: 2rem; }
+  .large-text h2 { font-size: 1.75rem; }
+  .large-text h3 { font-size: 1.5rem; }
+}
+
+/* Print styles for accessibility */
+@media print {
+  .sr-only {
+    position: static !important;
+    width: auto !important;
+    height: auto !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    clip: auto !important;
+    white-space: normal !important;
+  }
+  
+  .skip-to-main,
+  .tooltip,
+  .modal-overlay {
+    display: none !important;
+  }
+}

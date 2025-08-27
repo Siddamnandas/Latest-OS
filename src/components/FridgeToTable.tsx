@@ -361,7 +361,7 @@ export function FridgeToTable({ coupleId }: FridgeToTableProps) {
                     <div>
                       <h4 className="font-semibold text-gray-900">{plan.name}</h4>
                       <p className="text-sm text-gray-500">
-                        {plan.date.toLocaleDateString()} • {plan.meals.breakfast.length + plan.meals.lunch.length + plan.meals.dinner.length} meals
+                        {new Date(plan.date).toLocaleDateString()} • {plan.meals.breakfast.length + plan.meals.lunch.length + plan.meals.dinner.length} meals
                       </p>
                     </div>
                     <div className="flex items-center gap-2">

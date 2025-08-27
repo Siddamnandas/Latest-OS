@@ -25,20 +25,15 @@ import {
 import { useToast } from '@/hooks/use-toast';
 
 interface MemoryRecorderProps {
-  onSave: (memory: {
-    type: 'text' | 'audio' | 'video' | 'image';
-    content: string;
-    title: string;
-    description?: string;
-    tags: string[];
-    duration?: number;
-  }) => void;
+  coupleId?: string;
+  onSuccess?: (memory: any) => void;
   onCancel: () => void;
 }
 
-export function MemoryRecorder({ onSave, onCancel }: MemoryRecorderProps) {
+export function MemoryRecorder({ coupleId, onSuccess, onCancel }: MemoryRecorderProps) {
   const [recordingType, setRecordingType] = useState<'text' | 'audio' | 'video' | 'image'>('text');
   const [isRecording, setIsRecording] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -142,7 +137,7 @@ export function MemoryRecorder({ onSave, onCancel }: MemoryRecorderProps) {
     setTags(prev => prev.filter(tag => tag !== tagToRemove));
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!title.trim()) {
       toast({
         title: "Title Required",
@@ -170,16 +165,71 @@ export function MemoryRecorder({ onSave, onCancel }: MemoryRecorderProps) {
       return;
     }
 
-    const memoryData = {
-      type: recordingType,
-      content: recordingType === 'text' ? content : mediaUrl,
-      title,
-      description: description || undefined,
-      tags,
-      duration: recordingType !== 'text' ? recordingTime : undefined,
-    };
+    setIsSaving(true);
 
-    onSave(memoryData);
+    try {
+      const formData = new FormData();
+      formData.append('type', recordingType);
+      formData.append('title', title);
+      formData.append('tags', JSON.stringify(tags));
+      formData.append('sentiment', 'positive'); // Default sentiment
+      formData.append('partners', JSON.stringify(['current_user'])); // Default to current user
+      formData.append('is_private', 'false');
+      
+      if (description) {
+        formData.append('description', description);
+      }
+      
+      if (coupleId) {
+        formData.append('couple_id', coupleId);
+      }
+
+      if (recordingType === 'text') {
+        formData.append('content', content);
+      } else if (mediaBlob) {
+        // Generate appropriate filename
+        const extension = recordingType === 'audio' ? 'wav' : recordingType === 'image' ? 'jpg' : 'mp4';
+        const file = new File([mediaBlob], `memory.${extension}`, { type: mediaBlob.type });
+        formData.append('file', file);
+      }
+
+      const response = await fetch('/api/memories', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to save memory');
+      }
+
+      const result = await response.json();
+      
+      toast({
+        title: "Memory Saved! 🎉",
+        description: "Your memory has been saved successfully",
+        duration: 3000,
+      });
+
+      // Reset form
+      resetRecorder();
+      
+      // Call success callback if provided
+      if (onSuccess) {
+        onSuccess(result.data);
+      }
+      
+    } catch (error) {
+      console.error('Error saving memory:', error);
+      toast({
+        title: "Error Saving Memory",
+        description: error instanceof Error ? error.message : 'An unexpected error occurred',
+        variant: "destructive",
+        duration: 5000,
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const resetRecorder = () => {
@@ -424,9 +474,9 @@ export function MemoryRecorder({ onSave, onCancel }: MemoryRecorderProps) {
           <Button variant="outline" onClick={onCancel} className="flex-1">
             Cancel
           </Button>
-          <Button onClick={handleSave} className="flex-1">
+          <Button onClick={handleSave} className="flex-1" disabled={isSaving}>
             <Save className="w-4 h-4 mr-2" />
-            Save Memory
+            {isSaving ? 'Saving...' : 'Save Memory'}
           </Button>
         </div>
       </CardContent>

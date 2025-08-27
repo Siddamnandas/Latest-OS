@@ -7,8 +7,10 @@ import { getServerSession } from 'next-auth';
 import { z } from 'zod';
 import { UserProgress, Skill, Badge, Goal, Milestone } from '@/types/kids-activities';
 import { authOptions } from '@/lib/auth';
-import { logger } from '@/lib/logger';
+import { logger, apiLogger, performanceLogger } from '@/lib/logger';
 import { prisma } from '@/lib/prisma';
+import { cacheHelpers } from '@/lib/kids-cache';
+import { monitoring } from '@/lib/monitoring';
 
 // Validation schemas
 const UpdateProgressSchema = z.object({
@@ -62,11 +64,11 @@ export async function GET(request: NextRequest) {
     
     const validationResult = GetProgressSchema.safeParse({ childId });
     if (!validationResult.success) {
-      logger.warn('Invalid child ID provided', { childId, errors: validationResult.error.errors });
+      logger.warn({ childId, errors: validationResult.error.issues }, 'Invalid child ID provided');
       return NextResponse.json(
         { 
           error: 'Invalid child ID format',
-          details: validationResult.error.errors
+          details: validationResult.error.issues
         },
         { status: 400 }
       );
@@ -88,10 +90,10 @@ export async function GET(request: NextRequest) {
       });
 
       if (!child) {
-        logger.warn('Parent attempted to access unauthorized child progress', {
+        logger.warn({
           parentId: session.user.id,
           childId: validatedChildId
-        });
+        }, 'Parent attempted to access unauthorized child progress');
         return NextResponse.json(
           { error: 'Child not found or access denied. You can only view progress for your own children.' },
           { status: 404 }
@@ -132,11 +134,11 @@ export async function GET(request: NextRequest) {
         }
       });
 
-      logger.info('Child progress retrieved successfully', {
+      logger.info({
         parentId: session.user.id,
         childId: validatedChildId,
         activitiesCompleted: progress.totalActivitiesCompleted
-      });
+      }, 'Child progress retrieved successfully');
 
       return NextResponse.json({
         childId: validatedChildId,
@@ -148,11 +150,11 @@ export async function GET(request: NextRequest) {
       });
 
     } catch (dbError) {
-      logger.error('Database error retrieving child progress', {
+      logger.error({
         error: dbError,
         parentId: session.user.id,
         childId: validatedChildId
-      });
+      }, 'Database error retrieving child progress');
       return NextResponse.json(
         { error: 'Database error occurred while retrieving progress' },
         { status: 500 }
@@ -160,7 +162,7 @@ export async function GET(request: NextRequest) {
     }
 
   } catch (error) {
-    logger.error('Unexpected error in kids progress GET endpoint', { error });
+    logger.error({ error }, 'Unexpected error in kids progress GET endpoint');
     return NextResponse.json(
       { error: 'An unexpected error occurred' },
       { status: 500 }
@@ -415,58 +417,7 @@ function optimizeLearningPath(progress: UserProgress): UserProgress['learningPat
   };
 }
 
-// GET - Retrieve user progress
-export async function GET(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const userId = searchParams.get('userId') || 'current';
-    const includeAnalytics = searchParams.get('analytics') === 'true';
-    
-    let progress = mockProgress.get(userId);
-    if (!progress) {
-      progress = createDefaultProgress();
-      mockProgress.set(userId, progress);
-    }
-    
-    // Optimize learning path
-    progress.learningPath = optimizeLearningPath(progress);
-    
-    // Calculate achievements
-    const achievements = calculateAchievements(userId, progress);
-    mockAchievements.set(userId, achievements);
-    
-    let response: any = {
-      success: true,
-      data: progress,
-      achievements,
-      timestamp: new Date()
-    };
-    
-    // Include detailed analytics if requested
-    if (includeAnalytics) {
-      response.analytics = {
-        weeklyProgress: calculateWeeklyProgress(progress),
-        monthlyTrends: calculateMonthlyTrends(progress),
-        skillDistribution: calculateSkillDistribution(progress),
-        recommendations: generatePersonalizedRecommendations(progress)
-      };
-    }
-    
-    return NextResponse.json(response);
-  } catch (error) {
-    console.error('Progress GET error:', error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: {
-          code: 'INTERNAL_ERROR',
-          message: 'Failed to retrieve progress'
-        }
-      },
-      { status: 500 }
-    );
-  }
-}
+
 
 // PUT /api/kids/progress - Update child progress (parent-authenticated)
 export async function PUT(request: NextRequest) {
@@ -486,11 +437,11 @@ export async function PUT(request: NextRequest) {
     // Validate input
     const validationResult = UpdateProgressSchema.safeParse(body);
     if (!validationResult.success) {
-      logger.warn('Invalid progress update data', { errors: validationResult.error.errors });
+      logger.warn({ errors: validationResult.error.issues }, 'Invalid progress update data');
       return NextResponse.json(
         {
           error: 'Invalid progress data',
-          details: validationResult.error.errors
+          details: validationResult.error.issues
         },
         { status: 400 }
       );
@@ -508,10 +459,10 @@ export async function PUT(request: NextRequest) {
       });
 
       if (!child) {
-        logger.warn('Parent attempted to update unauthorized child progress', {
+        logger.warn({
           parentId: session.user.id,
           childId
-        });
+        }, 'Parent attempted to update unauthorized child progress');
         return NextResponse.json(
           { error: 'Child not found or access denied. You can only update progress for your own children.' },
           { status: 404 }
@@ -559,11 +510,11 @@ export async function PUT(request: NextRequest) {
         });
       }
 
-      logger.info('Child progress updated successfully', {
+      logger.info({
         parentId: session.user.id,
         childId,
         updatesApplied: Object.keys(updates)
-      });
+      }, 'Child progress updated successfully');
 
       return NextResponse.json({
         childId,
@@ -573,11 +524,11 @@ export async function PUT(request: NextRequest) {
       });
 
     } catch (dbError) {
-      logger.error('Database error updating child progress', {
+      logger.error({
         error: dbError,
         parentId: session.user.id,
         childId
-      });
+      }, 'Database error updating child progress');
       return NextResponse.json(
         { error: 'Database error occurred while updating progress' },
         { status: 500 }
@@ -585,7 +536,7 @@ export async function PUT(request: NextRequest) {
     }
 
   } catch (error) {
-    logger.error('Unexpected error in kids progress PUT endpoint', { error });
+    logger.error({ error }, 'Unexpected error in kids progress PUT endpoint');
     return NextResponse.json(
       { error: 'An unexpected error occurred' },
       { status: 500 }
@@ -616,11 +567,11 @@ export async function POST(request: NextRequest) {
     // Validate goal data
     const validationResult = CreateGoalWithChildSchema.safeParse(body);
     if (!validationResult.success) {
-      logger.warn('Invalid goal creation data', { errors: validationResult.error.errors });
+      logger.warn({ errors: validationResult.error.issues }, 'Invalid goal creation data');
       return NextResponse.json(
         {
           error: 'Invalid goal data',
-          details: validationResult.error.errors
+          details: validationResult.error.issues
         },
         { status: 400 }
       );
@@ -638,10 +589,10 @@ export async function POST(request: NextRequest) {
       });
 
       if (!child) {
-        logger.warn('Parent attempted to create goal for unauthorized child', {
+        logger.warn({
           parentId: session.user.id,
           childId
-        });
+        }, 'Parent attempted to create goal for unauthorized child');
         return NextResponse.json(
           { error: 'Child not found or access denied. You can only create goals for your own children.' },
           { status: 404 }
@@ -663,12 +614,12 @@ export async function POST(request: NextRequest) {
         }
       });
 
-      logger.info('Child goal created successfully', {
+      logger.info({
         parentId: session.user.id,
         childId,
         goalId: newGoal.id,
         category: goalData.category
-      });
+      }, 'Child goal created successfully');
 
       return NextResponse.json({
         childId,
@@ -677,11 +628,11 @@ export async function POST(request: NextRequest) {
       }, { status: 201 });
 
     } catch (dbError) {
-      logger.error('Database error creating child goal', {
+      logger.error({
         error: dbError,
         parentId: session.user.id,
         childId
-      });
+      }, 'Database error creating child goal');
       return NextResponse.json(
         { error: 'Database error occurred while creating goal' },
         { status: 500 }
@@ -689,7 +640,7 @@ export async function POST(request: NextRequest) {
     }
 
   } catch (error) {
-    logger.error('Unexpected error in kids progress POST endpoint', { error });
+    logger.error({ error }, 'Unexpected error in kids progress POST endpoint');
     return NextResponse.json(
       { error: 'An unexpected error occurred' },
       { status: 500 }
@@ -726,7 +677,12 @@ function calculateSkillDistribution(progress: UserProgress) {
 }
 
 function generatePersonalizedRecommendations(progress: UserProgress) {
-  const recommendations = [];
+  const recommendations: Array<{
+    type: string;
+    title: string;
+    description: string;
+    priority: string;
+  }> = [];
   
   if (progress.kindnessPoints < 10) {
     recommendations.push({

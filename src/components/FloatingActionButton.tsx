@@ -17,16 +17,23 @@ interface FloatingActionButtonProps {
   actions?: FABAction[];
   mainIcon?: any;
   position?: 'bottom-right' | 'bottom-left' | 'center-bottom';
+  hide?: boolean;
 }
 
 export function FloatingActionButton({ 
   actions, 
   mainIcon: MainIcon = Plus,
-  position = 'bottom-right' 
+  position = 'bottom-right',
+  hide = false
 }: FloatingActionButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
   const fabRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+
+  // Hide the FAB if hide prop is true
+  if (hide) {
+    return null;
+  }
 
   // Default actions if none provided
   const defaultActions: FABAction[] = [

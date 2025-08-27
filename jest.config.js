@@ -6,7 +6,11 @@ module.exports = {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
   transform: {
-    '^.+\\.(ts|tsx)$': ['ts-jest', { tsconfig: '<rootDir>/tsconfig.jest.json' }],
+    '^.+\\.(ts|tsx)$': ['ts-jest', { 
+      tsconfig: '<rootDir>/tsconfig.jest.json',
+      useESM: false
+    }],
+    '^.+\\.(js|jsx)$': 'babel-jest',
   },
   testMatch: [
     '<rootDir>/src/**/__tests__/**/*.(ts|tsx|js)',
@@ -16,6 +20,19 @@ module.exports = {
   collectCoverageFrom: [
     'src/**/*.(ts|tsx)',
     '!src/**/*.d.ts',
-    '!src/**/*.stories.*'
-  ]
+    '!src/**/*.stories.*',
+    '!src/**/index.ts',
+    '!src/**/types.ts'
+  ],
+  coverageReporters: ['text', 'lcov', 'html'],
+  coverageDirectory: 'coverage',
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
+  globals: {
+    'ts-jest': {
+      useESM: false,
+      tsconfig: '<rootDir>/tsconfig.jest.json'
+    }
+  },
+  testTimeout: 10000,
+  maxWorkers: '50%'
 };

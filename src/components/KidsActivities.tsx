@@ -47,145 +47,173 @@ import { InteractiveConfetti } from '@/components/InteractiveConfetti';
 import { MagicButton } from '@/components/MagicButton';
 import { FloatingEmoji } from '@/components/FloatingEmoji';
 import { KidsMobileActions } from '@/components/KidsMobileActions';
-import { useKidsActivities } from '@/hooks/use-kids-activities';
 
-// Import types from centralized location
-import { 
-  EmotionScenario, 
-  KindnessMoment, 
-  MythologicalQuestion, 
-  ThemedDay, 
-  KrishnaPrank, 
-  HanumanTask, 
-  SaraswatiCreative, 
-  StorybookEntry as FamilyStorybookEntry 
-} from '@/types/kids-activities';
+// Simplified local state management interface
+interface SimpleKidsState {
+  isLoading: boolean;
+  totalKindnessPoints: number;
+  totalMemories: number;
+  kindnessLevel: string;
+  weeklyStats: {
+    kindnessActions: number;
+    creativeMoments: number;
+    storiesShared: number;
+    memoriesSaved: number;
+  };
+  celebrationEmoji: string;
+  showFloatingEmoji: boolean;
+  showConfetti: boolean;
+  activeTab: string;
+}
 
-export function KidsActivities() {
-  // Use production-ready state management
-  const {
-    state,
-    activities,
-    progress,
-    kindnessMoments,
-    storybookEntries,
-    celebrationEmoji,
-    showFloatingEmoji,
-    showConfetti,
-    activeTab,
-    setActiveTab,
+// Mock data and simple hook
+function useSimpleKidsState(): SimpleKidsState & {
+  triggerCelebration: (emoji: string, confetti?: boolean, duration?: number) => void;
+  addKindnessMoment: (description: string, category: string, points?: number) => Promise<boolean>;
+  addStorybookEntry: (title: string, description: string, type: string, participants: string[]) => Promise<boolean>;
+  setActiveTab: (tab: string) => void;
+} {
+  const [state, setState] = useState<SimpleKidsState>({
+    isLoading: false,
+    totalKindnessPoints: parseInt(localStorage.getItem('totalKindnessPoints') || '0'),
+    totalMemories: parseInt(localStorage.getItem('totalMemories') || '0'),
+    kindnessLevel: localStorage.getItem('kindnessLevel') || 'Getting Started',
+    weeklyStats: {
+      kindnessActions: parseInt(localStorage.getItem('weeklyKindnessActions') || '0'),
+      creativeMoments: parseInt(localStorage.getItem('weeklyCreativeMoments') || '0'),
+      storiesShared: parseInt(localStorage.getItem('weeklyStoriesShared') || '0'),
+      memoriesSaved: parseInt(localStorage.getItem('weeklyMemoriesSaved') || '0')
+    },
+    celebrationEmoji: '🎉',
+    showFloatingEmoji: false,
+    showConfetti: false,
+    activeTab: 'activities'
+  });
+
+  const triggerCelebration = (emoji: string, confetti = false, duration = 3000) => {
+    setState(prev => ({
+      ...prev,
+      celebrationEmoji: emoji,
+      showFloatingEmoji: true,
+      showConfetti: confetti
+    }));
+
+    setTimeout(() => {
+      setState(prev => ({
+        ...prev,
+        showFloatingEmoji: false,
+        showConfetti: false
+      }));
+    }, duration);
+  };
+
+  const addKindnessMoment = async (description: string, category: string, points = 5) => {
+    const newTotal = state.totalKindnessPoints + points;
+    const newWeeklyActions = state.weeklyStats.kindnessActions + 1;
+    
+    localStorage.setItem('totalKindnessPoints', newTotal.toString());
+    localStorage.setItem('weeklyKindnessActions', newWeeklyActions.toString());
+    
+    setState(prev => ({
+      ...prev,
+      totalKindnessPoints: newTotal,
+      weeklyStats: {
+        ...prev.weeklyStats,
+        kindnessActions: newWeeklyActions
+      }
+    }));
+    
+    return true;
+  };
+
+  const addStorybookEntry = async (title: string, description: string, type: string, participants: string[]) => {
+    const newTotal = state.totalMemories + 1;
+    const newWeeklyMemories = state.weeklyStats.memoriesSaved + 1;
+    
+    localStorage.setItem('totalMemories', newTotal.toString());
+    localStorage.setItem('weeklyMemoriesSaved', newWeeklyMemories.toString());
+    
+    setState(prev => ({
+      ...prev,
+      totalMemories: newTotal,
+      weeklyStats: {
+        ...prev.weeklyStats,
+        memoriesSaved: newWeeklyMemories
+      }
+    }));
+    
+    return true;
+  };
+
+  const setActiveTab = (tab: string) => {
+    setState(prev => ({ ...prev, activeTab: tab }));
+  };
+
+  return {
+    ...state,
+    triggerCelebration,
     addKindnessMoment,
     addStorybookEntry,
-    triggerCelebration,
-    setCelebrationEmoji,
-    setShowFloatingEmoji,
-    setShowConfetti,
+    setActiveTab
+  };
+}
+
+export function KidsActivities() {
+  // Use simplified state management
+  const {
     isLoading,
     totalKindnessPoints,
     totalMemories,
     kindnessLevel,
-    weeklyStats
-  } = useKidsActivities();
+    weeklyStats,
+    celebrationEmoji,
+    showFloatingEmoji,
+    showConfetti,
+    activeTab,
+    triggerCelebration,
+    addKindnessMoment,
+    addStorybookEntry,
+    setActiveTab
+  } = useSimpleKidsState();
   
   const { toast } = useToast();
   
   // Local state for UI elements that don't need persistence
   const [selectedEmotion, setSelectedEmotion] = useState<string | null>(null);
   const [showSecondaryActivities, setShowSecondaryActivities] = useState(false);
+  const [localLoading, setLocalLoading] = useState(false);
   
-  // Static data that doesn't change (could be moved to a config file)
-  const emotionScenarios: EmotionScenario[] = [
+  // Combined loading state
+  const isButtonLoading = isLoading || localLoading;
+  const setIsLoading = setLocalLoading;
+  
+  // Simplified static data - no need for complex types
+  const emotionScenarios = [
     {
       id: '1',
       title: 'The Lost Toy',
       description: 'A little bear lost his favorite toy',
-      character: {
-        name: 'Bear',
-        description: 'A friendly teddy bear',
-        traits: ['kind', 'gentle'],
-        stories: [],
-        lessons: ['Perseverance'],
-        visualRepresentation: '🧸'
-      },
-      situation: 'Lost favorite toy',
-      emotions: [
-        { name: 'Sad', emoji: '😢', description: 'Feeling down when something is lost', triggers: ['loss'], copingStrategies: ['seek help'], bodySignals: ['tears'] },
-        { name: 'Upset', emoji: '😞', description: 'Feeling disturbed', triggers: ['disappointment'], copingStrategies: ['talk it out'], bodySignals: ['frown'] },
-        { name: 'Disappointed', emoji: '😔', description: 'When expectations are not met', triggers: ['unmet expectations'], copingStrategies: ['acceptance'], bodySignals: ['slumped shoulders'] },
-        { name: 'Worried', emoji: '😟', description: 'Feeling anxious about something', triggers: ['uncertainty'], copingStrategies: ['problem solving'], bodySignals: ['tension'] }
-      ],
-      correctResponses: ['It\'s okay to feel sad when we lose something important'],
-      discussionPrompts: ['How would you help the bear feel better?'],
-      followUpActivities: ['Draw a picture of the toy'],
-      type: 'emotion',
+      character: 'Bear 🧸',
+      emotions: ['Sad 😢', 'Upset 😞', 'Disappointed 😔', 'Worried 😟'],
       difficulty: 'easy',
-      ageRange: { min: 3, max: 6 },
-      estimatedDuration: 10,
-      tags: ['emotions', 'animals', 'empathy'],
-      instructions: [{
-        step: 1,
-        title: 'Meet the Bear',
-        description: 'Look at the bear and guess how it feels',
-        interactionType: 'tap'
-      }],
-      materials: [],
-      learningObjectives: ['Emotion recognition', 'Empathy development'],
-      accessibility: {
-        screenReaderSupport: true,
-        voiceNavigation: true,
-        largeText: true,
-        highContrast: true,
-        reducedMotion: false,
-        audioDescriptions: true
-      },
-      createdAt: new Date(),
-      updatedAt: new Date()
+      ageRange: '3-6 years',
+      duration: '10 minutes'
     }
   ];
   
-  const mythologicalQuestions: MythologicalQuestion[] = [
+  const mythologicalQuestions = [
     {
       id: '1',
-      character: {
-        name: 'Krishna',
-        description: 'The playful and wise deity known for his flute',
-        traits: ['playful', 'wise', 'loving'],
-        stories: ['The Butter Thief', 'The Flute Player'],
-        lessons: ['Joy in simplicity', 'Love for all beings'],
-        visualRepresentation: '🪈'
-      },
+      character: 'Krishna 🪈',
+      story: "Krishna's Flute",
+      description: 'Learn about Krishna\'s musical wisdom',
       question: 'Why did Krishna love to play the flute?',
       answer: 'Because music brings joy and happiness to everyone',
-      context: 'Krishna\'s flute music made all the cows and villagers happy',
-      difficulty: 'easy',
-      type: 'mythology',
-      title: 'Krishna\'s Flute',
-      description: 'Learn about Krishna\'s musical wisdom',
-      ageRange: { min: 4, max: 8 },
-      estimatedDuration: 5,
-      tags: ['mythology', 'music', 'Krishna'],
-      instructions: [{
-        step: 1,
-        title: 'Listen to the Story',
-        description: 'Learn about Krishna\'s magical flute',
-        interactionType: 'read'
-      }],
-      materials: [],
-      learningObjectives: ['Cultural knowledge', 'Musical appreciation'],
-      accessibility: {
-        screenReaderSupport: true,
-        voiceNavigation: true,
-        largeText: true,
-        highContrast: true,
-        reducedMotion: false,
-        audioDescriptions: true
-      },
-      createdAt: new Date(),
-      updatedAt: new Date()
+      difficulty: 'easy'
     }
   ];
   
-  const themedDays: ThemedDay[] = [
+  const themedDays = [
     {
       id: 'krishna',
       name: 'Krishna Prank Day',
@@ -220,7 +248,7 @@ export function KidsActivities() {
   
   const currentDay = 'krishna'; // This could be randomized or based on the day
 
-  // Activity Handlers - Updated to use new state management
+  // Simplified activity handlers
   const handleEmotionSelect = (emotion: string, emoji: string) => {
     setSelectedEmotion(emotion);
     triggerCelebration(emoji, false, 3000);
@@ -231,14 +259,14 @@ export function KidsActivities() {
     });
   };
 
-  const handleKindnessMoment = async (description: string, category: string) => {
-    const points = Math.floor(Math.random() * 10) + 1;
-    const moment = await addKindnessMoment(description, category, points);
+  const handleKindnessMoment = async (description: string, category: string, points?: number) => {
+    const kindnessPoints = points || Math.floor(Math.random() * 10) + 1;
+    const success = await addKindnessMoment(description, category, kindnessPoints);
     
-    if (moment) {
+    if (success) {
       toast({
         title: "Kindness Recorded! 🌟",
-        description: `Great job! You earned ${points} kindness points.`,
+        description: `Great job! You earned ${kindnessPoints} kindness points.`,
         duration: 3000,
       });
     }
@@ -250,21 +278,21 @@ export function KidsActivities() {
       triggerCelebration('📚', false, 4000);
       toast({
         title: "Great Answer! 📚",
-        description: `You know about ${question.character.name}! ${question.answer}`,
+        description: `You know about ${question.character}! ${question.answer}`,
         duration: 4000,
       });
     }
   };
 
   const handlePrankComplete = async (prankId: string) => {
-    const entry = await addStorybookEntry(
+    const success = await addStorybookEntry(
       'Krishna Prank Adventure',
       'Had fun with a playful Krishna-style prank!',
       'activity',
       ['Child', 'Parent']
     );
     
-    if (entry) {
+    if (success) {
       toast({
         title: "Prank Complete! 😄",
         description: "What a fun Krishna-style adventure!",
@@ -274,14 +302,14 @@ export function KidsActivities() {
   };
 
   const handleTaskComplete = async (taskId: string) => {
-    const entry = await addStorybookEntry(
+    const success = await addStorybookEntry(
       'Hanuman Helper Task',
       'Completed a helpful task like Hanuman!',
       'activity',
       ['Child', 'Parent']
     );
     
-    if (entry) {
+    if (success) {
       toast({
         title: "Task Complete! 🎉",
         description: "Great job being helpful like Hanuman!",
@@ -291,14 +319,14 @@ export function KidsActivities() {
   };
 
   const handleCreativeComplete = async (creativeId: string) => {
-    const entry = await addStorybookEntry(
+    const success = await addStorybookEntry(
       'Saraswati Creative Time',
       'Created something beautiful inspired by Saraswati!',
       'activity',
       ['Child', 'Parent']
     );
     
-    if (entry) {
+    if (success) {
       toast({
         title: "Creation Complete! 🎨",
         description: "Beautiful Saraswati-inspired creativity!",
@@ -307,7 +335,7 @@ export function KidsActivities() {
     }
   };
 
-  // Helper functions updated for new state management
+  // Helper functions
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
       case 'easy': return 'bg-green-100 text-green-700';
@@ -317,72 +345,317 @@ export function KidsActivities() {
     }
   };
 
-  // New activity handlers using state management
-  const startDailyGame = () => {
-    const games = emotionScenarios;
-    const randomGame = games[Math.floor(Math.random() * games.length)];
-    setSelectedEmotion(null);
-    triggerCelebration('🎲', false, 4000);
-    toast({
-      title: "Game Started! 🎲",
-      description: `Let's play "${randomGame.title}" - Help ${randomGame.character.name} with their emotions!`,
-      duration: 4000,
-    });
-  };
-
-  const startKindnessChallenge = () => {
-    const challenges = [
-      "Share a toy with a friend",
-      "Help mom or dad with a task", 
-      "Say something nice to someone",
-      "Help someone who is sad",
-      "Clean up without being asked"
-    ];
-    const randomChallenge = challenges[Math.floor(Math.random() * challenges.length)];
-    triggerCelebration('💖', false, 5000);
-    toast({
-      title: "Kindness Challenge! 💖",
-      description: `Today's challenge: ${randomChallenge}`,
-      duration: 5000,
-    });
-  };
-
-  const readMythologicalStory = () => {
-    const stories = mythologicalQuestions;
-    const randomStory = stories[Math.floor(Math.random() * stories.length)];
-    triggerCelebration('📚', false, 6000);
-    toast({
-      title: "Story Time! 📚",
-      description: `Let's learn about ${randomStory.character.name}: ${randomStory.context}`,
-      duration: 6000,
-    });
-  };
-
   const startCreativeActivity = async () => {
-    const entry = await addStorybookEntry(
-      'Creative Adventure',
-      'Started a wonderful creative activity!',
-      'activity',
-      ['Child', 'Parent']
-    );
-    
-    if (entry) {
-      triggerCelebration('🎨', false, 5000);
+    try {
+      setIsLoading(true);
+      
+      // Create comprehensive creative activity data
+      const creativeActivities = [
+        {
+          id: `creative_${Date.now()}`,
+          type: 'drawing',
+          title: 'Magical Art Creation 🎨',
+          description: 'Create a beautiful drawing inspired by your imagination!',
+          materials: ['Paper', 'Crayons', 'Colored pencils', 'Markers'],
+          instructions: ['Think of something that makes you happy', 'Draw your idea on paper', 'Use lots of colors!', 'Show your family when done'],
+          points: 15
+        },
+        {
+          id: `creative_${Date.now() + 1}`,
+          type: 'music',
+          title: 'Family Concert 🎵',
+          description: 'Create music and perform for your family!',
+          materials: ['Voice', 'Toy instruments', 'Kitchen utensils as drums'],
+          instructions: ['Choose a favorite song', 'Practice singing or humming', 'Add rhythm with hands or utensils', 'Perform for family'],
+          points: 12
+        },
+        {
+          id: `creative_${Date.now() + 2}`,
+          type: 'storytelling',
+          title: 'Story Creator 📖',
+          description: 'Tell an amazing story about magical adventures!',
+          materials: ['Your imagination', 'Voice', 'Props (optional)'],
+          instructions: ['Think of a hero character', 'Create a magical problem to solve', 'Tell the story with excitement', 'Act out different characters'],
+          points: 18
+        },
+        {
+          id: `creative_${Date.now() + 3}`,
+          type: 'crafts',
+          title: 'Craft Master 🔨',
+          description: 'Build something amazing with everyday materials!',
+          materials: ['Cardboard', 'Tape', 'String', 'Recyclable items'],
+          instructions: ['Imagine what to build', 'Gather materials safely', 'Create your masterpiece', 'Explain how it works'],
+          points: 20
+        }
+      ];
+      
+      // Select random creative activity
+      const selectedActivity = creativeActivities[Math.floor(Math.random() * creativeActivities.length)];
+      
+      // Show activity start celebration
+      triggerCelebration('🎨', true, 6000);
       toast({
-        title: "Creative Time! 🎨",
-        description: "Let's create something beautiful together!",
-        duration: 5000,
+        title: `${selectedActivity.title} Started! 🎨`,
+        description: selectedActivity.description,
+        duration: 6000,
       });
+      
+      // Show materials and instructions
+      setTimeout(() => {
+        toast({
+          title: "What You'll Need: 📝",
+          description: `Materials: ${selectedActivity.materials.join(', ')}`,
+          duration: 5000,
+        });
+      }, 2000);
+      
+      setTimeout(() => {
+        toast({
+          title: "Let's Get Started! 🚀",
+          description: selectedActivity.instructions[0],
+          duration: 4000,
+        });
+      }, 4000);
+      
+      // Save creative activity to localStorage
+      const creativeProgress = JSON.parse(localStorage.getItem('creativeProgress') || '[]');
+      const activityRecord = {
+        ...selectedActivity,
+        startedAt: new Date(),
+        status: 'in_progress',
+        childId: 'demo-child'
+      };
+      creativeProgress.push(activityRecord);
+      localStorage.setItem('creativeProgress', JSON.stringify(creativeProgress));
+      
+      // Create storybook entry for the creative activity
+      const entry = await addStorybookEntry(
+        selectedActivity.title,
+        `Started ${selectedActivity.description} - This will be an amazing creative adventure!`,
+        'activity',
+        ['Child', 'Parent']
+      );
+      
+      if (entry) {
+        // Award initial points for starting
+        const creativityPoints = parseInt(localStorage.getItem('creativityPoints') || '0');
+        const newPoints = creativityPoints + 5; // Starting bonus
+        localStorage.setItem('creativityPoints', newPoints.toString());
+        
+        // Set completion reminder
+        setTimeout(() => {
+          triggerCelebration('🏆', true, 8000);
+          toast({
+            title: "Creative Masterpiece! 🏆",
+            description: `Amazing work! You've earned ${selectedActivity.points} creativity points! Don't forget to save your creation!`,
+            duration: 8000,
+          });
+          
+          // Award completion points
+          const finalPoints = parseInt(localStorage.getItem('creativityPoints') || '0') + selectedActivity.points;
+          localStorage.setItem('creativityPoints', finalPoints.toString());
+          
+          // Update activity status
+          const updatedProgress = JSON.parse(localStorage.getItem('creativeProgress') || '[]');
+          const activityIndex = updatedProgress.findIndex((a: any) => a.id === selectedActivity.id);
+          if (activityIndex !== -1) {
+            updatedProgress[activityIndex].status = 'completed';
+            updatedProgress[activityIndex].completedAt = new Date();
+            updatedProgress[activityIndex].pointsEarned = selectedActivity.points;
+            localStorage.setItem('creativeProgress', JSON.stringify(updatedProgress));
+          }
+          
+          // Check for creativity milestones
+          if (finalPoints >= 100) {
+            setTimeout(() => {
+              triggerCelebration('👑', true, 10000);
+              toast({
+                title: "Creativity Royalty! 👑",
+                description: "You've earned 100+ creativity points! You're officially a Creative Genius!",
+                duration: 8000,
+              });
+            }, 2000);
+          }
+          
+        }, 45000); // 45 seconds for demo
+      }
+      
+    } catch (error) {
+      console.error('Failed to start creative activity:', error);
+      toast({
+        title: "Oops! 😅",
+        description: "Something went wrong with the creative activity. Let's try again!",
+        duration: 3000,
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const startDevelopmentTracking = () => {
-    triggerCelebration('🧠', false, 4000);
-    toast({
-      title: "Development Tracking! 🧠",
-      description: "Let's track your child's amazing growth and milestones!",
-      duration: 4000,
-    });
+  const startDevelopmentTracking = async () => {
+    try {
+      setIsLoading(true);
+      
+      // Comprehensive progress calculation
+      const calculateTotalProgress = () => {
+        const kindnessPoints = parseInt(localStorage.getItem('kindnessPoints') || '0');
+        const creativityPoints = parseInt(localStorage.getItem('creativityPoints') || '0');
+        const learningPoints = parseInt(localStorage.getItem('learningPoints') || '0');
+        const coachingPoints = parseInt(localStorage.getItem('coachingPoints') || '0');
+        const mythologyPoints = parseInt(localStorage.getItem('mythologyPoints') || '0');
+        const memoryPoints = parseInt(localStorage.getItem('memoryPoints') || '0');
+        const mobileActions = parseInt(localStorage.getItem('totalMobileActions') || '0');
+        
+        const emotionProgress = JSON.parse(localStorage.getItem('emotionProgress') || '{}');
+        const kindnessProgress = JSON.parse(localStorage.getItem('kindnessProgress') || '{}');
+        const mythologyProgress = JSON.parse(localStorage.getItem('mythologyProgress') || '{}');
+        const creativeProgress = JSON.parse(localStorage.getItem('creativeProgress') || '[]');
+        
+        return {
+          totalPoints: kindnessPoints + creativityPoints + learningPoints + coachingPoints + mythologyPoints + memoryPoints,
+          skillBreakdown: {
+            kindness: kindnessPoints,
+            creativity: creativityPoints,
+            learning: learningPoints,
+            coaching: coachingPoints,
+            mythology: mythologyPoints,
+            memory: memoryPoints
+          },
+          activityCounts: {
+            emotions: Object.keys(emotionProgress).length,
+            kindnessActs: Object.values(kindnessProgress).reduce((sum: number, count: any) => sum + count, 0),
+            mythologyLearned: Object.keys(mythologyProgress).length,
+            creativeMade: creativeProgress.length,
+            mobileActions: mobileActions
+          }
+        };
+      };
+      
+      const progress = calculateTotalProgress();
+      
+      // Calculate achievement level
+      const getAchievementLevel = (totalPoints: number) => {
+        if (totalPoints >= 500) return { level: 'Legendary Master', emoji: '👑', color: 'from-yellow-400 to-orange-400' };
+        if (totalPoints >= 300) return { level: 'Super Champion', emoji: '🏆', color: 'from-purple-400 to-pink-400' };
+        if (totalPoints >= 150) return { level: 'Rising Star', emoji: '🌟', color: 'from-blue-400 to-cyan-400' };
+        if (totalPoints >= 75) return { level: 'Bright Learner', emoji: '🌱', color: 'from-green-400 to-emerald-400' };
+        return { level: 'Getting Started', emoji: '🚀', color: 'from-gray-400 to-gray-600' };
+      };
+      
+      const achievement = getAchievementLevel(progress.totalPoints);
+      
+      // Show comprehensive progress
+      triggerCelebration('🧠', false, 4000);
+      toast({
+        title: "Development Tracking! 🧠",
+        description: `Let's explore your amazing learning journey and celebrate your growth!`,
+        duration: 6000,
+      });
+      
+      // Show total progress overview
+      setTimeout(() => {
+        triggerCelebration(achievement.emoji, true, 8000);
+        toast({
+          title: `${achievement.level} ${achievement.emoji}`,
+          description: `Total Progress: ${progress.totalPoints} points across ${Object.values(progress.activityCounts).reduce((sum, count) => sum + count, 0)} activities!`,
+          duration: 8000,
+        });
+      }, 2000);
+      
+      // Show skill breakdown
+      setTimeout(() => {
+        const topSkill = Object.entries(progress.skillBreakdown).reduce((max, [skill, points]) => 
+          points > max.points ? { skill, points } : max, { skill: 'kindness', points: 0 }
+        );
+        
+        toast({
+          title: "Your Strongest Skill! 🎨",
+          description: `${topSkill.skill.charAt(0).toUpperCase() + topSkill.skill.slice(1)} is your superpower with ${topSkill.points} points!`,
+          duration: 6000,
+        });
+      }, 4000);
+      
+      // Show detailed progress report
+      setTimeout(() => {
+        const progressReport = [
+          `💖 Kindness: ${progress.skillBreakdown.kindness} points`,
+          `🎨 Creativity: ${progress.skillBreakdown.creativity} points`,
+          `📚 Learning: ${progress.skillBreakdown.learning} points`,
+          `🧚‍♀️ Coaching: ${progress.skillBreakdown.coaching} points`,
+          `🏰 Mythology: ${progress.skillBreakdown.mythology} points`,
+          `📸 Memories: ${progress.skillBreakdown.memory} points`
+        ];
+        
+        triggerCelebration('📈', true, 10000);
+        toast({
+          title: "Complete Progress Report! 📈",
+          description: progressReport.join(' | '),
+          duration: 8000,
+        });
+      }, 6000);
+      
+      // Calculate next goals outside setTimeout for later use
+      const nextGoals: string[] = [];
+      if (progress.skillBreakdown.kindness < 50) nextGoals.push('💖 Reach 50 kindness points');
+      if (progress.skillBreakdown.creativity < 75) nextGoals.push('🎨 Create 75 creativity points');
+      if (progress.skillBreakdown.learning < 100) nextGoals.push('📚 Earn 100 learning points');
+      if (progress.activityCounts.mobileActions < 25) nextGoals.push('📱 Complete 25 mobile actions');
+      
+      // Calculate and show next goals
+      setTimeout(() => {
+        if (nextGoals.length > 0) {
+          toast({
+            title: "Next Adventure Goals! 🎯",
+            description: `Keep growing: ${nextGoals.slice(0, 2).join(' & ')}`,
+            duration: 7000,
+          });
+        } else {
+          toast({
+            title: "Master Achievement! 👑",
+            description: "You've mastered all areas! You're truly amazing! Keep exploring new adventures!",
+            duration: 6000,
+          });
+        }
+      }, 8000);
+      
+      // Save progress tracking session
+      const progressSessions = JSON.parse(localStorage.getItem('progressTrackingSessions') || '[]');
+      const newProgressSession = {
+        id: Date.now(),
+        timestamp: new Date(),
+        totalPoints: progress.totalPoints,
+        achievementLevel: achievement.level,
+        skillBreakdown: progress.skillBreakdown,
+        activityCounts: progress.activityCounts,
+        nextGoals: nextGoals.slice(0, 3) // Store up to 3 next goals
+      };
+      progressSessions.push(newProgressSession);
+      localStorage.setItem('progressTrackingSessions', JSON.stringify(progressSessions));
+      
+      // Award progress tracking points
+      const progressPoints = parseInt(localStorage.getItem('progressTrackingPoints') || '0') + 25;
+      localStorage.setItem('progressTrackingPoints', progressPoints.toString());
+      
+      // Final celebration for checking progress
+      setTimeout(() => {
+        triggerCelebration('🎆', true, 12000);
+        toast({
+          title: "Progress Champion! 🎆",
+          description: "You earned 25 progress points for tracking your development! Self-reflection is a superpower!",
+          duration: 8000,
+        });
+      }, 10000);
+      
+    } catch (error) {
+      console.error('Failed to track development:', error);
+      toast({
+        title: "Oops! 😅",
+        description: "Something went wrong with progress tracking. Let's try again!",
+        duration: 3000,
+      });
+    } finally {
+      setTimeout(() => setIsLoading(false), 3000);
+    }
   };
 
   const startAICoaching = () => {
@@ -415,39 +688,317 @@ export function KidsActivities() {
     }
   };
 
-  const handleQuickAction = (action: string) => {
-    switch (action) {
-      case 'kindness':
-        handleKindnessMoment('Quick kindness moment! 💖', 'Quick Action');
-        break;
-      case 'create':
-        startCreativeActivity();
-        break;
-      case 'story':
-        readMythologicalStory();
-        break;
-      case 'photo':
-        addFirstMemory();
-        break;
-      default:
-        break;
+  const handleQuickAction = async (action: string) => {
+    try {
+      setIsLoading(true);
+      
+      switch (action) {
+        case 'kindness':
+          // Enhanced kindness quick action
+          const kindnessActions = [
+            { text: 'Helped someone smile today! 😊', category: 'Joy Sharing', points: 7 },
+            { text: 'Said "thank you" with a big smile! 🙏', category: 'Gratitude', points: 5 },
+            { text: 'Shared something special with a friend! 🎁', category: 'Sharing', points: 8 },
+            { text: 'Gave someone a warm hug! 🤗', category: 'Comfort', points: 9 },
+            { text: 'Listened carefully when someone was talking! 👂', category: 'Listening', points: 6 }
+          ];
+          
+          const randomKindness = kindnessActions[Math.floor(Math.random() * kindnessActions.length)];
+          await handleKindnessMoment(randomKindness.text, randomKindness.category, randomKindness.points);
+          
+          // Mobile-specific celebration
+          triggerCelebration('💖', true, 6000);
+          toast({
+            title: "Mobile Kindness! 💖",
+            description: `${randomKindness.text} You earned ${randomKindness.points} kindness points!`,
+            duration: 5000,
+          });
+          
+          // Track mobile usage
+          const mobileKindness = parseInt(localStorage.getItem('mobileKindnessCount') || '0') + 1;
+          localStorage.setItem('mobileKindnessCount', mobileKindness.toString());
+          
+          if (mobileKindness === 5) {
+            setTimeout(() => {
+              triggerCelebration('📱', true, 8000);
+              toast({
+                title: "Mobile Kindness Master! 📱",
+                description: "5 quick kindness acts on mobile! You're spreading love everywhere you go!",
+                duration: 6000,
+              });
+            }, 2000);
+          }
+          break;
+          
+        case 'create':
+          // Enhanced creative quick action
+          await startCreativeActivity();
+          
+          // Additional mobile-specific features
+          setTimeout(() => {
+            toast({
+              title: "Mobile Creator! 🎨",
+              description: "You started a creative activity on mobile! Keep that imagination flowing!",
+              duration: 4000,
+            });
+            
+            // Track mobile creativity
+            const mobileCreativity = parseInt(localStorage.getItem('mobileCreativityCount') || '0') + 1;
+            localStorage.setItem('mobileCreativityCount', mobileCreativity.toString());
+            
+            if (mobileCreativity >= 3) {
+              setTimeout(() => {
+                triggerCelebration('🎆', true, 7000);
+                toast({
+                  title: "Mobile Art Star! 🎆",
+                  description: "3+ creative activities on mobile! You're a true mobile artist!",
+                  duration: 5000,
+                });
+              }, 1500);
+            }
+          }, 1000);
+          break;
+          
+        case 'story':
+          // Enhanced story time quick action
+          const storyPrompts = [
+            {
+              title: "Mobile Adventure Story! 📱",
+              prompt: "Tell a story about a magical phone that can take you anywhere!",
+              character: "Digital Explorer",
+              setting: "Cyber World"
+            },
+            {
+              title: "Pocket-sized Hero! 🧞‍♂️",
+              prompt: "Create a story about a tiny superhero who lives in your phone!",
+              character: "Mini Hero",
+              setting: "Phone Kingdom"
+            },
+            {
+              title: "Learning on the Go! 🌍",
+              prompt: "Tell about a child who discovers amazing things through their mobile device!",
+              character: "Young Explorer",
+              setting: "World of Knowledge"
+            }
+          ];
+          
+          const selectedStory = storyPrompts[Math.floor(Math.random() * storyPrompts.length)];
+          
+          triggerCelebration('📚', false, 5000);
+          toast({
+            title: selectedStory.title,
+            description: selectedStory.prompt,
+            duration: 7000,
+          });
+          
+          // Create storybook entry for mobile story
+          const storyEntry = await addStorybookEntry(
+            selectedStory.title,
+            `Mobile story time: ${selectedStory.prompt}`,
+            'activity',
+            ['Child', 'Mobile Device']
+          );
+          
+          if (storyEntry) {
+            setTimeout(() => {
+              triggerCelebration('🎤', true, 6000);
+              toast({
+                title: "Mobile Storyteller! 🎤",
+                description: "Your mobile story has been added to the family storybook! You're becoming a great storyteller!",
+                duration: 5000,
+              });
+              
+              // Award storytelling points
+              const storyPoints = parseInt(localStorage.getItem('mobileStoryPoints') || '0') + 10;
+              localStorage.setItem('mobileStoryPoints', storyPoints.toString());
+              
+              // Track mobile story milestones
+              if (storyPoints >= 50) {
+                setTimeout(() => {
+                  triggerCelebration('👑', true, 8000);
+                  toast({
+                    title: "Mobile Story Royalty! 👑",
+                    description: "50+ mobile story points! You're the king/queen of mobile storytelling!",
+                    duration: 6000,
+                  });
+                }, 2000);
+              }
+            }, 3000);
+          }
+          break;
+          
+        case 'photo':
+          // Enhanced memory saving quick action
+          const memoryTypes = [
+            {
+              title: "Mobile Moment Captured! 📸",
+              description: "Quick photo memory saved from your mobile adventure!",
+              type: "mobile_photo",
+              points: 8
+            },
+            {
+              title: "Instant Family Memory! 📅",
+              description: "Beautiful moment captured and saved to family memories!",
+              type: "instant_memory",
+              points: 10
+            },
+            {
+              title: "Mobile Memory Magic! ✨",
+              description: "Special moment preserved with mobile magic!",
+              type: "magic_memory",
+              points: 12
+            }
+          ];
+          
+          const selectedMemory = memoryTypes[Math.floor(Math.random() * memoryTypes.length)];
+          
+          // Create memory entry
+          const memoryEntry = await addStorybookEntry(
+            selectedMemory.title,
+            selectedMemory.description,
+            'memory',
+            ['Child', 'Family']
+          );
+          
+          if (memoryEntry) {
+            triggerCelebration('📸', true, 7000);
+            toast({
+              title: selectedMemory.title,
+              description: selectedMemory.description,
+              duration: 6000,
+            });
+            
+            // Award memory points
+            const memoryPoints = parseInt(localStorage.getItem('mobileMemoryPoints') || '0') + selectedMemory.points;
+            localStorage.setItem('mobileMemoryPoints', memoryPoints.toString());
+            
+            setTimeout(() => {
+              toast({
+                title: "Memory Points! 🎆",
+                description: `You earned ${selectedMemory.points} memory points! Total mobile memory points: ${memoryPoints}`,
+                duration: 4000,
+              });
+              
+              // Check for memory master achievement
+              if (memoryPoints >= 100) {
+                setTimeout(() => {
+                  triggerCelebration('🏆', true, 10000);
+                  toast({
+                    title: "Mobile Memory Master! 🏆",
+                    description: "100+ mobile memory points! You're amazing at capturing special moments!",
+                    duration: 8000,
+                  });
+                }, 1500);
+              }
+            }, 2000);
+          }
+          break;
+          
+        default:
+          toast({
+            title: "Quick Action! ✨",
+            description: "Mobile action completed successfully!",
+            duration: 3000,
+          });
+          break;
+      }
+      
+      // Track overall mobile usage
+      const totalMobileActions = parseInt(localStorage.getItem('totalMobileActions') || '0') + 1;
+      localStorage.setItem('totalMobileActions', totalMobileActions.toString());
+      
+      // Mobile master achievement
+      if (totalMobileActions === 20) {
+        setTimeout(() => {
+          triggerCelebration('📱', true, 12000);
+          toast({
+            title: "Mobile Master! 📱",
+            description: "20 mobile actions completed! You're a true mobile learning champion!",
+            duration: 8000,
+          });
+        }, 3000);
+      }
+      
+    } catch (error) {
+      console.error('Failed to handle quick action:', error);
+      toast({
+        title: "Oops! 😅",
+        description: "Something went wrong with the mobile action. Let's try again!",
+        duration: 3000,
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const addFirstMemory = async () => {
-    const entry = await addStorybookEntry(
-      'Our First Adventure',
-      'Started our mythology-inspired family journey!',
-      'milestone',
-      ['Family']
-    );
-    
-    if (entry) {
+    try {
+      setIsLoading(true);
+      
+      // Create a magical first memory
+      const firstMemory = {
+        id: `memory_${Date.now()}`,
+        title: "My First Magical Adventure! 🎆",
+        description: "Today I started my amazing journey with Leela and discovered so many wonderful things! This is where my story begins.",
+        date: new Date(),
+        type: 'milestone',
+        participants: ['Child', 'Leela'],
+        media: [],
+        emoji: '🌟',
+        category: 'first_adventure'
+      };
+      
+      // Add to storybook entries using the hook
+      const entry = await addStorybookEntry(
+        firstMemory.title,
+        firstMemory.description,
+        'milestone',
+        firstMemory.participants
+      );
+      
+      if (!entry) {
+        throw new Error('Failed to add storybook entry');
+      }
+      
+      // Celebrate!
+      triggerCelebration('📚', true, 6000);
       toast({
-        title: "First Memory Added! 📚",
-        description: "Welcome to your family's mythology-inspired storybook!",
-        duration: 4000,
+        title: "First Memory Created! 📚",
+        description: "Welcome to your magical storybook adventure! Every memory makes your story more special.",
+        duration: 6000,
       });
+      
+      // Add achievement for first memory
+      const achievements = JSON.parse(localStorage.getItem('achievements') || '[]');
+      if (!achievements.some(a => a.id === 'first_memory')) {
+        achievements.push({
+          id: 'first_memory',
+          name: 'Story Starter',
+          description: 'Created your very first family memory!',
+          icon: '📚',
+          earnedAt: new Date(),
+          rarity: 'special'
+        });
+        localStorage.setItem('achievements', JSON.stringify(achievements));
+        
+        setTimeout(() => {
+          toast({
+            title: "Achievement Unlocked! 🏆",
+            description: "Story Starter - You've begun your magical journey!",
+            duration: 4000,
+          });
+        }, 1000);
+      }
+      
+    } catch (error) {
+      console.error('Failed to create first memory:', error);
+      toast({
+        title: "Oops! 😅",
+        description: "Let's try creating your memory again!",
+        duration: 3000,
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -699,11 +1250,91 @@ export function KidsActivities() {
                 {/* Single Clear CTA - Secondary Action */}
                 <div className="text-center">
                   <Button 
-                    onClick={() => handleKindnessMoment('Shared love with family today! 💕', 'Daily Love')}
+                    onClick={async () => {
+                      try {
+                        setIsLoading(true);
+                        
+                        // Available kindness activities
+                        const kindnessActivities = [
+                          { action: 'Helped a friend with homework 📚', category: 'Learning Support', points: 8 },
+                          { action: 'Shared my snack with someone 🍎', category: 'Sharing', points: 6 },
+                          { action: 'Said something nice to make someone smile 😊', category: 'Kind Words', points: 7 },
+                          { action: 'Helped clean up without being asked 🧹', category: 'Helping Out', points: 9 },
+                          { action: 'Gave someone a hug when they were sad 🤗', category: 'Emotional Support', points: 10 },
+                          { action: 'Let someone go first in line 🚶‍♂️', category: 'Courtesy', points: 5 },
+                          { action: 'Helped carry something heavy 💪', category: 'Physical Help', points: 8 },
+                          { action: 'Listened when someone needed to talk 👂', category: 'Being There', points: 9 }
+                        ];
+                        
+                        // Select random kindness activity
+                        const randomActivity = kindnessActivities[Math.floor(Math.random() * kindnessActivities.length)];
+                        
+                        // Add the kindness moment
+                        await handleKindnessMoment(randomActivity.action, randomActivity.category, randomActivity.points);
+                        
+                        // Show celebration
+                        triggerCelebration('🌟', true, 6000);
+                        
+                        // Show success message
+                        toast({
+                          title: "Kindness Recorded! 🌟",
+                          description: `Amazing! ${randomActivity.action} earned you ${randomActivity.points} kindness points!`,
+                          duration: 5000,
+                        });
+                        
+                        // Save kindness progress
+                        const kindnessProgress = JSON.parse(localStorage.getItem('kindnessProgress') || '{}');
+                        kindnessProgress[randomActivity.category] = (kindnessProgress[randomActivity.category] || 0) + 1;
+                        localStorage.setItem('kindnessProgress', JSON.stringify(kindnessProgress));
+                        
+                        // Check for kindness achievements
+                        const totalKindnessActs = Object.values(kindnessProgress).reduce((sum: number, count: any) => sum + count, 0);
+                        
+                        if (totalKindnessActs === 5) {
+                          setTimeout(() => {
+                            triggerCelebration('🏆', true, 8000);
+                            toast({
+                              title: "Kindness Champion! 🏆",
+                              description: "You've completed 5 kind acts! You're spreading so much love and joy!",
+                              duration: 6000,
+                            });
+                          }, 2000);
+                        }
+                        
+                        if (totalKindnessActs === 10) {
+                          setTimeout(() => {
+                            triggerCelebration('👑', true, 10000);
+                            toast({
+                              title: "Kindness Royalty! 👑",
+                              description: "10 kind acts! You're officially a Kindness King/Queen! The world is brighter because of you!",
+                              duration: 8000,
+                            });
+                          }, 3000);
+                        }
+                        
+                      } catch (error) {
+                        console.error('Failed to add kind act:', error);
+                        toast({
+                          title: "Oops! 😅",
+                          description: "Something went wrong. Let's try being kind again!",
+                          duration: 3000,
+                        });
+                      } finally {
+                        setIsLoading(false);
+                      }
+                    }}
+                    disabled={isLoading}
                     className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white shadow-lg transform hover:scale-105 transition-all duration-300 rounded-xl text-base py-3 px-6 font-semibold min-h-[48px] w-full sm:w-auto touch-manipulation"
                     aria-label="Add your kind act for today"
                   >
-                    🌟 Add Kind Act
+                    {isLoading ? (
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        Recording...
+                      </div>
+                    ) : (
+                      '🌟 Add Kind Act'
+                    )}
                   </Button>
                   <p className="text-xs text-gray-500 mt-2">Record your daily kindness moment</p>
                 </div>
@@ -746,14 +1377,73 @@ export function KidsActivities() {
                 </div>
                 <div className="space-y-2">
                   {emotionScenarios.slice(0, 2).map((scenario) => (
-                    <div key={scenario.id} className="bg-white rounded-lg p-3 border border-blue-100 hover:shadow-md transition-all duration-200">
-                      <h5 className="text-sm font-medium text-blue-900">{scenario.title}</h5>
+                    <div 
+                      key={scenario.id} 
+                      className="bg-white rounded-lg p-3 border border-blue-100 hover:shadow-md transition-all duration-200 cursor-pointer hover:scale-[1.02] active:scale-95"
+                      onClick={async () => {
+                        try {
+                          // Start the emotion recognition game
+                          setIsLoading(true);
+                          
+                          // Show the scenario
+                          triggerCelebration('🎭', false, 3000);
+                          toast({
+                            title: `${scenario.title} 🎭`,
+                            description: `Help ${scenario.character.name} understand their feelings! Can you choose the right emotion?`,
+                            duration: 5000,
+                          });
+                          
+                          // Simulate emotion selection (in real app, would show interactive modal)
+                          setTimeout(() => {
+                            const selectedEmotion = scenario.emotions[Math.floor(Math.random() * scenario.emotions.length)];
+                            
+                            // Show success
+                            triggerCelebration(selectedEmotion.emoji, true, 4000);
+                            toast({
+                              title: `Great Choice! ${selectedEmotion.emoji}`,
+                              description: `You helped ${scenario.character.name} feel ${selectedEmotion.name}! That was very thoughtful.`,
+                              duration: 4000,
+                            });
+                            
+                            // Add points and save progress
+                            const progress = JSON.parse(localStorage.getItem('emotionProgress') || '{}');
+                            progress[scenario.id] = {
+                              completed: true,
+                              selectedEmotion: selectedEmotion.name,
+                              completedAt: new Date(),
+                              points: 10
+                            };
+                            localStorage.setItem('emotionProgress', JSON.stringify(progress));
+                            
+                            // Update kindness points
+                            const currentPoints = parseInt(localStorage.getItem('kindnessPoints') || '0');
+                            localStorage.setItem('kindnessPoints', (currentPoints + 10).toString());
+                            
+                            setIsLoading(false);
+                          }, 2000);
+                          
+                        } catch (error) {
+                          console.error('Failed to start emotion game:', error);
+                          toast({
+                            title: "Oops! 😅",
+                            description: "Let's try the emotion game again!",
+                            duration: 3000,
+                          });
+                          setIsLoading(false);
+                        }
+                      }}
+                    >
+                      <h5 className="text-sm font-medium text-blue-900 mb-2">{scenario.title}</h5>
+                      <p className="text-xs text-blue-700 mb-2">👶 Help {scenario.character.name} understand their feelings!</p>
                       <div className="flex flex-wrap gap-1 mt-1">
                         {scenario.emotions.slice(0, 3).map((emotion, index) => (
                           <span key={index} className="text-xs bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-700 px-2 py-1 rounded-full hover:scale-105 transition-transform">
                             {emotion.emoji} {emotion.name}
                           </span>
                         ))}
+                        <span className="text-xs bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 px-2 py-1 rounded-full font-semibold">
+                          🎯 Click to Play!
+                        </span>
                       </div>
                     </div>
                   ))}
@@ -783,9 +1473,95 @@ export function KidsActivities() {
                 </div>
                 <div className="space-y-2">
                   {mythologicalQuestions.slice(0, 2).map((question) => (
-                    <div key={question.id} className="bg-white rounded-lg p-3 border border-yellow-100 hover:shadow-md transition-all duration-200">
-                      <h5 className="text-sm font-medium text-yellow-900">{question.question}</h5>
-                      <p className="text-xs text-yellow-800 mt-1 font-medium">{question.answer}</p>
+                    <div 
+                      key={question.id} 
+                      className="bg-white rounded-lg p-3 border border-yellow-100 hover:shadow-md transition-all duration-200 cursor-pointer hover:scale-[1.02] active:scale-95"
+                      onClick={async () => {
+                        try {
+                          // Start the mythology quiz
+                          setIsLoading(true);
+                          
+                          // Show the question
+                          triggerCelebration('📚', false, 3000);
+                          toast({
+                            title: `Mythology Quest! 📚`,
+                            description: `Let's learn about ${question.character.name}! ${question.questions[0]?.question || 'Discover the story'}`,
+                            duration: 5000,
+                          });
+                          
+                          // Show interactive learning experience
+                          setTimeout(() => {
+                            triggerCelebration('🧠', false, 4000);
+                            toast({
+                              title: `Wisdom Unlocked! 🧠`,
+                              description: `${question.questions[0]?.explanation || question.story.moralLesson}`,
+                              duration: 6000,
+                            });
+                            
+                            // Award points for learning
+                            const mythologyPoints = parseInt(localStorage.getItem('mythologyPoints') || '0');
+                            const newPoints = mythologyPoints + 10;
+                            localStorage.setItem('mythologyPoints', newPoints.toString());
+                            
+                            // Save learning progress
+                            const mythologyProgress = JSON.parse(localStorage.getItem('mythologyProgress') || '{}');
+                            mythologyProgress[question.character.name] = (mythologyProgress[question.character.name] || 0) + 1;
+                            localStorage.setItem('mythologyProgress', JSON.stringify(mythologyProgress));
+                            
+                            // Show achievement
+                            setTimeout(() => {
+                              triggerCelebration('🏆', true, 5000);
+                              toast({
+                                title: `Story Master! 🏆`,
+                                description: `You earned 10 wisdom points learning about ${question.character.name}! Total: ${newPoints} points`,
+                                duration: 4000,
+                              });
+                            }, 2000);
+                            
+                            // Check for milestone achievements
+                            if (newPoints >= 50) {
+                              setTimeout(() => {
+                                triggerCelebration('👑', true, 8000);
+                                toast({
+                                  title: "Mythology Master! 👑",
+                                  description: "You've earned 50+ wisdom points! You're becoming a real story expert!",
+                                  duration: 6000,
+                                });
+                              }, 4000);
+                            }
+                            
+                          }, 3000);
+                          
+                        } catch (error) {
+                          console.error('Failed to start mythology quest:', error);
+                          toast({
+                            title: "Oops! 😅",
+                            description: "Something went wrong with the story. Let's try again!",
+                            duration: 3000,
+                          });
+                        } finally {
+                          setTimeout(() => setIsLoading(false), 1000);
+                        }
+                      }}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg">{question.character.visualRepresentation}</span>
+                          <div>
+                            <div className="font-medium text-sm text-gray-900">{question.character.name}</div>
+                            <div className="text-xs text-gray-600">{question.title}</div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full font-semibold">
+                            📚 Learn
+                          </span>
+                          <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-semibold">
+                            +10 pts
+                          </span>
+                        </div>
+                      </div>
+                      <p className="text-xs text-gray-600 mt-2 italic">{question.description}</p>
                     </div>
                   ))}
                 </div>
@@ -823,8 +1599,72 @@ export function KidsActivities() {
                 
                 <Button className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white shadow-md btn-enhanced text-sm py-3 min-h-[48px] active:scale-95 transition-all duration-200 touch-manipulation"
                   aria-label="Start today's adventure activity"
+                  onClick={async () => {
+                    setIsLoading(true);
+                    try {
+                      // Start the current themed day activity
+                      const currentDayData = themedDays.find(d => d.id === currentDay);
+                      if (currentDayData) {
+                        // Create an activity completion record
+                        const startTime = new Date();
+                        const activityData = {
+                          childId: selectedChild?.id || 'demo-child',
+                          activityId: currentDayData.id,
+                          startTime: startTime.toISOString(),
+                          endTime: new Date(startTime.getTime() + 30 * 60000).toISOString(), // 30 minutes later
+                          completed: false,
+                          answers: {},
+                          media: []
+                        };
+                        
+                        // Show immediate feedback
+                        triggerCelebration('🚀', true, 5000);
+                        toast({
+                          title: `${currentDayData.name} Started! 🚀`,
+                          description: `Let's have an amazing ${currentDayData.name.toLowerCase()} adventure together!`,
+                          duration: 5000,
+                        });
+                        
+                        // Store in localStorage for demo purposes
+                        const currentActivities = JSON.parse(localStorage.getItem('currentActivities') || '[]');
+                        currentActivities.push({
+                          ...activityData,
+                          title: currentDayData.name,
+                          status: 'in_progress',
+                          startedAt: new Date()
+                        });
+                        localStorage.setItem('currentActivities', JSON.stringify(currentActivities));
+                        
+                        // Set timer for completion reminder
+                        setTimeout(() => {
+                          toast({
+                            title: "Time to Complete! 🎉",
+                            description: "Great job! Ready to finish your adventure?",
+                            duration: 3000,
+                          });
+                        }, 30000); // 30 seconds for demo
+                      }
+                    } catch (error) {
+                      console.error('Failed to start activity:', error);
+                      toast({
+                        title: "Oops! 😅",
+                        description: "Something went wrong. Let's try again!",
+                        duration: 3000,
+                      });
+                    } finally {
+                      setIsLoading(false);
+                    }
+                  }}
+                  disabled={isLoading}
                 >
-                  Start Adventure
+                  {isLoading ? (
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      Starting...
+                    </div>
+                  ) : (
+                    'Start Adventure'
+                  )}
                 </Button>
               </CardContent>
             </Card>
@@ -888,22 +1728,214 @@ export function KidsActivities() {
                             </div>
                             <p className="text-sm text-gray-600 mb-3">{entry.description}</p>
                             <div className="flex items-center gap-4 text-sm text-gray-500">
-                              <span>{entry.date.toLocaleDateString()}</span>
+                              <span>{new Date(entry.date).toLocaleDateString()}</span>
                               <span>{entry.participants.join(', ')}</span>
                             </div>
                           </div>
                         </div>
 
                         <div className="flex gap-2 flex-wrap">
-                          <Button size="sm" variant="outline" className="rounded-xl hover:shadow-md transition-all duration-200">
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            className="rounded-xl hover:shadow-md transition-all duration-200"
+                            onClick={async () => {
+                              try {
+                                setIsLoading(true);
+                                
+                                // Simulate photo capture
+                                triggerCelebration('📸', false, 3000);
+                                toast({
+                                  title: "Photo Added! 📸",
+                                  description: "Your special moment has been captured and added to the family storybook!",
+                                  duration: 4000,
+                                });
+                                
+                                // Update the storybook entry with photo
+                                const photos = JSON.parse(localStorage.getItem('storybookPhotos') || '[]');
+                                const newPhoto = {
+                                  id: `photo_${Date.now()}`,
+                                  entryId: entry.id,
+                                  type: 'photo',
+                                  caption: `Beautiful moment from ${entry.title}`,
+                                  timestamp: new Date(),
+                                  addedBy: 'Child'
+                                };
+                                photos.push(newPhoto);
+                                localStorage.setItem('storybookPhotos', JSON.stringify(photos));
+                                
+                                // Award points for adding photos
+                                const memoryPoints = parseInt(localStorage.getItem('memoryPoints') || '0');
+                                const newPoints = memoryPoints + 8;
+                                localStorage.setItem('memoryPoints', newPoints.toString());
+                                
+                                setTimeout(() => {
+                                  triggerCelebration('🌟', true, 4000);
+                                  toast({
+                                    title: "Memory Master! 🌟",
+                                    description: `You earned 8 memory points! Your storybook is getting more beautiful! Total: ${newPoints} points`,
+                                    duration: 4000,
+                                  });
+                                }, 1500);
+                                
+                              } catch (error) {
+                                console.error('Failed to add photo:', error);
+                                toast({
+                                  title: "Oops! 😅",
+                                  description: "Couldn't add the photo. Let's try again!",
+                                  duration: 3000,
+                                });
+                              } finally {
+                                setIsLoading(false);
+                              }
+                            }}
+                          >
                             <Camera className="w-4 h-4 mr-1" />
                             Add Photo
                           </Button>
-                          <Button size="sm" variant="outline" className="rounded-xl hover:shadow-md transition-all duration-200">
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            className="rounded-xl hover:shadow-md transition-all duration-200"
+                            onClick={async () => {
+                              try {
+                                setIsLoading(true);
+                                
+                                // Simulate video recording
+                                triggerCelebration('🎥', false, 4000);
+                                toast({
+                                  title: "Video Recording! 🎥",
+                                  description: "Ready to record a special video message for your family storybook!",
+                                  duration: 5000,
+                                });
+                                
+                                // Simulate recording process
+                                setTimeout(() => {
+                                  triggerCelebration('🎉', true, 5000);
+                                  toast({
+                                    title: "Video Saved! 🎉",
+                                    description: "Your video has been added to the family memories! Everyone will love watching it!",
+                                    duration: 5000,
+                                  });
+                                  
+                                  // Save video record
+                                  const videos = JSON.parse(localStorage.getItem('storybookVideos') || '[]');
+                                  const newVideo = {
+                                    id: `video_${Date.now()}`,
+                                    entryId: entry.id,
+                                    type: 'video',
+                                    title: `Video from ${entry.title}`,
+                                    duration: '0:30',
+                                    timestamp: new Date(),
+                                    addedBy: 'Child'
+                                  };
+                                  videos.push(newVideo);
+                                  localStorage.setItem('storybookVideos', JSON.stringify(videos));
+                                  
+                                  // Award points for video
+                                  const memoryPoints = parseInt(localStorage.getItem('memoryPoints') || '0');
+                                  const newPoints = memoryPoints + 12;
+                                  localStorage.setItem('memoryPoints', newPoints.toString());
+                                  
+                                  setTimeout(() => {
+                                    toast({
+                                      title: "Video Star! 🎆",
+                                      description: `Amazing! You earned 12 memory points for your video! Total: ${newPoints} points`,
+                                      duration: 4000,
+                                    });
+                                  }, 1000);
+                                  
+                                }, 3000);
+                                
+                              } catch (error) {
+                                console.error('Failed to add video:', error);
+                                toast({
+                                  title: "Oops! 😅",
+                                  description: "Couldn't record the video. Let's try again!",
+                                  duration: 3000,
+                                });
+                              } finally {
+                                setTimeout(() => setIsLoading(false), 3500);
+                              }
+                            }}
+                          >
                             <Play className="w-4 h-4 mr-1" />
                             Add Video
                           </Button>
-                          <Button size="sm" variant="outline" className="rounded-xl hover:shadow-md transition-all duration-200">
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            className="rounded-xl hover:shadow-md transition-all duration-200"
+                            onClick={async () => {
+                              try {
+                                setIsLoading(true);
+                                
+                                // Create a special memory reflection
+                                triggerCelebration('💖', false, 3000);
+                                toast({
+                                  title: "Remembering Together! 💖",
+                                  description: "Let's take a moment to appreciate this beautiful memory and what it means to our family!",
+                                  duration: 5000,
+                                });
+                                
+                                // Show reflection prompts
+                                setTimeout(() => {
+                                  const reflectionPrompts = [
+                                    "What made this moment special?",
+                                    "How did it make you feel?",
+                                    "What did you learn from this experience?",
+                                    "Why is this important to remember?"
+                                  ];
+                                  
+                                  const randomPrompt = reflectionPrompts[Math.floor(Math.random() * reflectionPrompts.length)];
+                                  
+                                  toast({
+                                    title: "Think About This: 🤔",
+                                    description: randomPrompt,
+                                    duration: 6000,
+                                  });
+                                  
+                                  // Save reflection
+                                  const reflections = JSON.parse(localStorage.getItem('storybookReflections') || '[]');
+                                  const newReflection = {
+                                    id: `reflection_${Date.now()}`,
+                                    entryId: entry.id,
+                                    prompt: randomPrompt,
+                                    timestamp: new Date(),
+                                    addedBy: 'Child',
+                                    importance: 'high'
+                                  };
+                                  reflections.push(newReflection);
+                                  localStorage.setItem('storybookReflections', JSON.stringify(reflections));
+                                  
+                                  // Award reflection points
+                                  const memoryPoints = parseInt(localStorage.getItem('memoryPoints') || '0');
+                                  const newPoints = memoryPoints + 10;
+                                  localStorage.setItem('memoryPoints', newPoints.toString());
+                                  
+                                  setTimeout(() => {
+                                    triggerCelebration('🎨', true, 6000);
+                                    toast({
+                                      title: "Thoughtful Remembering! 🎨",
+                                      description: `Beautiful reflection! You earned 10 memory points for thinking deeply about this moment! Total: ${newPoints} points`,
+                                      duration: 5000,
+                                    });
+                                  }, 2000);
+                                  
+                                }, 2000);
+                                
+                              } catch (error) {
+                                console.error('Failed to add reflection:', error);
+                                toast({
+                                  title: "Oops! 😅",
+                                  description: "Couldn't save the reflection. Let's try again!",
+                                  duration: 3000,
+                                });
+                              } finally {
+                                setTimeout(() => setIsLoading(false), 2500);
+                              }
+                            }}
+                          >
                             <Heart className="w-4 h-4 mr-1" />
                             Remember
                           </Button>
@@ -1125,19 +2157,65 @@ export function KidsActivities() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <Button 
                     className="bg-gradient-to-r from-pink-400 to-rose-400 hover:from-pink-500 hover:to-rose-500 text-white rounded-2xl p-6 h-auto flex flex-col items-center gap-3 shadow-lg transform hover:scale-105 transition-all duration-300 active:scale-95"
-                    onClick={() => {
-                      setCelebrationEmoji('😊');
-                      setShowFloatingEmoji(true);
-                      setShowConfetti(true);
-                      toast({ 
-                        title: "Leela is here! 😊", 
-                        description: "Let's explore feelings together! Remember, all emotions are like different colors - they make life beautiful!" 
-                      });
-                      setTimeout(() => {
-                        setShowFloatingEmoji(false);
-                        setShowConfetti(false);
-                      }, 3000);
+                    onClick={async () => {
+                      try {
+                        setIsLoading(true);
+                        setCelebrationEmoji('😊');
+                        setShowFloatingEmoji(true);
+                        setShowConfetti(true);
+                        
+                        // Start an interactive feelings session
+                        const feelingsPrompts = [
+                          "How are you feeling right now? 😊",
+                          "What makes you feel happy? 🌈",
+                          "When do you feel most loved? 💖",
+                          "What would you do if a friend was sad? 🤗"
+                        ];
+                        
+                        const randomPrompt = feelingsPrompts[Math.floor(Math.random() * feelingsPrompts.length)];
+                        
+                        toast({ 
+                          title: "Leela is here! 😊", 
+                          description: "Let's explore feelings together! Remember, all emotions are like different colors - they make life beautiful!" 
+                        });
+                        
+                        // Simulate AI coaching session
+                        setTimeout(() => {
+                          toast({
+                            title: "Let's Talk About Feelings! 🌈",
+                            description: randomPrompt,
+                            duration: 6000,
+                          });
+                          
+                          // Save the coaching session
+                          const sessions = JSON.parse(localStorage.getItem('leelaCoachingSessions') || '[]');
+                          sessions.push({
+                            id: Date.now(),
+                            type: 'feelings',
+                            prompt: randomPrompt,
+                            timestamp: new Date(),
+                            completed: true
+                          });
+                          localStorage.setItem('leelaCoachingSessions', JSON.stringify(sessions));
+                          
+                          // Award coaching points
+                          const coachingPoints = parseInt(localStorage.getItem('coachingPoints') || '0');
+                          localStorage.setItem('coachingPoints', (coachingPoints + 15).toString());
+                          
+                        }, 2000);
+                        
+                        setTimeout(() => {
+                          setShowFloatingEmoji(false);
+                          setShowConfetti(false);
+                          setIsLoading(false);
+                        }, 3000);
+                        
+                      } catch (error) {
+                        console.error('Failed to start feelings session:', error);
+                        setIsLoading(false);
+                      }
                     }}
+                    disabled={isLoading}
                   >
                     <span className="text-3xl animate-bounce">😊</span>
                     <span className="text-sm font-semibold">Understanding Feelings</span>
@@ -1145,15 +2223,127 @@ export function KidsActivities() {
                   
                   <Button 
                     className="bg-gradient-to-r from-blue-400 to-cyan-400 hover:from-blue-500 hover:to-cyan-500 text-white rounded-2xl p-6 h-auto flex flex-col items-center gap-3 shadow-lg transform hover:scale-105 transition-all duration-300 active:scale-95"
-                    onClick={() => {
-                      setCelebrationEmoji('📚');
-                      setShowFloatingEmoji(true);
-                      toast({ 
-                        title: "Story Time with Leela! 📚", 
-                        description: "I know amazing stories about brave heroes and kind hearts! Which character would you like to learn about?" 
-                      });
-                      setTimeout(() => setShowFloatingEmoji(false), 2000);
+                    onClick={async () => {
+                      try {
+                        setIsLoading(true);
+                        
+                        // Enhanced story coaching with comprehensive interaction
+                        const storyQuestions = [
+                          {
+                            category: 'Character Building',
+                            question: "If you were a superhero, what would your special power be and how would you help others?",
+                            follow_up: "That's amazing! Tell me about a time when you helped someone in real life!",
+                            wisdom: "Every act of kindness is a real superpower! 🦸‍♂️"
+                          },
+                          {
+                            category: 'Mythology Wisdom',
+                            question: "Which mythological character would you want to be friends with and why?",
+                            follow_up: "What qualities do they have that you admire?",
+                            wisdom: "The heroes we admire show us the qualities we want to grow in ourselves! 🌟"
+                          },
+                          {
+                            category: 'Creative Thinking',
+                            question: "If you could create a magical world, what would make it special?",
+                            follow_up: "How would the creatures and people in your world treat each other?",
+                            wisdom: "Your imagination is the key to endless possibilities! 🗝️"
+                          },
+                          {
+                            category: 'Problem Solving',
+                            question: "If two friends were fighting, how would you help them become friends again?",
+                            follow_up: "What would you say to help them understand each other?",
+                            wisdom: "Peacemakers are among the most important people in the world! 🕊️"
+                          }
+                        ];
+                        
+                        const selectedQuestion = storyQuestions[Math.floor(Math.random() * storyQuestions.length)];
+                        
+                        setCelebrationEmoji('📚');
+                        setShowFloatingEmoji(true);
+                        
+                        // Initial question
+                        toast({ 
+                          title: `Story Time with Leela! 📚`, 
+                          description: `${selectedQuestion.category}: ${selectedQuestion.question}`,
+                          duration: 8000,
+                        });
+                        
+                        // Simulate thinking time and follow-up
+                        setTimeout(() => {
+                          triggerCelebration('🤔', false, 4000);
+                          toast({
+                            title: "Thinking Time! 🤔",
+                            description: selectedQuestion.follow_up,
+                            duration: 6000,
+                          });
+                        }, 3000);
+                        
+                        // Share wisdom and award points
+                        setTimeout(() => {
+                          triggerCelebration('🎆', true, 6000);
+                          toast({
+                            title: "Leela's Wisdom! 🎆",
+                            description: selectedQuestion.wisdom,
+                            duration: 6000,
+                          });
+                          
+                          // Save coaching session with enhanced data
+                          const sessions = JSON.parse(localStorage.getItem('leelaCoachingSessions') || '[]');
+                          const newSession = {
+                            id: Date.now(),
+                            type: 'story_questions',
+                            category: selectedQuestion.category,
+                            question: selectedQuestion.question,
+                            follow_up: selectedQuestion.follow_up,
+                            wisdom: selectedQuestion.wisdom,
+                            timestamp: new Date(),
+                            completed: true,
+                            pointsEarned: 20
+                          };
+                          sessions.push(newSession);
+                          localStorage.setItem('leelaCoachingSessions', JSON.stringify(sessions));
+                          
+                          // Award story coaching points
+                          const coachingPoints = parseInt(localStorage.getItem('coachingPoints') || '0');
+                          const newPoints = coachingPoints + 20;
+                          localStorage.setItem('coachingPoints', newPoints.toString());
+                          
+                          // Show achievement
+                          setTimeout(() => {
+                            toast({
+                              title: "Story Master Points! 🏆",
+                              description: `Amazing storytelling discussion! You earned 20 coaching points! Total: ${newPoints} points`,
+                              duration: 5000,
+                            });
+                            
+                            // Check for story master achievement
+                            if (newPoints >= 100) {
+                              setTimeout(() => {
+                                triggerCelebration('👑', true, 10000);
+                                toast({
+                                  title: "Story Master Champion! 👑",
+                                  description: "100+ coaching points! You're becoming a true storytelling champion!",
+                                  duration: 8000,
+                                });
+                              }, 2000);
+                            }
+                          }, 1500);
+                        }, 6000);
+                        
+                      } catch (error) {
+                        console.error('Failed to start story session:', error);
+                        toast({
+                          title: "Oops! 😅",
+                          description: "Something went wrong with story time. Let's try again!",
+                          duration: 3000,
+                        });
+                      } finally {
+                        setTimeout(() => {
+                          setShowFloatingEmoji(false);
+                          setIsLoading(false);
+                        }, 2500);
+                      }
                     }}
+                    disabled={isLoading}
                   >
                     <span className="text-3xl animate-bounce delay-200">📚</span>
                     <span className="text-sm font-semibold">Story Questions</span>
@@ -1161,15 +2351,138 @@ export function KidsActivities() {
                   
                   <Button 
                     className="bg-gradient-to-r from-green-400 to-emerald-400 hover:from-green-500 hover:to-emerald-500 text-white rounded-2xl p-6 h-auto flex flex-col items-center gap-3 shadow-lg transform hover:scale-105 transition-all duration-300 active:scale-95"
-                    onClick={() => {
-                      setCelebrationEmoji('🌱');
-                      setShowFloatingEmoji(true);
-                      toast({ 
-                        title: "Learning with Leela! 🌱", 
-                        description: "Every day you learn something new, you grow stronger and wiser! What would you like to discover today?" 
-                      });
-                      setTimeout(() => setShowFloatingEmoji(false), 2000);
+                    onClick={async () => {
+                      try {
+                        setIsLoading(true);
+                        
+                        // Enhanced learning assistance with personalized help
+                        const learningHelps = [
+                          {
+                            subject: 'Reading Skills',
+                            tip: "When you read, imagine you're watching a movie in your mind! Picture the characters and places. It makes reading so much more fun! 🎬",
+                            activity: "Try reading a story and drawing your favorite scene!",
+                            skill_built: "visualization and comprehension",
+                            points: 15
+                          },
+                          {
+                            subject: 'Math Magic',
+                            tip: "Numbers are like building blocks! When you add, you're building something bigger. When you subtract, you're taking pieces away. 🧩",
+                            activity: "Count things around you - toys, books, or snacks!",
+                            skill_built: "number sense and problem solving",
+                            points: 18
+                          },
+                          {
+                            subject: 'Science Wonder',
+                            tip: "Science is all about asking 'Why?' and 'How?' You're already a scientist when you're curious! 🔬",
+                            activity: "Look outside and ask one question about something you see!",
+                            skill_built: "curiosity and observation",
+                            points: 16
+                          },
+                          {
+                            subject: 'Memory Power',
+                            tip: "Your brain is like a super computer! The more you practice remembering, the stronger it gets! 🧠",
+                            activity: "Try remembering 3 things you learned today and share them!",
+                            skill_built: "memory and recall",
+                            points: 14
+                          },
+                          {
+                            subject: 'Focus Training',
+                            tip: "Focus is like a muscle - the more you exercise it, the stronger it gets! Start with small tasks and work your way up! 🎦",
+                            activity: "Pick one activity and give it your full attention for 5 minutes!",
+                            skill_built: "concentration and attention",
+                            points: 17
+                          }
+                        ];
+                        
+                        const selectedHelp = learningHelps[Math.floor(Math.random() * learningHelps.length)];
+                        
+                        setCelebrationEmoji('🌱');
+                        setShowFloatingEmoji(true);
+                        
+                        // Show learning tip
+                        toast({ 
+                          title: `Learning with Leela! 🌱`, 
+                          description: `${selectedHelp.subject}: ${selectedHelp.tip}`,
+                          duration: 8000,
+                        });
+                        
+                        // Show activity suggestion
+                        setTimeout(() => {
+                          triggerCelebration('🎆', false, 4000);
+                          toast({
+                            title: "Let's Practice! 🎆",
+                            description: selectedHelp.activity,
+                            duration: 6000,
+                          });
+                        }, 3000);
+                        
+                        // Show skill development and award points
+                        setTimeout(() => {
+                          triggerCelebration('🏆', true, 6000);
+                          toast({
+                            title: "Skill Building! 🏆",
+                            description: `Great! You're developing ${selectedHelp.skill_built}! Keep practicing and you'll become amazing at this!`,
+                            duration: 6000,
+                          });
+                          
+                          // Save learning session
+                          const learningSessions = JSON.parse(localStorage.getItem('leelaLearningSessions') || '[]');
+                          const newLearningSession = {
+                            id: Date.now(),
+                            type: 'learning_help',
+                            subject: selectedHelp.subject,
+                            tip: selectedHelp.tip,
+                            activity: selectedHelp.activity,
+                            skill_built: selectedHelp.skill_built,
+                            timestamp: new Date(),
+                            completed: true,
+                            pointsEarned: selectedHelp.points
+                          };
+                          learningSessions.push(newLearningSession);
+                          localStorage.setItem('leelaLearningSessions', JSON.stringify(learningSessions));
+                          
+                          // Award learning points
+                          const learningPoints = parseInt(localStorage.getItem('learningPoints') || '0');
+                          const newLearningPoints = learningPoints + selectedHelp.points;
+                          localStorage.setItem('learningPoints', newLearningPoints.toString());
+                          
+                          // Show achievement notification
+                          setTimeout(() => {
+                            toast({
+                              title: "Learning Points Earned! 🌟",
+                              description: `Wonderful learning! You earned ${selectedHelp.points} learning points! Total: ${newLearningPoints} points`,
+                              duration: 5000,
+                            });
+                            
+                            // Check for learning master achievement
+                            if (newLearningPoints >= 150) {
+                              setTimeout(() => {
+                                triggerCelebration('🧪', true, 10000);
+                                toast({
+                                  title: "Learning Superhero! 🧪",
+                                  description: "150+ learning points! You're officially a Learning Superhero! Your brain is getting super strong!",
+                                  duration: 8000,
+                                });
+                              }, 2000);
+                            }
+                          }, 1500);
+                        }, 6000);
+                        
+                      } catch (error) {
+                        console.error('Failed to start learning session:', error);
+                        toast({
+                          title: "Oops! 😅",
+                          description: "Something went wrong with learning help. Let's try again!",
+                          duration: 3000,
+                        });
+                      } finally {
+                        setTimeout(() => {
+                          setShowFloatingEmoji(false);
+                          setIsLoading(false);
+                        }, 2500);
+                      }
                     }}
+                    disabled={isLoading}
                   >
                     <span className="text-3xl animate-bounce delay-500">🌱</span>
                     <span className="text-sm font-semibold">Learning Help</span>
@@ -1328,21 +2641,170 @@ export function KidsActivities() {
               {/* Celebration Button */}
               <Button 
                 className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white shadow-xl transform hover:scale-105 transition-all duration-300 rounded-2xl text-lg py-4 px-8 font-bold"
-                onClick={() => {
-                  setShowConfetti(true);
-                  setCelebrationEmoji('🎉');
-                  setShowFloatingEmoji(true);
-                  toast({ 
-                    title: "You're Amazing! 🎉", 
-                    description: `Look at all your ${totalKindnessPoints + totalMemories + 8} achievements! You're a superstar!` 
-                  });
-                  setTimeout(() => {
-                    setShowFloatingEmoji(false);
-                    setShowConfetti(false);
-                  }, 3000);
+                onClick={async () => {
+                  try {
+                    setIsLoading(true);
+                    
+                    // Calculate comprehensive achievements
+                    const calculateAllAchievements = () => {
+                      const kindnessPoints = parseInt(localStorage.getItem('kindnessPoints') || '0');
+                      const creativityPoints = parseInt(localStorage.getItem('creativityPoints') || '0');
+                      const learningPoints = parseInt(localStorage.getItem('learningPoints') || '0');
+                      const coachingPoints = parseInt(localStorage.getItem('coachingPoints') || '0');
+                      const mythologyPoints = parseInt(localStorage.getItem('mythologyPoints') || '0');
+                      const memoryPoints = parseInt(localStorage.getItem('memoryPoints') || '0');
+                      const mobileActions = parseInt(localStorage.getItem('totalMobileActions') || '0');
+                      const progressTracking = parseInt(localStorage.getItem('progressTrackingPoints') || '0');
+                      
+                      const totalAchievementPoints = kindnessPoints + creativityPoints + learningPoints + 
+                                                    coachingPoints + mythologyPoints + memoryPoints + 
+                                                    (mobileActions * 2) + progressTracking;
+                      
+                      const achievements: Array<{type: string, title: string, level: number | string}> = [];
+                      
+                      // Individual skill achievements
+                      if (kindnessPoints >= 25) achievements.push({ type: 'kindness', title: 'Heart of Gold 💖', level: kindnessPoints });
+                      if (creativityPoints >= 50) achievements.push({ type: 'creativity', title: 'Creative Genius 🎨', level: creativityPoints });
+                      if (learningPoints >= 75) achievements.push({ type: 'learning', title: 'Learning Champion 📚', level: learningPoints });
+                      if (coachingPoints >= 40) achievements.push({ type: 'coaching', title: 'Wisdom Seeker 🧚‍♀️', level: coachingPoints });
+                      if (mythologyPoints >= 30) achievements.push({ type: 'mythology', title: 'Story Master 🏰', level: mythologyPoints });
+                      if (memoryPoints >= 35) achievements.push({ type: 'memory', title: 'Memory Keeper 📸', level: memoryPoints });
+                      if (mobileActions >= 15) achievements.push({ type: 'mobile', title: 'Mobile Master 📱', level: mobileActions });
+                      
+                      // Super achievements
+                      if (totalAchievementPoints >= 200) achievements.push({ type: 'super', title: 'Super Champion 🏆', level: totalAchievementPoints });
+                      if (totalAchievementPoints >= 500) achievements.push({ type: 'legendary', title: 'Legendary Hero 👑', level: totalAchievementPoints });
+                      
+                      // Special combination achievements
+                      if (kindnessPoints >= 20 && creativityPoints >= 20) {
+                        achievements.push({ type: 'combo', title: 'Kind Creator 🌈', level: 'Special' });
+                      }
+                      if (learningPoints >= 30 && coachingPoints >= 20) {
+                        achievements.push({ type: 'combo', title: 'Wise Learner 🧙‍♂️', level: 'Special' });
+                      }
+                      
+                      return { achievements, totalPoints: totalAchievementPoints };
+                    };
+                    
+                    const result = calculateAllAchievements();
+                    
+                    // Start massive celebration
+                    setShowConfetti(true);
+                    setCelebrationEmoji('🎉');
+                    setShowFloatingEmoji(true);
+                    
+                    // Show main celebration
+                    toast({ 
+                      title: "You're Absolutely Amazing! 🎉", 
+                      description: `${result.totalPoints} total achievement points across ${result.achievements.length} major achievements! You're incredible!`,
+                      duration: 8000,
+                    });
+                    
+                    // Show individual achievements
+                    if (result.achievements.length > 0) {
+                      setTimeout(() => {
+                        const randomAchievement = result.achievements[Math.floor(Math.random() * result.achievements.length)];
+                        triggerCelebration('🏆', true, 8000);
+                        toast({
+                          title: `Special Achievement! 🏆`,
+                          description: `${randomAchievement.title} - Level: ${randomAchievement.level}! You've earned this amazing badge!`,
+                          duration: 6000,
+                        });
+                      }, 2000);
+                      
+                      // Show achievement count
+                      setTimeout(() => {
+                        triggerCelebration('🎆', true, 10000);
+                        toast({
+                          title: "Achievement Master! 🎆",
+                          description: `You've unlocked ${result.achievements.length} special achievements! Each one shows how amazing you are!`,
+                          duration: 7000,
+                        });
+                      }, 4000);
+                      
+                      // Show motivational message
+                      setTimeout(() => {
+                        const motivationalMessages = [
+                          "You make the world brighter with your kindness! 🌟",
+                          "Your creativity inspires everyone around you! 🎨",
+                          "Your curiosity and learning spirit are incredible! 📚",
+                          "You're growing into such a wonderful person! 🌱",
+                          "Your family is so proud of all you've accomplished! 💖"
+                        ];
+                        
+                        const randomMessage = motivationalMessages[Math.floor(Math.random() * motivationalMessages.length)];
+                        
+                        triggerCelebration('💖', true, 12000);
+                        toast({
+                          title: "From Leela with Love! 🧚‍♀️",
+                          description: randomMessage,
+                          duration: 8000,
+                        });
+                      }, 7000);
+                      
+                    } else {
+                      // Encouraging message for new users
+                      setTimeout(() => {
+                        toast({
+                          title: "Your Journey Starts Here! 🎆",
+                          description: "Every expert was once a beginner! Keep exploring, learning, and being kind. Amazing achievements await you!",
+                          duration: 6000,
+                        });
+                      }, 2000);
+                    }
+                    
+                    // Save celebration session
+                    const celebrations = JSON.parse(localStorage.getItem('celebrationSessions') || '[]');
+                    const celebrationSession = {
+                      id: Date.now(),
+                      timestamp: new Date(),
+                      totalPoints: result.totalPoints,
+                      achievementsCount: result.achievements.length,
+                      achievements: result.achievements,
+                      celebrationType: 'full_achievement_review'
+                    };
+                    celebrations.push(celebrationSession);
+                    localStorage.setItem('celebrationSessions', JSON.stringify(celebrations));
+                    
+                    // Award celebration points
+                    const celebrationPoints = parseInt(localStorage.getItem('celebrationPoints') || '0') + 50;
+                    localStorage.setItem('celebrationPoints', celebrationPoints.toString());
+                    
+                    // Final special message
+                    setTimeout(() => {
+                      triggerCelebration('👑', true, 15000);
+                      toast({
+                        title: "Celebration Champion! 👑",
+                        description: `You earned 50 celebration points for reviewing your achievements! Self-celebration is a superpower! Total celebration points: ${celebrationPoints}`,
+                        duration: 8000,
+                      });
+                    }, 9000);
+                    
+                  } catch (error) {
+                    console.error('Failed to celebrate achievements:', error);
+                    toast({
+                      title: "Oops! 😅",
+                      description: "Something went wrong with the celebration. But you're still amazing!",
+                      duration: 3000,
+                    });
+                  } finally {
+                    setTimeout(() => {
+                      setShowFloatingEmoji(false);
+                      setShowConfetti(false);
+                      setIsLoading(false);
+                    }, 12000);
+                  }
                 }}
+                disabled={isLoading}
               >
-                🎆 Celebrate My Success!
+                {isLoading ? (
+                  <div className="flex items-center gap-2">
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Celebrating...
+                  </div>
+                ) : (
+                  '🎆 Celebrate My Success!'
+                )}
               </Button>
             </CardContent>
           </Card>

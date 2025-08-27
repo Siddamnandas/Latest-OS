@@ -7,8 +7,11 @@ import { getServerSession } from 'next-auth';
 import { z } from 'zod';
 import { BaseActivity, ActivityResult, EmotionScenario, CreativeActivity } from '@/types/kids-activities';
 import { authOptions } from '@/lib/auth';
-import { logger } from '@/lib/logger';
+import { logger, apiLogger, performanceLogger } from '@/lib/logger';
 import { prisma } from '@/lib/prisma';
+import { kidsCache, cacheHelpers } from '@/lib/kids-cache';
+import { performanceMonitor } from '@/lib/performance-monitor';
+import { monitoring } from '@/lib/monitoring';
 
 // Validation schemas
 const ActivityFilterSchema = z.object({
@@ -32,7 +35,7 @@ const ActivityResultSchema = z.object({
   endTime: z.string().datetime(),
   completed: z.boolean(),
   score: z.number().min(0).max(100).optional(),
-  answers: z.record(z.any()).optional(),
+  answers: z.record(z.string(), z.any()).optional(),
   reflection: z.string().optional(),
   parentFeedback: z.string().optional(),
   media: z.array(z.object({
@@ -48,11 +51,15 @@ const ActivityResultSchema = z.object({
 
 // GET /api/kids/activities - Retrieve activities with filtering and pagination (parent-authenticated)
 export async function GET(request: NextRequest) {
+  const startTime = Date.now();
+  
   try {
     // Authenticate parent user
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
-      logger.warn('Unauthorized access attempt to kids activities API');
+      const responseTime = Date.now() - startTime;
+      monitoring.recordAPIMetric('/api/kids/activities', 'GET', 401, responseTime);
+      apiLogger.warn('Unauthorized access attempt to kids activities API');
       return NextResponse.json(
         { error: 'Authentication required. Parents must be logged in to access activities.' },
         { status: 401 }
@@ -79,17 +86,41 @@ export async function GET(request: NextRequest) {
     // Validate filters
     const validationResult = ActivityFilterSchema.safeParse(filters);
     if (!validationResult.success) {
-      logger.warn('Invalid activity filter parameters', { filters, errors: validationResult.error.errors });
+      logger.warn({ filters, errors: validationResult.error.issues }, 'Invalid activity filter parameters');
       return NextResponse.json(
         {
           error: 'Invalid filter parameters',
-          details: validationResult.error.errors
+          details: validationResult.error.issues
         },
         { status: 400 }
       );
     }
 
     const validatedFilters = validationResult.data;
+    
+    // Check cache first
+    const cacheKey = { ...validatedFilters, parentId: session.user.id };
+    const cachedActivities = cacheHelpers.getCachedActivityList(cacheKey);
+    
+    if (cachedActivities) {
+      const responseTime = Date.now() - startTime;
+      monitoring.recordAPIMetric('/api/kids/activities', 'GET', 200, responseTime);
+      monitoring.recordUserActivity(session.user.id, 'get_activities_cached', validatedFilters.childId);
+      
+      apiLogger.info({
+        parentId: session.user.id,
+        childId: validatedFilters.childId,
+        cacheHit: true,
+        totalResults: cachedActivities.length,
+        responseTime
+      }, 'Activities retrieved from cache');
+      
+      return NextResponse.json({
+        activities: cachedActivities,
+        cached: true,
+        timestamp: new Date()
+      });
+    }
     
     // If childId is specified, verify parent-child relationship
     if (validatedFilters.childId) {
@@ -102,21 +133,21 @@ export async function GET(request: NextRequest) {
         });
 
         if (!child) {
-          logger.warn('Parent attempted to access unauthorized child activities', {
+          logger.warn({
             parentId: session.user.id,
             childId: validatedFilters.childId
-          });
+          }, 'Parent attempted to access unauthorized child activities');
           return NextResponse.json(
             { error: 'Child not found or access denied. You can only access activities for your own children.' },
             { status: 404 }
           );
         }
       } catch (dbError) {
-        logger.error('Database error verifying child access', {
+        logger.error({
           error: dbError,
           parentId: session.user.id,
           childId: validatedFilters.childId
-        });
+        }, 'Database error verifying child access');
         return NextResponse.json(
           { error: 'Database error occurred while verifying access' },
           { status: 500 }
@@ -225,15 +256,9 @@ export async function GET(request: NextRequest) {
           completion: completions.find(c => c.activityId === activity.id)
         }));
       }
-
-      logger.info('Activities retrieved successfully', {
-        parentId: session.user.id,
-        childId: validatedFilters.childId,
-        totalResults: totalCount,
-        returnedResults: activitiesWithProgress.length
-      });
-
-      return NextResponse.json({
+        
+      // Cache the results
+      const resultWithMeta = {
         activities: activitiesWithProgress,
         meta: {
           total: totalCount,
@@ -241,16 +266,38 @@ export async function GET(request: NextRequest) {
           limit: validatedFilters.limit,
           hasMore: validatedFilters.offset + validatedFilters.limit < totalCount
         },
-        filters: validatedFilters,
+        filters: validatedFilters
+      };
+      
+      cacheHelpers.cacheActivityList(cacheKey, activitiesWithProgress);
+
+      const responseTime = Date.now() - startTime;
+      monitoring.recordAPIMetric('/api/kids/activities', 'GET', 200, responseTime);
+      monitoring.recordUserActivity(session.user.id, 'get_activities', validatedFilters.childId);
+
+      apiLogger.info({
+        parentId: session.user.id,
+        childId: validatedFilters.childId,
+        totalResults: totalCount,
+        returnedResults: activitiesWithProgress.length,
+        cached: false,
+        responseTime
+      }, 'Activities retrieved successfully');
+
+      return NextResponse.json({
+        ...resultWithMeta,
         timestamp: new Date()
       });
       
     } catch (dbError) {
-      logger.error('Database error retrieving activities', {
+      const responseTime = Date.now() - startTime;
+      monitoring.recordAPIMetric('/api/kids/activities', 'GET', 500, responseTime);
+      apiLogger.error({
         error: dbError,
         parentId: session.user.id,
-        childId: validatedFilters.childId
-      });
+        childId: validatedFilters.childId,
+        responseTime
+      }, 'Database error retrieving activities');
       return NextResponse.json(
         { error: 'Database error occurred while retrieving activities' },
         { status: 500 }
@@ -258,7 +305,12 @@ export async function GET(request: NextRequest) {
     }
     
   } catch (error) {
-    logger.error('Unexpected error in kids activities GET endpoint', { error });
+    const responseTime = Date.now() - startTime;
+    monitoring.recordAPIMetric('/api/kids/activities', 'GET', 500, responseTime);
+    apiLogger.error({ 
+      error, 
+      responseTime 
+    }, 'Unexpected error in kids activities GET endpoint');
     return NextResponse.json(
       { error: 'An unexpected error occurred' },
       { status: 500 }
@@ -268,11 +320,15 @@ export async function GET(request: NextRequest) {
 
 // POST /api/kids/activities - Submit activity result (parent-authenticated)
 export async function POST(request: NextRequest) {
+  const startTime = Date.now();
+  
   try {
     // Authenticate parent user
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
-      logger.warn('Unauthorized access attempt to submit activity result');
+      const responseTime = Date.now() - startTime;
+      monitoring.recordAPIMetric('/api/kids/activities', 'POST', 401, responseTime);
+      apiLogger.warn('Unauthorized access attempt to submit activity result');
       return NextResponse.json(
         { error: 'Authentication required. Parents must be logged in to submit activity results.' },
         { status: 401 }
@@ -284,11 +340,11 @@ export async function POST(request: NextRequest) {
     // Validate activity result
     const validationResult = ActivityResultSchema.safeParse(body);
     if (!validationResult.success) {
-      logger.warn('Invalid activity result data', { errors: validationResult.error.errors });
+      logger.warn({ errors: validationResult.error.issues }, 'Invalid activity result data');
       return NextResponse.json(
         {
           error: 'Invalid activity result data',
-          details: validationResult.error.errors
+          details: validationResult.error.issues
         },
         { status: 400 }
       );
@@ -306,10 +362,10 @@ export async function POST(request: NextRequest) {
       });
 
       if (!child) {
-        logger.warn('Parent attempted to submit result for unauthorized child', {
+        logger.warn({
           parentId: session.user.id,
           childId: resultData.childId
-        });
+        }, 'Parent attempted to submit result for unauthorized child');
         return NextResponse.json(
           { error: 'Child not found or access denied. You can only submit results for your own children.' },
           { status: 404 }
@@ -322,10 +378,10 @@ export async function POST(request: NextRequest) {
       });
       
       if (!activity) {
-        logger.warn('Activity not found for result submission', {
+        logger.warn({
           activityId: resultData.activityId,
           childId: resultData.childId
-        });
+        }, 'Activity not found for result submission');
         return NextResponse.json(
           { error: 'Activity not found' },
           { status: 404 }
@@ -351,18 +407,35 @@ export async function POST(request: NextRequest) {
       // Update child progress if activity was completed
       if (resultData.completed) {
         await updateChildProgress(resultData.childId, activity, resultData.score || 0);
+        // Invalidate progress cache since it changed
+        cacheHelpers.invalidateChildData(resultData.childId);
       }
 
       // Calculate new achievements
       const achievements = await calculateAndAwardAchievements(resultData.childId);
 
-      logger.info('Activity result submitted successfully', {
+      const responseTime = Date.now() - startTime;
+      monitoring.recordAPIMetric('/api/kids/activities', 'POST', 201, responseTime);
+      monitoring.recordUserActivity(session.user.id, 'submit_activity', resultData.childId);
+      
+      // Record kids activity metrics
+      if (activity) {
+        monitoring.recordKidsActivity(
+          activity.type,
+          resultData.completed,
+          // Calculate child age based on birth date if available
+          18 // Default age for now
+        );
+      }
+
+      apiLogger.info({
         parentId: session.user.id,
         childId: resultData.childId,
         activityId: resultData.activityId,
         completed: resultData.completed,
-        newAchievements: achievements.length
-      });
+        newAchievements: achievements.length,
+        responseTime
+      }, 'Activity result submitted successfully');
 
       return NextResponse.json({
         completion,
@@ -371,11 +444,11 @@ export async function POST(request: NextRequest) {
       }, { status: 201 });
 
     } catch (dbError) {
-      logger.error('Database error submitting activity result', {
+      logger.error({
         error: dbError,
         parentId: session.user.id,
         childId: resultData.childId
-      });
+      }, 'Database error submitting activity result');
       return NextResponse.json(
         { error: 'Database error occurred while submitting result' },
         { status: 500 }
@@ -383,7 +456,7 @@ export async function POST(request: NextRequest) {
     }
 
   } catch (error) {
-    logger.error('Unexpected error in kids activities POST endpoint', { error });
+    logger.error({ error }, 'Unexpected error in kids activities POST endpoint');
     return NextResponse.json(
       { error: 'An unexpected error occurred' },
       { status: 500 }
@@ -436,7 +509,7 @@ async function updateChildProgress(childId: string, activity: any, score: number
       });
     }
   } catch (error) {
-    logger.error('Error updating child progress', { error, childId });
+    logger.error({ error, childId }, 'Error updating child progress');
     throw error;
   }
 }
@@ -538,7 +611,7 @@ async function calculateAndAwardAchievements(childId: string) {
 
     return newAchievements;
   } catch (error) {
-    logger.error('Error calculating achievements', { error, childId });
+    logger.error({ error, childId }, 'Error calculating achievements');
     return [];
   }
 }
@@ -568,7 +641,7 @@ export async function PUT(request: NextRequest) {
       { status: 403 }
     );
   } catch (error) {
-    logger.error('Error in activities PUT endpoint', { error });
+    logger.error({ error }, 'Error in activities PUT endpoint');
     return NextResponse.json(
       { error: 'An unexpected error occurred' },
       { status: 500 }
@@ -601,7 +674,7 @@ export async function DELETE(request: NextRequest) {
       { status: 403 }
     );
   } catch (error) {
-    logger.error('Error in activities DELETE endpoint', { error });
+    logger.error({ error }, 'Error in activities DELETE endpoint');
     return NextResponse.json(
       { error: 'An unexpected error occurred' },
       { status: 500 }

@@ -117,11 +117,11 @@ export async function GET(request: NextRequest) {
     
     const validationResult = GetProfileSchema.safeParse({ childId });
     if (!validationResult.success) {
-      logger.warn('Invalid profile request parameters', { errors: validationResult.error.errors });
+      logger.warn({ errors: validationResult.error.issues }, 'Invalid profile request parameters');
       return NextResponse.json(
         {
           error: 'Invalid request parameters',
-          details: validationResult.error.errors
+          details: validationResult.error.issues
         },
         { status: 400 }
       );
@@ -143,10 +143,10 @@ export async function GET(request: NextRequest) {
         });
 
         if (!child) {
-          logger.warn('Parent attempted to access unauthorized child profile', {
+          logger.warn({
             parentId: session.user.id,
             childId
-          });
+          }, 'Parent attempted to access unauthorized child profile');
           return NextResponse.json(
             { error: 'Child profile not found or access denied.' },
             { status: 404 }
@@ -157,10 +157,10 @@ export async function GET(request: NextRequest) {
         const age = Math.floor((Date.now() - child.birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000));
         const ageGroup = age <= 4 ? 'toddler' : age <= 6 ? 'preschool' : age <= 12 ? 'elementary' : 'preteen';
 
-        logger.info('Child profile retrieved successfully', {
+        logger.info({
           parentId: session.user.id,
           childId
-        });
+        }, 'Child profile retrieved successfully');
 
         return NextResponse.json({
           child: {
@@ -199,10 +199,10 @@ export async function GET(request: NextRequest) {
           };
         });
 
-        logger.info('All children profiles retrieved successfully', {
+        logger.info({
           parentId: session.user.id,
           childrenCount: children.length
-        });
+        }, 'All children profiles retrieved successfully');
 
         return NextResponse.json({
           children: childrenWithAge,
@@ -211,11 +211,11 @@ export async function GET(request: NextRequest) {
       }
 
     } catch (dbError) {
-      logger.error('Database error retrieving child profile', {
+      logger.error({
         error: dbError,
         parentId: session.user.id,
         childId
-      });
+      }, 'Database error retrieving child profile');
       return NextResponse.json(
         { error: 'Database error occurred while retrieving profile' },
         { status: 500 }
@@ -223,7 +223,7 @@ export async function GET(request: NextRequest) {
     }
 
   } catch (error) {
-    logger.error('Unexpected error in kids profile GET endpoint', { error });
+    logger.error({ error }, 'Unexpected error in kids profile GET endpoint');
     return NextResponse.json(
       { error: 'An unexpected error occurred' },
       { status: 500 }
@@ -249,11 +249,11 @@ export async function POST(request: NextRequest) {
     // Validate input
     const validationResult = CreateProfileSchema.safeParse(body);
     if (!validationResult.success) {
-      logger.warn('Invalid profile creation data', { errors: validationResult.error.errors });
+      logger.warn({ errors: validationResult.error.issues }, 'Invalid profile creation data');
       return NextResponse.json(
         {
           error: 'Invalid profile data',
-          details: validationResult.error.errors
+          details: validationResult.error.issues
         },
         { status: 400 }
       );
@@ -270,10 +270,10 @@ export async function POST(request: NextRequest) {
       });
 
       if (existingChildrenCount >= 10) {
-        logger.warn('Parent attempted to create too many child profiles', {
+        logger.warn({
           parentId: session.user.id,
           currentCount: existingChildrenCount
-        });
+        }, 'Parent attempted to create too many child profiles');
         return NextResponse.json(
           { error: 'Maximum number of child profiles reached (10). Please contact support if you need more.' },
           { status: 400 }
@@ -324,12 +324,12 @@ export async function POST(request: NextRequest) {
       const age = Math.floor((Date.now() - newChild.birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000));
       const ageGroup = age <= 4 ? 'toddler' : age <= 6 ? 'preschool' : age <= 12 ? 'elementary' : 'preteen';
 
-      logger.info('Child profile created successfully', {
+      logger.info({
         parentId: session.user.id,
         childId: newChild.id,
         childName: newChild.name,
         age
-      });
+      }, 'Child profile created successfully');
 
       return NextResponse.json({
         child: {
@@ -341,10 +341,10 @@ export async function POST(request: NextRequest) {
       }, { status: 201 });
 
     } catch (dbError) {
-      logger.error('Database error creating child profile', {
+      logger.error({
         error: dbError,
         parentId: session.user.id
-      });
+      }, 'Database error creating child profile');
       return NextResponse.json(
         { error: 'Database error occurred while creating profile' },
         { status: 500 }
@@ -352,7 +352,7 @@ export async function POST(request: NextRequest) {
     }
 
   } catch (error) {
-    logger.error('Unexpected error in kids profile POST endpoint', { error });
+    logger.error({ error }, 'Unexpected error in kids profile POST endpoint');
     return NextResponse.json(
       { error: 'An unexpected error occurred' },
       { status: 500 }
@@ -388,11 +388,11 @@ export async function PUT(request: NextRequest) {
     const UpdateProfileSchema = CreateProfileSchema.partial();
     const validationResult = UpdateProfileSchema.safeParse(body);
     if (!validationResult.success) {
-      logger.warn('Invalid profile update data', { errors: validationResult.error.errors });
+      logger.warn({ errors: validationResult.error.issues }, 'Invalid profile update data');
       return NextResponse.json(
         {
           error: 'Invalid profile data',
-          details: validationResult.error.errors
+          details: validationResult.error.issues
         },
         { status: 400 }
       );
@@ -410,10 +410,10 @@ export async function PUT(request: NextRequest) {
       });
 
       if (!existingChild) {
-        logger.warn('Parent attempted to update unauthorized child profile', {
+        logger.warn({
           parentId: session.user.id,
           childId
-        });
+        }, 'Parent attempted to update unauthorized child profile');
         return NextResponse.json(
           { error: 'Child profile not found or access denied.' },
           { status: 404 }
@@ -450,11 +450,11 @@ export async function PUT(request: NextRequest) {
       const age = Math.floor((Date.now() - updatedChild.birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000));
       const ageGroup = age <= 4 ? 'toddler' : age <= 6 ? 'preschool' : age <= 12 ? 'elementary' : 'preteen';
 
-      logger.info('Child profile updated successfully', {
+      logger.info({
         parentId: session.user.id,
         childId,
         updatedFields: Object.keys(updates)
-      });
+      }, 'Child profile updated successfully');
 
       return NextResponse.json({
         child: {
@@ -466,11 +466,11 @@ export async function PUT(request: NextRequest) {
       });
 
     } catch (dbError) {
-      logger.error('Database error updating child profile', {
+      logger.error({
         error: dbError,
         parentId: session.user.id,
         childId
-      });
+      }, 'Database error updating child profile');
       return NextResponse.json(
         { error: 'Database error occurred while updating profile' },
         { status: 500 }
@@ -478,7 +478,7 @@ export async function PUT(request: NextRequest) {
     }
 
   } catch (error) {
-    logger.error('Unexpected error in kids profile PUT endpoint', { error });
+    logger.error({ error }, 'Unexpected error in kids profile PUT endpoint');
     return NextResponse.json(
       { error: 'An unexpected error occurred' },
       { status: 500 }
@@ -528,10 +528,10 @@ export async function DELETE(request: NextRequest) {
       });
 
       if (!existingChild) {
-        logger.warn('Parent attempted to delete unauthorized child profile', {
+        logger.warn({
           parentId: session.user.id,
           childId
-        });
+        }, 'Parent attempted to delete unauthorized child profile');
         return NextResponse.json(
           { error: 'Child profile not found or access denied.' },
           { status: 404 }
@@ -545,22 +545,22 @@ export async function DELETE(request: NextRequest) {
         }
       });
 
-      logger.info('Child profile deleted successfully', {
+      logger.info({
         parentId: session.user.id,
         childId,
         childName: existingChild.name
-      });
+      }, 'Child profile deleted successfully');
 
       return NextResponse.json({
         message: 'Child profile deleted successfully'
       });
 
     } catch (dbError) {
-      logger.error('Database error deleting child profile', {
+      logger.error({
         error: dbError,
         parentId: session.user.id,
         childId
-      });
+      }, 'Database error deleting child profile');
       return NextResponse.json(
         { error: 'Database error occurred while deleting profile' },
         { status: 500 }
@@ -568,13 +568,10 @@ export async function DELETE(request: NextRequest) {
     }
 
   } catch (error) {
-    logger.error('Unexpected error in kids profile DELETE endpoint', { error });
+    logger.error({ error }, 'Unexpected error in kids profile DELETE endpoint');
     return NextResponse.json(
       { error: 'An unexpected error occurred' },
       { status: 500 }
-    );
-  }
-} }
     );
   }
 }
