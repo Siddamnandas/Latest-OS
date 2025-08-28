@@ -26,14 +26,10 @@ export function FloatingActionButton({
   position = 'bottom-right',
   hide = false
 }: FloatingActionButtonProps) {
+  // All hooks must be declared at the top - no early returns allowed
   const [isOpen, setIsOpen] = useState(false);
   const fabRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
-
-  // Hide the FAB if hide prop is true
-  if (hide) {
-    return null;
-  }
 
   // Default actions if none provided
   const defaultActions: FABAction[] = [
@@ -116,11 +112,14 @@ export function FloatingActionButton({
     'center-bottom': 'bottom-24 left-1/2 transform -translate-x-1/2'
   };
 
+  // Use conditional rendering instead of early return to avoid hooks issues
   return (
-    <div 
-      ref={fabRef}
-      className={`fixed ${positionClasses[position]} z-50`}
-    >
+    <>
+      {!hide && (
+        <div 
+          ref={fabRef}
+          className={`fixed ${positionClasses[position]} z-50`}
+        >
       <AnimatePresence>
         {isOpen && (
           <div className="space-y-3 mb-4">
@@ -219,6 +218,8 @@ export function FloatingActionButton({
           }}
         />
       </motion.button>
-    </div>
+        </div>
+      )}
+    </>
   );
 }

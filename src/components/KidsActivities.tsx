@@ -1,162 +1,158 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Textarea } from '@/components/ui/textarea';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  // Emotion Explorers
-  Baby,
-  Book,
-  
-  // Mythological Characters
-  Feather,
-  
-  // Krishna Prank
-  Smile,
-  Laugh,
-  
-  // Hanuman Helper
-  CheckCircle,
-  
-  // Saraswati Creative
-  Brush,
-  
-  // General
-  Target,
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
   Heart,
+  Star,
+  Smile,
+  Book,
+  Palette,
+  Music,
+  Trophy,
+  Gift,
+  CheckCircle,
+  Calendar,
   Clock,
   Users,
-  Play,
-  Camera,
-  Plus,
-  Gift,
-  BarChart3,
-  Brain,
+  Target,
+  Award,
   Sparkles,
-  TrendingUp,
-  Calendar,
-  Activity,
-  Trophy
+  Play,
+  Brush,
+  Baby,
+  Brain,
+  Feather,
+  Plus,
+  Camera
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Progress } from '@/components/ui/progress';
 import { InteractiveConfetti } from '@/components/InteractiveConfetti';
-import { MagicButton } from '@/components/MagicButton';
 import { FloatingEmoji } from '@/components/FloatingEmoji';
-import { KidsMobileActions } from '@/components/KidsMobileActions';
 
-// Simplified local state management interface
-interface SimpleKidsState {
-  isLoading: boolean;
-  totalKindnessPoints: number;
-  totalMemories: number;
-  kindnessLevel: string;
-  weeklyStats: {
-    kindnessActions: number;
-    creativeMoments: number;
-    storiesShared: number;
-    memoriesSaved: number;
-  };
-  celebrationEmoji: string;
-  showFloatingEmoji: boolean;
-  showConfetti: boolean;
-  activeTab: string;
-}
-
-// Mock data and simple hook
-function useSimpleKidsState(): SimpleKidsState & {
-  triggerCelebration: (emoji: string, confetti?: boolean, duration?: number) => void;
-  addKindnessMoment: (description: string, category: string, points?: number) => Promise<boolean>;
-  addStorybookEntry: (title: string, description: string, type: string, participants: string[]) => Promise<boolean>;
-  setActiveTab: (tab: string) => void;
-} {
-  const [state, setState] = useState<SimpleKidsState>({
-    isLoading: false,
-    totalKindnessPoints: parseInt(localStorage.getItem('totalKindnessPoints') || '0'),
-    totalMemories: parseInt(localStorage.getItem('totalMemories') || '0'),
-    kindnessLevel: localStorage.getItem('kindnessLevel') || 'Getting Started',
-    weeklyStats: {
-      kindnessActions: parseInt(localStorage.getItem('weeklyKindnessActions') || '0'),
-      creativeMoments: parseInt(localStorage.getItem('weeklyCreativeMoments') || '0'),
-      storiesShared: parseInt(localStorage.getItem('weeklyStoriesShared') || '0'),
-      memoriesSaved: parseInt(localStorage.getItem('weeklyMemoriesSaved') || '0')
-    },
+// Simple state management hook
+const useSimpleKidsState = () => {
+  const [state, setState] = useState({
+    totalKindnessPoints: 25,
+    wisdomPoints: 15,
+    creativityPoints: 20,
+    storybookEntries: [] as any[],
+    emotionProgress: {} as Record<string, number>,
+    mythologyProgress: {} as Record<string, number>,
+    currentTab: 'activities',
     celebrationEmoji: '🎉',
     showFloatingEmoji: false,
-    showConfetti: false,
-    activeTab: 'activities'
+    showConfetti: false
   });
-
-  const triggerCelebration = (emoji: string, confetti = false, duration = 3000) => {
-    setState(prev => ({
-      ...prev,
-      celebrationEmoji: emoji,
-      showFloatingEmoji: true,
-      showConfetti: confetti
-    }));
-
-    setTimeout(() => {
+  
+  const [isLoading, setIsLoading] = useState(false);
+  
+  // Computed values
+  const totalMemories = state.storybookEntries.length;
+  const kindnessLevel = Math.floor(state.totalKindnessPoints / 10);
+  const weeklyStats = {
+    kindnessActions: state.totalKindnessPoints,
+    storiesCreated: totalMemories,
+    emotionsLearned: Object.keys(state.emotionProgress).length
+  };
+  
+  // Initialize from localStorage only on client side
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
       setState(prev => ({
         ...prev,
+        totalKindnessPoints: parseInt(localStorage.getItem('totalKindnessPoints') || '25'),
+        wisdomPoints: parseInt(localStorage.getItem('wisdomPoints') || '15'),
+        creativityPoints: parseInt(localStorage.getItem('creativityPoints') || '20'),
+        storybookEntries: JSON.parse(localStorage.getItem('storybookEntries') || '[]'),
+        emotionProgress: JSON.parse(localStorage.getItem('emotionProgress') || '{}'),
+        mythologyProgress: JSON.parse(localStorage.getItem('mythologyProgress') || '{}'),
+      }));
+    }
+  }, []);
+  
+  const addKindnessMoment = async (description: string, category: string, points: number = 1) => {
+    try {
+      setIsLoading(true);
+      const newTotal = state.totalKindnessPoints + points;
+      setState(prev => ({ ...prev, totalKindnessPoints: newTotal }));
+      
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('totalKindnessPoints', newTotal.toString());
+      }
+      return true;
+    } catch (error) {
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  const addStorybookEntry = async (title: string, description: string, type: string, participants: string[]) => {
+    try {
+      setIsLoading(true);
+      const newEntry = {
+        id: Date.now().toString(),
+        title,
+        description,
+        type,
+        participants,
+        timestamp: new Date().toISOString()
+      };
+      
+      const newEntries = [...state.storybookEntries, newEntry];
+      setState(prev => ({ ...prev, storybookEntries: newEntries }));
+      
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('storybookEntries', JSON.stringify(newEntries));
+      }
+      return true;
+    } catch (error) {
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  const triggerCelebration = (emoji: string, showConfetti: boolean, duration: number) => {
+    setState(prev => ({ 
+      ...prev, 
+      celebrationEmoji: emoji, 
+      showFloatingEmoji: true,
+      showConfetti 
+    }));
+    setTimeout(() => {
+      setState(prev => ({ 
+        ...prev, 
         showFloatingEmoji: false,
-        showConfetti: false
+        showConfetti: false 
       }));
     }, duration);
   };
-
-  const addKindnessMoment = async (description: string, category: string, points = 5) => {
-    const newTotal = state.totalKindnessPoints + points;
-    const newWeeklyActions = state.weeklyStats.kindnessActions + 1;
-    
-    localStorage.setItem('totalKindnessPoints', newTotal.toString());
-    localStorage.setItem('weeklyKindnessActions', newWeeklyActions.toString());
-    
-    setState(prev => ({
-      ...prev,
-      totalKindnessPoints: newTotal,
-      weeklyStats: {
-        ...prev.weeklyStats,
-        kindnessActions: newWeeklyActions
-      }
-    }));
-    
-    return true;
-  };
-
-  const addStorybookEntry = async (title: string, description: string, type: string, participants: string[]) => {
-    const newTotal = state.totalMemories + 1;
-    const newWeeklyMemories = state.weeklyStats.memoriesSaved + 1;
-    
-    localStorage.setItem('totalMemories', newTotal.toString());
-    localStorage.setItem('weeklyMemoriesSaved', newWeeklyMemories.toString());
-    
-    setState(prev => ({
-      ...prev,
-      totalMemories: newTotal,
-      weeklyStats: {
-        ...prev.weeklyStats,
-        memoriesSaved: newWeeklyMemories
-      }
-    }));
-    
-    return true;
-  };
-
+  
   const setActiveTab = (tab: string) => {
-    setState(prev => ({ ...prev, activeTab: tab }));
+    setState(prev => ({ ...prev, currentTab: tab }));
   };
-
+  
   return {
     ...state,
-    triggerCelebration,
+    totalMemories,
+    kindnessLevel,
+    weeklyStats,
+    activeTab: state.currentTab,
+    isLoading,
+    setState,
     addKindnessMoment,
     addStorybookEntry,
+    triggerCelebration,
     setActiveTab
   };
-}
+};
 
 export function KidsActivities() {
   // Use simplified state management
@@ -170,6 +166,7 @@ export function KidsActivities() {
     showFloatingEmoji,
     showConfetti,
     activeTab,
+    storybookEntries,
     triggerCelebration,
     addKindnessMoment,
     addStorybookEntry,
@@ -179,22 +176,46 @@ export function KidsActivities() {
   const { toast } = useToast();
   
   // Local state for UI elements that don't need persistence
-  const [selectedEmotion, setSelectedEmotion] = useState<string | null>(null);
+  const [selectedEmotion, setSelectedEmotion] = useState<any>(null);
   const [showSecondaryActivities, setShowSecondaryActivities] = useState(false);
   const [localLoading, setLocalLoading] = useState(false);
+  
+  // Mock selected child for demo purposes
+  const selectedChild = { id: 'demo-child', name: 'Demo Child' };
   
   // Combined loading state
   const isButtonLoading = isLoading || localLoading;
   const setIsLoading = setLocalLoading;
   
-  // Simplified static data - no need for complex types
+  // Quick action handler for mobile interface
+  const handleQuickAction = (action: string) => {
+    switch (action) {
+      case 'kindness':
+        triggerCelebration('❤️', true, 3000);
+        addKindnessMoment('Quick kindness action', 'mobile', 1);
+        break;
+      case 'story':
+        triggerCelebration('📚', false, 2000);
+        addStorybookEntry('Quick story', 'Mobile story creation', 'quick', ['child']);
+        break;
+      default:
+        triggerCelebration('🎉', false, 2000);
+    }
+  };
+  
+  // Simplified static data with proper object structures
   const emotionScenarios = [
     {
       id: '1',
       title: 'The Lost Toy',
       description: 'A little bear lost his favorite toy',
-      character: 'Bear 🧸',
-      emotions: ['Sad 😢', 'Upset 😞', 'Disappointed 😔', 'Worried 😟'],
+      character: { name: 'Bear', emoji: '🧸' },
+      emotions: [
+        { name: 'Sad', emoji: '😢' },
+        { name: 'Upset', emoji: '😞' },
+        { name: 'Disappointed', emoji: '😔' },
+        { name: 'Worried', emoji: '😟' }
+      ],
       difficulty: 'easy',
       ageRange: '3-6 years',
       duration: '10 minutes'
@@ -204,8 +225,9 @@ export function KidsActivities() {
   const mythologicalQuestions = [
     {
       id: '1',
-      character: 'Krishna 🪈',
+      character: { name: 'Krishna', emoji: '🪈', visualRepresentation: '🪈' },
       story: "Krishna's Flute",
+      title: "Krishna's Musical Wisdom",
       description: 'Learn about Krishna\'s musical wisdom',
       question: 'Why did Krishna love to play the flute?',
       answer: 'Because music brings joy and happiness to everyone',
@@ -685,249 +707,6 @@ export function KidsActivities() {
         description: "Your special kindness moment has been added to the family story!",
         duration: 3000,
       });
-    }
-  };
-
-  const handleQuickAction = async (action: string) => {
-    try {
-      setIsLoading(true);
-      
-      switch (action) {
-        case 'kindness':
-          // Enhanced kindness quick action
-          const kindnessActions = [
-            { text: 'Helped someone smile today! 😊', category: 'Joy Sharing', points: 7 },
-            { text: 'Said "thank you" with a big smile! 🙏', category: 'Gratitude', points: 5 },
-            { text: 'Shared something special with a friend! 🎁', category: 'Sharing', points: 8 },
-            { text: 'Gave someone a warm hug! 🤗', category: 'Comfort', points: 9 },
-            { text: 'Listened carefully when someone was talking! 👂', category: 'Listening', points: 6 }
-          ];
-          
-          const randomKindness = kindnessActions[Math.floor(Math.random() * kindnessActions.length)];
-          await handleKindnessMoment(randomKindness.text, randomKindness.category, randomKindness.points);
-          
-          // Mobile-specific celebration
-          triggerCelebration('💖', true, 6000);
-          toast({
-            title: "Mobile Kindness! 💖",
-            description: `${randomKindness.text} You earned ${randomKindness.points} kindness points!`,
-            duration: 5000,
-          });
-          
-          // Track mobile usage
-          const mobileKindness = parseInt(localStorage.getItem('mobileKindnessCount') || '0') + 1;
-          localStorage.setItem('mobileKindnessCount', mobileKindness.toString());
-          
-          if (mobileKindness === 5) {
-            setTimeout(() => {
-              triggerCelebration('📱', true, 8000);
-              toast({
-                title: "Mobile Kindness Master! 📱",
-                description: "5 quick kindness acts on mobile! You're spreading love everywhere you go!",
-                duration: 6000,
-              });
-            }, 2000);
-          }
-          break;
-          
-        case 'create':
-          // Enhanced creative quick action
-          await startCreativeActivity();
-          
-          // Additional mobile-specific features
-          setTimeout(() => {
-            toast({
-              title: "Mobile Creator! 🎨",
-              description: "You started a creative activity on mobile! Keep that imagination flowing!",
-              duration: 4000,
-            });
-            
-            // Track mobile creativity
-            const mobileCreativity = parseInt(localStorage.getItem('mobileCreativityCount') || '0') + 1;
-            localStorage.setItem('mobileCreativityCount', mobileCreativity.toString());
-            
-            if (mobileCreativity >= 3) {
-              setTimeout(() => {
-                triggerCelebration('🎆', true, 7000);
-                toast({
-                  title: "Mobile Art Star! 🎆",
-                  description: "3+ creative activities on mobile! You're a true mobile artist!",
-                  duration: 5000,
-                });
-              }, 1500);
-            }
-          }, 1000);
-          break;
-          
-        case 'story':
-          // Enhanced story time quick action
-          const storyPrompts = [
-            {
-              title: "Mobile Adventure Story! 📱",
-              prompt: "Tell a story about a magical phone that can take you anywhere!",
-              character: "Digital Explorer",
-              setting: "Cyber World"
-            },
-            {
-              title: "Pocket-sized Hero! 🧞‍♂️",
-              prompt: "Create a story about a tiny superhero who lives in your phone!",
-              character: "Mini Hero",
-              setting: "Phone Kingdom"
-            },
-            {
-              title: "Learning on the Go! 🌍",
-              prompt: "Tell about a child who discovers amazing things through their mobile device!",
-              character: "Young Explorer",
-              setting: "World of Knowledge"
-            }
-          ];
-          
-          const selectedStory = storyPrompts[Math.floor(Math.random() * storyPrompts.length)];
-          
-          triggerCelebration('📚', false, 5000);
-          toast({
-            title: selectedStory.title,
-            description: selectedStory.prompt,
-            duration: 7000,
-          });
-          
-          // Create storybook entry for mobile story
-          const storyEntry = await addStorybookEntry(
-            selectedStory.title,
-            `Mobile story time: ${selectedStory.prompt}`,
-            'activity',
-            ['Child', 'Mobile Device']
-          );
-          
-          if (storyEntry) {
-            setTimeout(() => {
-              triggerCelebration('🎤', true, 6000);
-              toast({
-                title: "Mobile Storyteller! 🎤",
-                description: "Your mobile story has been added to the family storybook! You're becoming a great storyteller!",
-                duration: 5000,
-              });
-              
-              // Award storytelling points
-              const storyPoints = parseInt(localStorage.getItem('mobileStoryPoints') || '0') + 10;
-              localStorage.setItem('mobileStoryPoints', storyPoints.toString());
-              
-              // Track mobile story milestones
-              if (storyPoints >= 50) {
-                setTimeout(() => {
-                  triggerCelebration('👑', true, 8000);
-                  toast({
-                    title: "Mobile Story Royalty! 👑",
-                    description: "50+ mobile story points! You're the king/queen of mobile storytelling!",
-                    duration: 6000,
-                  });
-                }, 2000);
-              }
-            }, 3000);
-          }
-          break;
-          
-        case 'photo':
-          // Enhanced memory saving quick action
-          const memoryTypes = [
-            {
-              title: "Mobile Moment Captured! 📸",
-              description: "Quick photo memory saved from your mobile adventure!",
-              type: "mobile_photo",
-              points: 8
-            },
-            {
-              title: "Instant Family Memory! 📅",
-              description: "Beautiful moment captured and saved to family memories!",
-              type: "instant_memory",
-              points: 10
-            },
-            {
-              title: "Mobile Memory Magic! ✨",
-              description: "Special moment preserved with mobile magic!",
-              type: "magic_memory",
-              points: 12
-            }
-          ];
-          
-          const selectedMemory = memoryTypes[Math.floor(Math.random() * memoryTypes.length)];
-          
-          // Create memory entry
-          const memoryEntry = await addStorybookEntry(
-            selectedMemory.title,
-            selectedMemory.description,
-            'memory',
-            ['Child', 'Family']
-          );
-          
-          if (memoryEntry) {
-            triggerCelebration('📸', true, 7000);
-            toast({
-              title: selectedMemory.title,
-              description: selectedMemory.description,
-              duration: 6000,
-            });
-            
-            // Award memory points
-            const memoryPoints = parseInt(localStorage.getItem('mobileMemoryPoints') || '0') + selectedMemory.points;
-            localStorage.setItem('mobileMemoryPoints', memoryPoints.toString());
-            
-            setTimeout(() => {
-              toast({
-                title: "Memory Points! 🎆",
-                description: `You earned ${selectedMemory.points} memory points! Total mobile memory points: ${memoryPoints}`,
-                duration: 4000,
-              });
-              
-              // Check for memory master achievement
-              if (memoryPoints >= 100) {
-                setTimeout(() => {
-                  triggerCelebration('🏆', true, 10000);
-                  toast({
-                    title: "Mobile Memory Master! 🏆",
-                    description: "100+ mobile memory points! You're amazing at capturing special moments!",
-                    duration: 8000,
-                  });
-                }, 1500);
-              }
-            }, 2000);
-          }
-          break;
-          
-        default:
-          toast({
-            title: "Quick Action! ✨",
-            description: "Mobile action completed successfully!",
-            duration: 3000,
-          });
-          break;
-      }
-      
-      // Track overall mobile usage
-      const totalMobileActions = parseInt(localStorage.getItem('totalMobileActions') || '0') + 1;
-      localStorage.setItem('totalMobileActions', totalMobileActions.toString());
-      
-      // Mobile master achievement
-      if (totalMobileActions === 20) {
-        setTimeout(() => {
-          triggerCelebration('📱', true, 12000);
-          toast({
-            title: "Mobile Master! 📱",
-            description: "20 mobile actions completed! You're a true mobile learning champion!",
-            duration: 8000,
-          });
-        }, 3000);
-      }
-      
-    } catch (error) {
-      console.error('Failed to handle quick action:', error);
-      toast({
-        title: "Oops! 😅",
-        description: "Something went wrong with the mobile action. Let's try again!",
-        duration: 3000,
-      });
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -1485,7 +1264,7 @@ export function KidsActivities() {
                           triggerCelebration('📚', false, 3000);
                           toast({
                             title: `Mythology Quest! 📚`,
-                            description: `Let's learn about ${question.character.name}! ${question.questions[0]?.question || 'Discover the story'}`,
+                            description: `Let's learn about ${question.character.name}! ${question.question || 'Discover the story'}`,
                             duration: 5000,
                           });
                           
@@ -1494,7 +1273,7 @@ export function KidsActivities() {
                             triggerCelebration('🧠', false, 4000);
                             toast({
                               title: `Wisdom Unlocked! 🧠`,
-                              description: `${question.questions[0]?.explanation || question.story.moralLesson}`,
+                              description: `${question.answer}`,
                               duration: 6000,
                             });
                             
@@ -2160,9 +1939,7 @@ export function KidsActivities() {
                     onClick={async () => {
                       try {
                         setIsLoading(true);
-                        setCelebrationEmoji('😊');
-                        setShowFloatingEmoji(true);
-                        setShowConfetti(true);
+                        triggerCelebration('😊', true, 3000);
                         
                         // Start an interactive feelings session
                         const feelingsPrompts = [
@@ -2205,8 +1982,7 @@ export function KidsActivities() {
                         }, 2000);
                         
                         setTimeout(() => {
-                          setShowFloatingEmoji(false);
-                          setShowConfetti(false);
+                          // No need to manually reset, triggerCelebration handles timing
                           setIsLoading(false);
                         }, 3000);
                         
@@ -2257,8 +2033,7 @@ export function KidsActivities() {
                         
                         const selectedQuestion = storyQuestions[Math.floor(Math.random() * storyQuestions.length)];
                         
-                        setCelebrationEmoji('📚');
-                        setShowFloatingEmoji(true);
+                        triggerCelebration('📚', false, 4000);
                         
                         // Initial question
                         toast({ 
@@ -2338,7 +2113,7 @@ export function KidsActivities() {
                         });
                       } finally {
                         setTimeout(() => {
-                          setShowFloatingEmoji(false);
+                          // triggerCelebration handles timing automatically
                           setIsLoading(false);
                         }, 2500);
                       }
@@ -2396,8 +2171,7 @@ export function KidsActivities() {
                         
                         const selectedHelp = learningHelps[Math.floor(Math.random() * learningHelps.length)];
                         
-                        setCelebrationEmoji('🌱');
-                        setShowFloatingEmoji(true);
+                        triggerCelebration('🌱', false, 4000);
                         
                         // Show learning tip
                         toast({ 
@@ -2477,7 +2251,7 @@ export function KidsActivities() {
                         });
                       } finally {
                         setTimeout(() => {
-                          setShowFloatingEmoji(false);
+                          // triggerCelebration handles timing automatically
                           setIsLoading(false);
                         }, 2500);
                       }
@@ -2491,17 +2265,11 @@ export function KidsActivities() {
                   <Button 
                     className="bg-gradient-to-r from-yellow-400 to-orange-400 hover:from-yellow-500 hover:to-orange-500 text-white rounded-2xl p-6 h-auto flex flex-col items-center gap-3 shadow-lg transform hover:scale-105 transition-all duration-300 active:scale-95"
                     onClick={() => {
-                      setCelebrationEmoji('😄');
-                      setShowFloatingEmoji(true);
-                      setShowConfetti(true);
+                      triggerCelebration('😄', true, 3000);
                       toast({ 
                         title: "Fun Time with Leela! 😄", 
                         description: "Laughter is the best magic! It makes everything brighter and more wonderful. Let's create some joy together!" 
                       });
-                      setTimeout(() => {
-                        setShowFloatingEmoji(false);
-                        setShowConfetti(false);
-                      }, 3000);
                     }}
                   >
                     <span className="text-3xl animate-bounce delay-700">😄</span>
@@ -2511,17 +2279,11 @@ export function KidsActivities() {
                   <Button 
                     className="bg-gradient-to-r from-purple-400 to-indigo-400 hover:from-purple-500 hover:to-indigo-500 text-white rounded-2xl p-6 h-auto flex flex-col items-center gap-3 shadow-lg transform hover:scale-105 transition-all duration-300 active:scale-95 sm:col-span-2"
                     onClick={() => {
-                      setCelebrationEmoji('📝');
-                      setShowFloatingEmoji(true);
-                      setShowConfetti(true);
+                      triggerCelebration('📝', true, 3000);
                       toast({ 
                         title: "Homework Helper Leela! 📝", 
                         description: "Don't worry! Every question is a chance to grow smarter. Let's solve this together step by step! I believe in you! 🌟" 
                       });
-                      setTimeout(() => {
-                        setShowFloatingEmoji(false);
-                        setShowConfetti(false);
-                      }, 4000);
                     }}
                   >
                     <span className="text-4xl animate-bounce delay-900">📝</span>
@@ -2569,13 +2331,12 @@ export function KidsActivities() {
                     variant="outline" 
                     className="bg-gradient-to-r from-yellow-100 to-orange-100 border-yellow-300 text-yellow-700 hover:from-yellow-200 hover:to-orange-200 rounded-xl transform hover:scale-105 transition-all duration-200"
                     onClick={() => {
-                      setCelebrationEmoji('✨');
-                      setShowFloatingEmoji(true);
+                      triggerCelebration('✨', false, 2000);
                       toast({ 
                         title: "More Wisdom Coming! ✨", 
                         description: "Leela has so many magical insights to share with you!" 
                       });
-                      setTimeout(() => setShowFloatingEmoji(false), 2000);
+                      // triggerCelebration handles timing automatically
                     }}
                   >
                     💭 Get More Wisdom
@@ -2689,9 +2450,7 @@ export function KidsActivities() {
                     const result = calculateAllAchievements();
                     
                     // Start massive celebration
-                    setShowConfetti(true);
-                    setCelebrationEmoji('🎉');
-                    setShowFloatingEmoji(true);
+                    triggerCelebration('🎉', true, 3000);
                     
                     // Show main celebration
                     toast({ 
@@ -2789,8 +2548,7 @@ export function KidsActivities() {
                     });
                   } finally {
                     setTimeout(() => {
-                      setShowFloatingEmoji(false);
-                      setShowConfetti(false);
+                      // triggerCelebration handles timing automatically
                       setIsLoading(false);
                     }, 12000);
                   }
@@ -2853,8 +2611,7 @@ export function KidsActivities() {
         </TabsContent>
       </Tabs>
 
-      {/* Mobile-only floating actions */}
-      <KidsMobileActions onQuickAction={handleQuickAction} />
+      {/* Mobile actions will be added back when KidsMobileActions component is available */}
     </div>
   </div>
   );
