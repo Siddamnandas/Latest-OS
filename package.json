@@ -72,7 +72,7 @@
     "expo-local-authentication": "^16.0.5",
     "fast-glob": "^3.3.3",
     "framer-motion": "^12.23.2",
-    "helmet": "^7.2.0",
+    "helmet": "^8.1.0",
     "input-otp": "^1.4.2",
     "ioredis": "^5.7.0",
     "kafkajs": "^2.2.4",
