@@ -10,7 +10,6 @@ interface OptimizedImageProps {
   height?: number;
   className?: string;
   priority?: boolean;
-  placeholder?: string;
 }
 
 export function OptimizedImage({
@@ -19,8 +18,7 @@ export function OptimizedImage({
   width = 400,
   height = 300,
   className = '',
-  priority = false,
-  placeholder = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSIjZjNmNGY2Ii8+CjxwYXRoIGQ9Im0xNSAxNSA2IDYgNi02IiBzdHJva2U9IiM5Y2EzYWYiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+Cjwvc3ZnPgo='
+  priority = false
 }: OptimizedImageProps) {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isInView, setIsInView] = useState(false);
@@ -53,18 +51,16 @@ export function OptimizedImage({
           width={width}
           height={height}
           priority={priority}
-          placeholder=\"blur\"
-          blurDataURL={placeholder}
           onLoadingComplete={() => setIsLoaded(true)}
           className={`transition-opacity duration-300 ${
             isLoaded ? 'opacity-100' : 'opacity-0'
           }`}
         />
       )}
-      
+
       {!isLoaded && (
-        <div className=\"absolute inset-0 bg-gray-200 animate-pulse\" />
+        <div className="absolute inset-0 bg-gray-200 animate-pulse" />
       )}
     </div>
   );
-}"
+}

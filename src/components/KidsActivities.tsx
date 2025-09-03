@@ -35,6 +35,49 @@ import { Progress } from '@/components/ui/progress';
 import { InteractiveConfetti } from '@/components/InteractiveConfetti';
 import { FloatingEmoji } from '@/components/FloatingEmoji';
 
+// Safe localStorage wrapper
+const safeLocalStorage = {
+  getItem: (key: string, defaultValue: string = '') => {
+    if (typeof window === 'undefined') return defaultValue;
+    try {
+      return localStorage.getItem(key) || defaultValue;
+    } catch (error) {
+      console.warn('localStorage access failed for key:', key, error);
+      return defaultValue;
+    }
+  },
+  setItem: (key: string, value: string) => {
+    if (typeof window === 'undefined') return;
+    try {
+      localStorage.setItem(key, value);
+    } catch (error) {
+      console.warn('localStorage set failed for key:', key, error);
+    }
+  }
+};
+
+// Safe JSON localStorage wrapper
+const safeJSONStorage = {
+  getItem: (key: string, defaultValue: any) => {
+    if (typeof window === 'undefined') return defaultValue;
+    try {
+      const stored = localStorage.getItem(key);
+      return stored ? JSON.parse(stored) : defaultValue;
+    } catch (error) {
+      console.warn('localStorage JSON parse failed for key:', key, error);
+      return defaultValue;
+    }
+  },
+  setItem: (key: string, value: any) => {
+    if (typeof window === 'undefined') return;
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+    } catch (error) {
+      console.warn('localStorage JSON set failed for key:', key, error);
+    }
+  }
+};
+
 // Simple state management hook
 const useSimpleKidsState = () => {
   const [state, setState] = useState({
@@ -49,9 +92,9 @@ const useSimpleKidsState = () => {
     showFloatingEmoji: false,
     showConfetti: false
   });
-  
+
   const [isLoading, setIsLoading] = useState(false);
-  
+
   // Computed values
   const totalMemories = state.storybookEntries.length;
   const kindnessLevel = Math.floor(state.totalKindnessPoints / 10);
@@ -60,20 +103,18 @@ const useSimpleKidsState = () => {
     storiesCreated: totalMemories,
     emotionsLearned: Object.keys(state.emotionProgress).length
   };
-  
+
   // Initialize from localStorage only on client side
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setState(prev => ({
-        ...prev,
-        totalKindnessPoints: parseInt(localStorage.getItem('totalKindnessPoints') || '25'),
-        wisdomPoints: parseInt(localStorage.getItem('wisdomPoints') || '15'),
-        creativityPoints: parseInt(localStorage.getItem('creativityPoints') || '20'),
-        storybookEntries: JSON.parse(localStorage.getItem('storybookEntries') || '[]'),
-        emotionProgress: JSON.parse(localStorage.getItem('emotionProgress') || '{}'),
-        mythologyProgress: JSON.parse(localStorage.getItem('mythologyProgress') || '{}'),
-      }));
-    }
+    setState(prev => ({
+      ...prev,
+      totalKindnessPoints: parseInt(safeLocalStorage.getItem('totalKindnessPoints', '25')),
+      wisdomPoints: parseInt(safeLocalStorage.getItem('wisdomPoints', '15')),
+      creativityPoints: parseInt(safeLocalStorage.getItem('creativityPoints', '20')),
+      storybookEntries: safeJSONStorage.getItem('storybookEntries', []),
+      emotionProgress: safeJSONStorage.getItem('emotionProgress', {}),
+      mythologyProgress: safeJSONStorage.getItem('mythologyProgress', {}),
+    }));
   }, []);
   
   const addKindnessMoment = async (description: string, category: string, points: number = 1) => {
@@ -81,10 +122,8 @@ const useSimpleKidsState = () => {
       setIsLoading(true);
       const newTotal = state.totalKindnessPoints + points;
       setState(prev => ({ ...prev, totalKindnessPoints: newTotal }));
-      
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('totalKindnessPoints', newTotal.toString());
-      }
+
+      safeLocalStorage.setItem('totalKindnessPoints', newTotal.toString());
       return true;
     } catch (error) {
       return false;

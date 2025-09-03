@@ -7,6 +7,7 @@ import { QueryProvider } from "@/lib/query-provider";
 import { AuthProvider } from "@/lib/auth-context";
 import { UpdateNotifier } from "@/lib/update-notifier";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { DevelopmentAuthBypass } from "@/components/DevelopmentAuthBypass";
 import React from "react";
 
 const geistSans = Inter({
@@ -114,6 +115,7 @@ export default function RootLayout({
             }
           `}
         </Script>
+        <DevelopmentAuthBypass />
       </body>
     </html>
   );
