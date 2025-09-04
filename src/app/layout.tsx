@@ -1,28 +1,31 @@
 import type { Metadata, Viewport } from "next";
-import Script from "next/script";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { Toaster } from "@/components/ui/sonner";
-import { QueryProvider } from "@/lib/query-provider";
-import { AuthProvider } from "@/lib/auth-context";
-import { UpdateNotifier } from "@/lib/update-notifier";
-import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { DevelopmentAuthBypass } from "@/components/DevelopmentAuthBypass";
-import React from "react";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
+import { NextIntlClientProvider } from "next-intl";
+import { Toaster } from "@/components/ui/toaster";
+import Script from "next/script";
+import { AuthProvider } from "@/components/providers/auth-provider";
+import { QueryProvider } from "@/components/providers/query-provider";
+import { ErrorBoundary } from "@/components/error-boundary";
 
-const geistSans = Inter({
-  subsets: ["latin"],
-  variable: "--font-geist-sans",
-});
+const inter = Inter({ subsets: ["latin"] });
 
-const geistMono = Inter({
-  subsets: ["latin"],
-  variable: "--font-geist-mono",
-});
+const messages = {
+  en: () => import("../../messages/en.json").then((m) => m.default),
+  hi: () => import("../../messages/hi.json").then((m) => m.default),
+};
 
 export const metadata: Metadata = {
-  title: "Leela OS - AI Relationship Companion",
+  title: {
+    default: "Leela OS - AI Relationship Companion",
+    template: "%s | Leela OS",
+  },
   description: "Transform your relationship with AI-powered coaching and mythological wisdom",
+  keywords: ["AI relationship coach", "couples therapy", "relationship advice", "marriage counseling", "Indian culture", "mythology"],
   authors: [{ name: "Leela OS Team" }],
   openGraph: {
     title: "Leela OS - AI Relationship Companion",
@@ -49,15 +52,25 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const session = await getServerSession(authOptions);
+  if (!session) {
+    redirect("/api/auth/signin");
+  }
+
+  const cookieStore = cookies();
+  const locale = cookieStore.get('locale')?.value || 'en';
+  
+  const messagesModule = locale === 'hi' ? await messages.hi() : await messages.en();
+  
   const themeScript = `(function(){try{var t=localStorage.getItem('theme');var m=window.matchMedia('(prefers-color-scheme: dark)').matches;if(t==='dark'||(!t&&m)){document.documentElement.classList.add('dark');}else{document.documentElement.classList.remove('dark');}}catch(e){}})();`;
 
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`} suppressHydrationWarning>
+    <html lang={locale} className={inter.className} suppressHydrationWarning>
       <head>
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
@@ -70,12 +83,13 @@ export default function RootLayout({
       </head>
       <body>
         <ErrorBoundary>
-          <AuthProvider>
-            <QueryProvider>
-              <UpdateNotifier />
-              {children}
-              <Toaster />
-            </QueryProvider>
+          <AuthProvider session={session}>
+            <NextIntlClientProvider locale={locale} messages={messagesModule}>
+              <QueryProvider>
+                {children}
+                <Toaster />
+              </QueryProvider>
+            </NextIntlClientProvider>
           </AuthProvider>
         </ErrorBoundary>
         <Script
@@ -102,7 +116,7 @@ export default function RootLayout({
                 }
               }).catch(err => console.error('Service worker registration failed', err));
             }
-
+            
             function urlBase64ToUint8Array(base64String) {
               const padding = '='.repeat((4 - base64String.length % 4) % 4);
               const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
@@ -115,7 +129,6 @@ export default function RootLayout({
             }
           `}
         </Script>
-        <DevelopmentAuthBypass />
       </body>
     </html>
   );
