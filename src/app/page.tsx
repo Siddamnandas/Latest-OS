@@ -8,6 +8,7 @@ import { RitualSystem } from '@/components/RitualSystem';
 import { GoalsHub } from '@/components/GoalsHub';
 import { KidsActivities } from '@/components/KidsActivities';
 import { FloatingActionButton } from '@/components/FloatingActionButton';
+import { ProfileEditModal } from '@/components/ProfileEditModal';
 import { useToast } from '@/hooks/use-toast';
 import { useLiveData } from '@/hooks/useLiveData';
 import { Button } from '@/components/ui/button';
@@ -16,6 +17,7 @@ import { X } from 'lucide-react';
 export default function Home() {
   const [activeTab, setActiveTab] = useState('home');
   const [showCelebration, setShowCelebration] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
   const [isDemoMode, setIsDemoMode] = useState(false);
   const { toast } = useToast();
   const { data: liveData, loading, error } = useLiveData();
@@ -115,13 +117,30 @@ export default function Home() {
                     </div>
                   </>
                 )}
-                <div className="border-t pt-4 mt-4">
-                  <button className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white py-2 rounded-lg mb-2">
-                    Edit Profile
-                  </button>
-                  <button className="w-full bg-gray-100 text-gray-700 py-2 rounded-lg">
-                    Settings
-                  </button>
+                <div className="border-t pt-4 mt-4 space-y-2">
+                  <Button
+                    className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white"
+                    onClick={() => setShowProfileModal(true)}
+                  >
+                    <div className="flex items-center justify-center gap-2">
+                      <span>✏️</span>
+                      <span>Edit Profile</span>
+                    </div>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => toast({
+                      title: "Settings Coming Soon! ⚙️",
+                      description: "Settings panel is being developed.",
+                      duration: 2000,
+                    })}
+                  >
+                    <div className="flex items-center justify-center gap-2">
+                      <span>⚙️</span>
+                      <span>Settings</span>
+                    </div>
+                  </Button>
                 </div>
                 {loading && (
                   <div className="text-center text-sm text-gray-500">
@@ -182,6 +201,12 @@ export default function Home() {
       <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white/90 backdrop-blur-lg border-t border-gray-200/50 shadow-lg">
         <BottomNavigation activeTab={activeTab} onTabChange={setActiveTab} />
       </div>
+
+      {/* Profile Edit Modal */}
+      <ProfileEditModal
+        open={showProfileModal}
+        onOpenChange={setShowProfileModal}
+      />
     </div>
   );
 }

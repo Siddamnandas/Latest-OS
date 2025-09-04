@@ -82,7 +82,7 @@
         }
       }
     },
-    "/api/auth": {
+    "/api/assign": {
       "get": {
         "responses": {
           "200": {
@@ -98,7 +98,7 @@
         }
       }
     },
-    "/api/assign": {
+    "/api/auth": {
       "get": {
         "responses": {
           "200": {
@@ -276,15 +276,6 @@
         }
       }
     },
-    "/api/jobs": {
-      "post": {
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      }
-    },
     "/api/kids-activities": {
       "get": {
         "responses": {
@@ -381,7 +372,7 @@
         }
       }
     },
-    "/api/payments": {
+    "/api/privacy": {
       "get": {
         "responses": {
           "200": {
@@ -413,7 +404,7 @@
         }
       }
     },
-    "/api/privacy": {
+    "/api/rasa-balance": {
       "get": {
         "responses": {
           "200": {
@@ -445,7 +436,7 @@
         }
       }
     },
-    "/api/relationship-health": {
+    "/api/jobs": {
       "post": {
         "responses": {
           "200": {
@@ -454,14 +445,7 @@
         }
       }
     },
-    "/api/rasa-balance": {
-      "get": {
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      },
+    "/api/relationship-health": {
       "post": {
         "responses": {
           "200": {
@@ -495,15 +479,6 @@
         }
       }
     },
-    "/api/search": {
-      "get": {
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      }
-    },
     "/api/settings": {
       "get": {
         "responses": {
@@ -520,7 +495,7 @@
         }
       }
     },
-    "/api/tasks": {
+    "/api/payments": {
       "get": {
         "responses": {
           "200": {
@@ -561,6 +536,31 @@
         }
       }
     },
+    "/api/search": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/tasks": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
+      "post": {
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
     "/api/voice-interaction": {
       "get": {
         "responses": {
@@ -593,31 +593,6 @@
         }
       }
     },
-    "/api/wellness-programs": {
-      "post": {
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      }
-    },
-    "/api/admin/monitoring": {
-      "get": {
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      },
-      "post": {
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      }
-    },
     "/api/ai-suggestions/generate": {
       "get": {
         "responses": {
@@ -626,6 +601,15 @@
           }
         }
       },
+      "post": {
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/wellness-programs": {
       "post": {
         "responses": {
           "200": {
@@ -650,8 +634,8 @@
         }
       }
     },
-    "/api/auth/login": {
-      "post": {
+    "/api/auth/me": {
+      "get": {
         "responses": {
           "200": {
             "description": "Success"
@@ -659,8 +643,8 @@
         }
       }
     },
-    "/api/auth/me": {
-      "get": {
+    "/api/auth/login": {
+      "post": {
         "responses": {
           "200": {
             "description": "Success"
@@ -677,40 +661,8 @@
         }
       }
     },
-    "/api/family/activities": {
+    "/api/cultural/preferences": {
       "get": {
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      },
-      "post": {
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      }
-    },
-    "/api/auth/register": {
-      "post": {
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      }
-    },
-    "/api/kids/activities": {
-      "get": {
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      },
-      "post": {
         "responses": {
           "200": {
             "description": "Success"
@@ -723,8 +675,17 @@
             "description": "Success"
           }
         }
+      }
+    },
+    "/api/family/activities": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
       },
-      "delete": {
+      "post": {
         "responses": {
           "200": {
             "description": "Success"
@@ -778,38 +739,6 @@
         }
       }
     },
-    "/api/cultural/preferences": {
-      "get": {
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      },
-      "put": {
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      }
-    },
-    "/api/memories/{id}": {
-      "get": {
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      },
-      "post": {
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      }
-    },
     "/api/kids/progress": {
       "get": {
         "responses": {
@@ -833,8 +762,86 @@
         }
       }
     },
+    "/api/auth/register": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/memories/{id}": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
+      "put": {
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
+      "delete": {
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
     "/api/notifications/subscribe": {
       "post": {
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/admin/monitoring": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
+      "post": {
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/kids/activities": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
+      "post": {
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
+      "put": {
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
+      "delete": {
         "responses": {
           "200": {
             "description": "Success"
@@ -851,109 +858,7 @@
         }
       }
     },
-    "/api/push/partner-activity": {
-      "post": {
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      }
-    },
-    "/api/push/subscribe": {
-      "post": {
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      }
-    },
-    "/api/push/send": {
-      "post": {
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      }
-    },
-    "/api/privacy/settings": {
-      "get": {
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      },
-      "put": {
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      }
-    },
-    "/api/offline/sync": {
-      "get": {
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      },
-      "post": {
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      }
-    },
-    "/api/push/unsubscribe": {
-      "post": {
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      }
-    },
-    "/api/user/delete": {
-      "post": {
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      }
-    },
-    "/api/user/export": {
-      "get": {
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      }
-    },
     "/api/tasks/assign": {
-      "get": {
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      },
-      "post": {
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      }
-    },
-    "/api/sync/complete": {
       "get": {
         "responses": {
           "200": {
@@ -978,6 +883,108 @@
         }
       },
       "delete": {
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/user/delete": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/privacy/settings": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
+      "put": {
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/sync/complete": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
+      "post": {
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/offline/sync": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
+      "post": {
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/user/export": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/push/subscribe": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/push/unsubscribe": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/push/partner-activity": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/push/send": {
+      "post": {
         "responses": {
           "200": {
             "description": "Success"

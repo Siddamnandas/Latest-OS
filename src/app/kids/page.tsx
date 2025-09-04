@@ -50,18 +50,18 @@ export const metadata: Metadata = {
     locale: 'en_US',
     images: [
       {
-        url: '/images/kids-activities-og.png',
+        url: '/images/kids/kids-activities-og.svg',
         width: 1200,
         height: 630,
         alt: 'Kids Activities - Interactive learning platform with colorful, child-friendly interface',
-        type: 'image/png'
+        type: 'image/svg+xml'
       },
       {
-        url: '/images/kids-activities-square.png',
+        url: '/images/kids/kids-activities-square.svg',
         width: 400,
         height: 400,
         alt: 'Kids Activities Logo',
-        type: 'image/png'
+        type: 'image/svg+xml'
       }
     ]
   },
@@ -71,7 +71,7 @@ export const metadata: Metadata = {
     creator: '@LatestOS',
     title: 'Kids Activities - Interactive Learning',
     description: 'Safe, fun, and educational activities for children ages 3-12. Parent-supervised learning environment.',
-    images: ['/images/kids-activities-twitter.png']
+    images: ['/images/kids/kids-activities-twitter.svg']
   },
 
   category: 'education',
