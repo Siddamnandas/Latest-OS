@@ -1,4 +1,5 @@
 // server.ts - Next.js Standalone + Socket.IO
+import 'dotenv/config';
 import { setupSocket } from '@/lib/socket';
 import { logger } from '@/lib/logger';
 import { createServer } from 'http';
@@ -101,4 +102,3 @@ async function createCustomServer() {
 
 // Start the server
 createCustomServer();
-

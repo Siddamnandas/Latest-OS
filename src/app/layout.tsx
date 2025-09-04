@@ -5,19 +5,16 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
-import { NextIntlClientProvider } from "next-intl";
+
 import { Toaster } from "@/components/ui/toaster";
 import Script from "next/script";
 import { AuthProvider } from "@/components/providers/auth-provider";
 import { QueryProvider } from "@/components/providers/query-provider";
-import { ErrorBoundary } from "@/components/error-boundary";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 const inter = Inter({ subsets: ["latin"] });
 
-const messages = {
-  en: () => import("../../messages/en.json").then((m) => m.default),
-  hi: () => import("../../messages/hi.json").then((m) => m.default),
-};
+
 
 export const metadata: Metadata = {
   title: {
@@ -57,15 +54,16 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await getServerSession(authOptions);
-  if (!session) {
+  // DEVELOPMENT MODE: Bypass session authentication
+  const isDevelopment = process.env.NODE_ENV !== 'production';
+  const session = isDevelopment ? { user: { name: 'Development User', email: 'dev@example.com' } } : await getServerSession(authOptions);
+
+  if (!session && !isDevelopment) {
     redirect("/api/auth/signin");
   }
 
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const locale = cookieStore.get('locale')?.value || 'en';
-  
-  const messagesModule = locale === 'hi' ? await messages.hi() : await messages.en();
   
   const themeScript = `(function(){try{var t=localStorage.getItem('theme');var m=window.matchMedia('(prefers-color-scheme: dark)').matches;if(t==='dark'||(!t&&m)){document.documentElement.classList.add('dark');}else{document.documentElement.classList.remove('dark');}}catch(e){}})();`;
 
@@ -84,12 +82,10 @@ export default async function RootLayout({
       <body>
         <ErrorBoundary>
           <AuthProvider session={session}>
-            <NextIntlClientProvider locale={locale} messages={messagesModule}>
-              <QueryProvider>
-                {children}
-                <Toaster />
-              </QueryProvider>
-            </NextIntlClientProvider>
+            <QueryProvider>
+              {children}
+              <Toaster />
+            </QueryProvider>
           </AuthProvider>
         </ErrorBoundary>
         <Script
