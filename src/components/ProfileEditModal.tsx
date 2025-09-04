@@ -77,19 +77,22 @@ export function ProfileEditModal({ open, onOpenChange }: ProfileEditModalProps) 
       return response.data;
     },
     enabled: open,
-    onSuccess: (data) => {
-      // Reset form with current data
-      form.reset({
-        partner_a_name: data.partner_a_name || '',
-        partner_b_name: data.partner_b_name || '',
-        anniversary_date: data.anniversary_date || '',
-        city: data.city || '',
-        region: data.region || 'north-india',
-        language: data.language || '',
-      });
-      setProfileImage(data.profile_image);
-    },
   });
+
+  // Reset form with current data when profileData loads
+  useEffect(() => {
+    if (profileData) {
+      form.reset({
+        partner_a_name: profileData.partner_a_name || '',
+        partner_b_name: profileData.partner_b_name || '',
+        anniversary_date: profileData.anniversary_date || '',
+        city: profileData.city || '',
+        region: profileData.region || 'north-india',
+        language: profileData.language || '',
+      });
+      setProfileImage(profileData.profile_image);
+    }
+  }, [profileData, form]);
 
   // Update profile mutation
   const updateProfileMutation = useMutation({
