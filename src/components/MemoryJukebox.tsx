@@ -68,6 +68,11 @@ export function MemoryJukebox({ coupleId }: MemoryJukeboxProps) {
   });
   const { toast } = useToast();
 
+  // Enhanced playback state
+  const [playbackProgress, setPlaybackProgress] = useState<{[key: string]: number}>({});
+  const [playbackVolumes, setPlaybackVolumes] = useState<{[key: string]: number}>({});
+  const [playbackSpeeds, setPlaybackSpeeds] = useState<{[key: string]: number}>({});
+
   // Fetch memories from API
   useEffect(() => {
     const fetchMemories = async () => {
@@ -196,20 +201,166 @@ export function MemoryJukebox({ coupleId }: MemoryJukeboxProps) {
   const handlePlayMemory = (memoryId: string) => {
     if (isPlaying === memoryId) {
       setIsPlaying(null);
+      setPlaybackProgress(prev => ({ ...prev, [memoryId]: 0 }));
+      toast({
+        title: "Playback Paused ⏸️",
+        description: "Memory playback has been stopped",
+        duration: 2000,
+      });
     } else {
       setIsPlaying(memoryId);
-      // Simulate playing audio/video
-      setTimeout(() => setIsPlaying(null), 3000);
+      const memory = memories.find(m => m.id === memoryId);
+
+      if (memory?.type === 'text') {
+        toast({
+          title: "Reading Memory 📖",
+          description: `"${memory.title}" - Reliving this beautiful moment...`,
+          duration: 4000,
+        });
+        // Simulate text playback progress
+        const interval = setInterval(() => {
+          setPlaybackProgress(prev => {
+            const current = prev[memoryId] || 0;
+            const newProgress = current + 10;
+            if (newProgress >= 100) {
+              clearInterval(interval);
+              setIsPlaying(null);
+              toast({
+                title: "Memory Completed ✨",
+                description: "You've rediscovered this special moment",
+                duration: 3000,
+              });
+              return { ...prev, [memoryId]: 0 };
+            }
+            return { ...prev, [memoryId]: newProgress };
+          });
+        }, 400);
+      } else if (memory?.type === 'audio' || memory?.type === 'video') {
+        toast({
+          title: `Playing ${memory.type === 'audio' ? '🎵' : '🎬'} ${memory.title}`,
+          description: "Enjoy this precious memory...",
+          duration: 3000,
+        });
+        // Simulate media playback progress
+        const interval = setInterval(() => {
+          setPlaybackProgress(prev => {
+            const current = prev[memoryId] || 0;
+            const newProgress = current + 8;
+            if (newProgress >= 100) {
+              clearInterval(interval);
+              setIsPlaying(null);
+              toast({
+                title: `${memory.type === 'audio' ? '🎵' : '🎬'} Playback Finished`,
+                description: "What a beautiful memory! 💕",
+                duration: 4000,
+              });
+              return { ...prev, [memoryId]: 0 };
+            }
+            return { ...prev, [memoryId]: newProgress };
+          });
+        }, 600);
+      } else {
+        toast({
+          title: "Viewing Memory 🖼️",
+          description: `"${memory?.title}" - Enjoying your photo memory...`,
+          duration: 4000,
+        });
+        setTimeout(() => {
+          setIsPlaying(null);
+          toast({
+            title: "Memory Viewed 🖼️",
+            description: "Beautiful photo memory! Keep creating! 📸",
+            duration: 3000,
+          });
+        }, 5000);
+      }
     }
   };
 
-  const handleDeleteMemory = (memoryId: string) => {
-    setMemories(prev => prev.filter(memory => memory.id !== memoryId));
+  const handleSeekMemory = (memoryId: string, newProgress: number) => {
+    setPlaybackProgress(prev => ({ ...prev, [memoryId]: newProgress }));
+
     toast({
-      title: "Memory Deleted",
-      description: "The memory has been removed",
+      title: "Position Changed",
+      description: `Jumped to ${Math.round(newProgress)}% of the memory`,
+      duration: 1500,
+    });
+  };
+
+  const handleAdjustVolume = (memoryId: string, newVolume: number) => {
+    setPlaybackVolumes(prev => ({ ...prev, [memoryId]: newVolume }));
+  };
+
+  const handleAdjustSpeed = (memoryId: string, newSpeed: number) => {
+    setPlaybackSpeeds(prev => ({ ...prev, [memoryId]: newSpeed }));
+
+    toast({
+      title: `Playback Speed: ${newSpeed}x`,
+      description: `Playing memory at ${newSpeed}x speed`,
       duration: 2000,
     });
+  };
+
+  const handleDeleteMemory = (memoryId: string) => {
+    if (confirm(`Are you sure you want to delete "${memories.find(m => m.id === memoryId)?.title}"? This action cannot be undone.`)) {
+      setMemories(prev => prev.filter(memory => memory.id !== memoryId));
+      toast({
+        title: "Memory Deleted",
+        description: "The memory has been permanently removed",
+        duration: 2000,
+      });
+    }
+  };
+
+  const handleEditMemory = (memoryId: string) => {
+    const memory = memories.find(m => m.id === memoryId);
+    if (memory) {
+      toast({
+        title: "Edit Mode 📝",
+        description: `Editing "${memory.title}" - Feature coming soon!`,
+        duration: 3000,
+      });
+    }
+  };
+
+  const handleShareMemory = (memoryId: string) => {
+    const memory = memories.find(m => m.id === memoryId);
+    if (memory) {
+      if (navigator.share && navigator.canShare) {
+        navigator.share({
+          title: memory.title,
+          text: memory.description,
+          url: window.location.origin,
+        });
+      } else {
+        navigator.clipboard.writeText(`${memory.title} - ${memory.description}`);
+        toast({
+          title: "Memory Copied! 📋",
+          description: "Memory details have been copied to clipboard",
+          duration: 3000,
+        });
+      }
+    }
+  };
+
+  const handleDownloadMemory = (memoryId: string) => {
+    const memory = memories.find(m => m.id === memoryId);
+    if (memory) {
+      toast({
+        title: "Download Started 💾",
+        description: `Downloading "${memory.title}"...`,
+        duration: 3000,
+      });
+
+      // Simulate download delay
+      setTimeout(() => {
+        toast({
+          title: "Download Complete! 💾",
+          description: `Your memory "${memory.title}" has been downloaded successfully!`,
+          duration: 4000,
+        });
+      }, 2000);
+    }
   };
 
   const getMemoryIcon = (type: string) => {
@@ -437,17 +588,141 @@ export function MemoryJukebox({ coupleId }: MemoryJukeboxProps) {
                         ))}
                       </div>
 
+                      {/* Enhanced Playback Controls */}
+                      {isPlaying === memory.id && (memory.type === 'audio' || memory.type === 'video') && (
+                        <div className="flex items-center gap-4 mb-4 p-3 bg-purple-50 rounded-lg">
+                          <Button
+                            size="sm"
+                            onClick={() => handleAdjustSpeed(memory.id, Math.max(0.5, (playbackSpeeds[memory.id] || 1) - 0.5))}
+                            className="px-2"
+                          >
+                            {playbackSpeeds[memory.id] || 1}x ◀
+                          </Button>
+                          <div className="flex-1">
+                            <div className="w-full bg-gray-200 rounded-full h-2 cursor-pointer" onClick={(e) => {
+                              const rect = e.currentTarget.getBoundingClientRect();
+                              const newProgress = ((e.clientX - rect.left) / rect.width) * 100;
+                              handleSeekMemory(memory.id, newProgress);
+                            }}>
+                              <div className="bg-purple-600 h-2 rounded-full transition-all" style={{ width: `${playbackProgress[memory.id] || 0}%` }}></div>
+                            </div>
+                          </div>
+                          <Button
+                            size="sm"
+                            onClick={() => handleAdjustSpeed(memory.id, Math.min(2, (playbackSpeeds[memory.id] || 1) + 0.5))}
+                            className="px-2"
+                          >
+                            {playbackSpeeds[memory.id] || 1}x ▶
+                          </Button>
+                        </div>
+                      )}
+
+                      {/* Memory Content with Playback Preview */}
+                      <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                        {memory.type === 'text' && (
+                          <div>
+                            <p className="text-gray-700">{memory.content}</p>
+                            {isPlaying === memory.id && (
+                              <div className="mt-3 space-y-2">
+                                <div className="w-full bg-purple-200 rounded-full h-2">
+                                  <div className="bg-purple-600 h-2 rounded-full transition-all" style={{ width: `${playbackProgress[memory.id] || 0}%` }}></div>
+                                </div>
+                                <p className="text-xs text-purple-600 text-center">Reading in progress... ✨</p>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        {memory.type === 'audio' && (
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-3">
+                              <div className="flex-1 bg-gray-200 rounded-full h-3">
+                                <div className="bg-purple-600 h-3 rounded-full transition-all relative">
+                                  <div className="bg-purple-600 h-3 rounded-full" style={{ width: `${playbackProgress[memory.id] || 0}%` }}></div>
+                                  {isPlaying === memory.id && (
+                                    <div className="absolute top-0 right-0 w-1 h-3 bg-white rounded-sm animate-pulse"></div>
+                                  )}
+                                </div>
+                              </div>
+                              <Music className="w-5 h-5 text-gray-500" />
+                            </div>
+                            <div className="flex items-center gap-2 text-xs text-gray-500">
+                              <span>🎵 {Math.round(playbackProgress[memory.id] || 0)}% played</span>
+                              {isPlaying === memory.id && <span className="text-purple-600">▶ Now Playing</span>}
+                            </div>
+                          </div>
+                        )}
+                        {memory.type === 'video' && (
+                          <div className="space-y-2">
+                            <div className="w-full h-24 bg-gradient-to-r from-blue-200 to-purple-200 rounded-lg flex items-center justify-center relative overflow-hidden">
+                              {isPlaying === memory.id ? (
+                                <>
+                                  <div className="absolute inset-0 bg-gradient-to-r from-blue-300 to-purple-300 animate-pulse opacity-75"></div>
+                                  <div className="relative z-10 text-gray-700">
+                                    <Play className="w-8 h-8 mx-auto mb-1" />
+                                    <span className="text-xs">Playing...</span>
+                                  </div>
+                                </>
+                              ) : (
+                                <>
+                                  <Play className="w-8 h-8 text-gray-600" />
+                                  <span className="text-xs text-gray-600 mt-1 block">Video</span>
+                                </>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2 text-xs text-gray-500">
+                              <span>🎬 {Math.round(playbackProgress[memory.id] || 0)}% played</span>
+                              {isPlaying === memory.id && <span className="text-purple-600">▶ Now Playing</span>}
+                            </div>
+                          </div>
+                        )}
+                        {memory.type === 'image' && (
+                          <div className="space-y-2">
+                            <div className="w-full h-32 bg-gradient-to-r from-purple-200 to-pink-200 rounded-lg flex items-center justify-center relative">
+                              {isPlaying === memory.id ? (
+                                <>
+                                  <div className="absolute inset-0 bg-yellow-200 animate-pulse opacity-75"></div>
+                                  <div className="relative z-10">
+                                    <Camera className="w-8 h-8 text-gray-700" />
+                                    <span className="text-xs text-gray-700 mt-1 block">Viewing...</span>
+                                  </div>
+                                </>
+                              ) : (
+                                <>
+                                  <Camera className="w-8 h-8 text-gray-600" />
+                                  <span className="text-xs text-gray-600 mt-1 block">Photo Memory</span>
+                                </>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2 text-xs text-gray-500">
+                              <span>📸 Memory viewed</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
                       {/* Action Buttons */}
-                      <div className="flex gap-2 mt-4">
-                        <Button variant="outline" size="sm">
+                      <div className="flex gap-2 mt-4 flex-wrap">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEditMemory(memory.id)}
+                        >
                           <Edit className="w-4 h-4 mr-2" />
                           Edit
                         </Button>
-                        <Button variant="outline" size="sm">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleShareMemory(memory.id)}
+                        >
                           <Share2 className="w-4 h-4 mr-2" />
                           Share
                         </Button>
-                        <Button variant="outline" size="sm">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDownloadMemory(memory.id)}
+                        >
                           <Download className="w-4 h-4 mr-2" />
                           Download
                         </Button>

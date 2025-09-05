@@ -24,7 +24,9 @@ import {
   Brain,
   Feather,
   Plus,
-  Camera
+  Camera,
+  Mic,
+  Video
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -34,6 +36,69 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { InteractiveConfetti } from '@/components/InteractiveConfetti';
 import { FloatingEmoji } from '@/components/FloatingEmoji';
+import { MemoryRecorder } from '@/components/MemoryRecorder';
+
+// Enhanced KidsMemoryRecorder that integrates with KidsActivities
+const KidsMemoryRecorder = ({ 
+  coupleId, 
+  onSuccess, 
+  onCancel, 
+  memoryType,
+  onAwardPoints,
+  onCelebration 
+}: {
+  coupleId?: string;
+  onSuccess: (memory: any) => void;
+  onCancel: () => void;
+  memoryType?: 'text' | 'audio' | 'video' | 'image';
+  onAwardPoints: (points: number, reason: string) => void;
+  onCelebration: (type: string) => void;
+}) => {
+  const [showRecorder, setShowRecorder] = useState(false);
+
+  if (!showRecorder) {
+    return (
+      <div className="text-center py-8 bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl border-2 border-blue-200">
+        <div className="w-16 h-16 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full flex items-center justify-center mx-auto mb-4 transform hover:scale-110 transition-transform">
+          <Camera className="w-8 h-8 text-white" />
+        </div>
+        <h3 className="text-lg font-bold text-gray-800 mb-2">Create Memory!</h3>
+        <p className="text-gray-600 mb-4">Capture your magical moment!</p>
+        <Button 
+          onClick={() => setShowRecorder(true)}
+          className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-500 text-white font-semibold py-3 px-6 rounded-xl transform hover:scale-105 transition-all"
+        >
+          Start Creating 🎨
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <MemoryRecorder
+      coupleId={coupleId}
+      onSuccess={(memory) => {
+        // Award points based on memory type
+        const pointsAwarded = {
+          text: 5,
+          audio: 10,
+          video: 15,
+          image: 8
+        };
+        onAwardPoints(pointsAwarded[memory.type as keyof typeof pointsAwarded] || 5, `Created ${memory.type} memory`);
+        onCelebration(memory.type === 'text' ? '📝' : memory.type === 'audio' ? '🎤' : memory.type === 'video' ? '🎬' : '📸');
+        onSuccess(memory);
+        setShowRecorder(false);
+      }}
+      onCancel={() => {
+        onCancel();
+        setShowRecorder(false);
+      }}
+    />
+  );
+};
+
+// This will be moved inside the component
 
 // Safe localStorage wrapper
 const safeLocalStorage = {
@@ -218,13 +283,354 @@ export function KidsActivities() {
   const [selectedEmotion, setSelectedEmotion] = useState<any>(null);
   const [showSecondaryActivities, setShowSecondaryActivities] = useState(false);
   const [localLoading, setLocalLoading] = useState(false);
-  
+
+  // Real media capture state
+  const [isCapturingPhoto, setIsCapturingPhoto] = useState(false);
+  const [photoStream, setPhotoStream] = useState<MediaStream | null>(null);
+  const [isRecordingAudio, setIsRecordingAudio] = useState(false);
+  const [audioStream, setAudioStream] = useState<MediaStream | null>(null);
+  const [audioRecorder, setAudioRecorder] = useState<MediaRecorder | null>(null);
+  const [audioChunks, setAudioChunks] = useState<Blob[]>([]);
+  const [recordingTime, setRecordingTime] = useState(0);
+
   // Mock selected child for demo purposes
   const selectedChild = { id: 'demo-child', name: 'Demo Child' };
-  
+
   // Combined loading state
   const isButtonLoading = isLoading || localLoading;
   const setIsLoading = setLocalLoading;
+
+  // Add recording timer effect
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isRecordingAudio) {
+      interval = setInterval(() => {
+        setRecordingTime(prev => prev + 1);
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [isRecordingAudio]);
+
+  // Real media capture functions
+  const startRealPhotoCapture = async (entryId: string) => {
+    try {
+      setIsLoading(true);
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { width: 1280, height: 720 }
+      });
+
+      setPhotoStream(stream);
+      setIsCapturingPhoto(true);
+
+      toast({
+        title: "Camera Ready! 📸",
+        description: "Smile! You're capturing a magical memory!",
+        duration: 3000,
+      });
+
+    } catch (error) {
+      console.error('Failed to access camera:', error);
+      toast({
+        title: "Camera Access Reposed 🔒",
+        description: "Please allow camera access to capture photos!",
+        variant: "destructive",
+        duration: 4000,
+      });
+      setIsLoading(false);
+    }
+  };
+
+  const takePhoto = async (entryId: string) => {
+    if (!photoStream) return;
+
+    try {
+      setIsLoading(true);
+
+      // Create a video element to grab frame
+      const video = document.createElement('video');
+      video.srcObject = photoStream;
+      await new Promise(resolve => setTimeout(resolve, 100)); // Brief delay for stream to load
+
+      const canvas = document.createElement('canvas');
+      const context = canvas.getContext('2d')!;
+      canvas.width = 640;
+      canvas.height = 480;
+
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const imageDataUrl = canvas.toDataURL('image/jpeg', 0.8);
+
+      // Stop camera stream
+      photoStream.getTracks().forEach(track => track.stop());
+      setPhotoStream(null);
+      setIsCapturingPhoto(false);
+
+      // Save photo to localStorage
+      const photos = JSON.parse(localStorage.getItem('storybookPhotos') || '[]');
+      const newPhoto = {
+        id: `photo_${Date.now()}`,
+        entryId: entryId,
+        type: 'photo',
+        imageData: imageDataUrl,
+        caption: `Magical photo for memory ${entryId}`,
+        timestamp: new Date(),
+        addedBy: 'Child'
+      };
+      photos.push(newPhoto);
+      localStorage.setItem('storybookPhotos', JSON.stringify(photos));
+
+      // Award points for photo
+      const memoryPoints = parseInt(localStorage.getItem('memoryPoints') || '0');
+      const newPoints = memoryPoints + 8;
+      localStorage.setItem('memoryPoints', newPoints.toString());
+
+      triggerCelebration('📸', true, 5000);
+      toast({
+        title: "Photo Captured! 📸",
+        description: `Beautiful family memory saved! You earned 8 memory points! Total: ${newPoints} points`,
+        duration: 6000,
+      });
+
+      // Save celebration point
+      setTimeout(() => {
+        toast({
+          title: "Photo Master! 🎨",
+          description: "You're becoming a great photographer! Keep capturing those magical moments!",
+          duration: 4000,
+        });
+      }, 2000);
+
+    } catch (error) {
+      console.error('Failed to take photo:', error);
+      toast({
+        title: "Oops! 😅",
+        description: "Something went wrong with the photo. Let's try again!",
+        variant: "destructive",
+        duration: 3000,
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const cancelPhoto = () => {
+    if (photoStream) {
+      photoStream.getTracks().forEach(track => track.stop());
+    }
+    setPhotoStream(null);
+    setIsCapturingPhoto(false);
+    toast({
+      title: "Photo Cancelled ❌",
+      description: "No worries! We can take a photo anytime!",
+      duration: 3000,
+    });
+  };
+
+  const startAudioRecording = async (entryId: string) => {
+    try {
+      setIsLoading(true);
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      setAudioStream(stream);
+      setIsRecordingAudio(true);
+
+      // Initialize MediaRecorder
+      const recorder = new MediaRecorder(stream);
+      setAudioRecorder(recorder);
+      setAudioChunks([]);
+
+      recorder.ondataavailable = (event) => {
+        setAudioChunks(prev => [...prev, event.data]);
+      };
+
+      recorder.start();
+      setRecordingTime(0);
+
+      toast({
+        title: "Microphone Ready! 🎤",
+        description: "Speak your heart! Start recording your magical message!",
+        duration: 4000,
+      });
+
+    } catch (error) {
+      console.error('Failed to access microphone:', error);
+      toast({
+        title: "Microphone Access 🔒",
+        description: "Please allow microphone access to record audio!",
+        variant: "destructive",
+        duration: 4000,
+      });
+      setIsLoading(false);
+    }
+  };
+
+  const stopAudioRecording = async (entryId: string) => {
+    if (!audioRecorder) return;
+
+    try {
+      setIsLoading(true);
+      audioRecorder.stop();
+
+      // Wait for data to be available
+      await new Promise(resolve => {
+        audioRecorder.onstop = resolve;
+      });
+
+      // Create audio blob and stop stream
+      const audioBlob = new Blob([...audioChunks], { type: 'audio/wav' });
+      const audioUrl = URL.createObjectURL(audioBlob);
+
+      if (audioStream) {
+        audioStream.getTracks().forEach(track => track.stop());
+      }
+
+      setAudioStream(null);
+      setAudioRecorder(null);
+      setIsRecordingAudio(false);
+
+      // Save audio to localStorage
+      const audios = JSON.parse(localStorage.getItem('storybookAudios') || '[]');
+      const newAudio = {
+        id: `audio_${Date.now()}`,
+        entryId: entryId,
+        type: 'audio',
+        audioBlob: audioBlob,
+        audioUrl: audioUrl,
+        duration: recordingTime,
+        title: `Magical voice message for ${entryId}`,
+        timestamp: new Date(),
+        addedBy: 'Child'
+      };
+      audios.push(newAudio);
+      localStorage.setItem('storybookAudios', JSON.stringify(audios));
+
+      // Award points for audio recording
+      const memoryPoints = parseInt(localStorage.getItem('memoryPoints') || '0');
+      const newPoints = memoryPoints + 10;
+      localStorage.setItem('memoryPoints', newPoints.toString());
+
+      triggerCelebration('🎤', true, 6000);
+      toast({
+        title: "Audio Recorded! 🎤",
+        description: `Your magical voice message was recorded for ${Math.floor(recordingTime / 60)}:${(recordingTime % 60).toString().padStart(2, '0')}! You earned 10 memory points!`,
+        duration: 8000,
+      });
+
+      setTimeout(() => {
+        toast({
+          title: "Voice Master! 🎭",
+          description: "You're becoming a wonderful storyteller! Your voice is truly magical!",
+          duration: 4000,
+        });
+      }, 2000);
+
+    } catch (error) {
+      console.error('Failed to save audio:', error);
+      toast({
+        title: "Oops! 😅",
+        description: "Something went wrong with saving the audio. Let's try again!",
+        variant: "destructive",
+        duration: 3000,
+      });
+    } finally {
+      setIsLoading(false);
+      setRecordingTime(0);
+      setAudioChunks([]);
+    }
+  };
+
+  const cancelAudioRecording = () => {
+    if (audioRecorder && audioRecorder.state !== 'inactive') {
+      audioRecorder.stop();
+    }
+    if (audioStream) {
+      audioStream.getTracks().forEach(track => track.stop());
+    }
+    setAudioStream(null);
+    setAudioRecorder(null);
+    setIsRecordingAudio(false);
+    setRecordingTime(0);
+    setAudioChunks([]);
+
+    toast({
+      title: "Audio Cancelled ❌",
+      description: "No worries! We can record your story anytime!",
+      duration: 3000,
+    });
+  };
+
+  const startThoughtfulReflection = async (entryId: string) => {
+    try {
+      setIsLoading(true);
+
+      const reflectionPrompts = [
+        "What made this memory so special to you?",
+        "How did this moment make you feel inside?",
+        "What would you remember forever about today?",
+        "What was your favorite part and why?",
+        "How did your family help make this moment wonderful?",
+        "What would you tell your future self about today?",
+        "What did you learn that you want to remember?",
+        "How did you help someone today become more joyful?"
+      ];
+
+      const randomPrompt = reflectionPrompts[Math.floor(Math.random() * reflectionPrompts.length)];
+
+      triggerCelebration('🤔', false, 4000);
+      toast({
+        title: "Time for Reflection! 🤔",
+        description: randomPrompt,
+        duration: 8000,
+      });
+
+      // Give time for reflection
+      setTimeout(() => {
+        triggerCelebration('💭', false, 6000);
+        toast({
+          title: "Your Wise Reflection! 💭",
+          description: "Deep thoughts are like stars - they make your story more beautiful! ✨",
+          duration: 6000,
+        });
+
+        // Save thoughtful reflection
+        const reflections = JSON.parse(localStorage.getItem('storybookReflections') || '[]');
+        const newReflection = {
+          id: `reflection_${Date.now()}`,
+          entryId: entryId,
+          prompt: randomPrompt,
+          reflection: "Child is thinking about this special memory...",
+          importance: 'special',
+          timestamp: new Date(),
+          addedBy: 'Child'
+        };
+        reflections.push(newReflection);
+        localStorage.setItem('storybookReflections', JSON.stringify(reflections));
+
+        // Award points for reflection
+        const memoryPoints = parseInt(localStorage.getItem('memoryPoints') || '0');
+        const newPoints = memoryPoints + 6;
+        localStorage.setItem('memoryPoints', newPoints.toString());
+
+        setTimeout(() => {
+          toast({
+            title: "Reflection Master! 🧠",
+            description: `Thoughtful reflection saved! You earned 6 memory points! You're building wisdom and joy! Total: ${newPoints} points`,
+            duration: 5000,
+          });
+        }, 2000);
+
+      }, 6000);
+
+    } catch (error) {
+      console.error('Failed to start reflection:', error);
+      toast({
+        title: "Oops! 😅",
+        description: "Something went wrong with the reflection. Let's try again!",
+        variant: "destructive",
+        duration: 3000,
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
   
   // Quick action handler for mobile interface
   const handleQuickAction = (action: string) => {
@@ -818,6 +1224,19 @@ export function KidsActivities() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Helper function to add points consistently
+  const addPoints = (points: number, reason: string) => {
+    const currentPoints = parseInt(localStorage.getItem('memoryPoints') || '0');
+    const newPoints = currentPoints + points;
+    localStorage.setItem('memoryPoints', newPoints.toString());
+
+    toast({
+      title: "Points Earned! 🏆",
+      description: `${points} points for ${reason}! Total: ${newPoints}`,
+      duration: 4000,
+    });
   };
 
   const getCharacterColor = (type: 'krishna' | 'hanuman' | 'saraswati') => {
@@ -1552,142 +1971,59 @@ export function KidsActivities() {
                           </div>
                         </div>
 
-                        <div className="flex gap-2 flex-wrap">
-                          <Button 
-                            size="sm" 
-                            variant="outline" 
-                            className="rounded-xl hover:shadow-md transition-all duration-200"
-                            onClick={async () => {
-                              try {
-                                setIsLoading(true);
-                                
-                                // Simulate photo capture
-                                triggerCelebration('📸', false, 3000);
+                                        <div className="flex gap-2 flex-wrap">
+                          <KidsMemoryRecorder
+                            coupleId="demo-couple"
+                            onSuccess={(memory) => {
+                              // Enhanced memory creation with storybook integration
+                              const newEntry = {
+                                id: Date.now().toString(),
+                                title: `${entry.title} - ${memory.title}`,
+                                description: `Added ${memory.type} to: ${entry.description}`,
+                                type: 'enhanced',
+                                date: new Date(),
+                                participants: ['Child', ...entry.participants],
+                                media: entry.media || [],
+                                emoji: entry.emoji,
+                                category: 'enhanced_memory'
+                              };
+
+                              // Add to storybook entries with enhanced features
+                              addStorybookEntry(
+                                newEntry.title,
+                                newEntry.description,
+                                'enhanced',
+                                newEntry.participants
+                              ).then(() => {
                                 toast({
-                                  title: "Photo Added! 📸",
-                                  description: "Your special moment has been captured and added to the family storybook!",
-                                  duration: 4000,
-                                });
-                                
-                                // Update the storybook entry with photo
-                                const photos = JSON.parse(localStorage.getItem('storybookPhotos') || '[]');
-                                const newPhoto = {
-                                  id: `photo_${Date.now()}`,
-                                  entryId: entry.id,
-                                  type: 'photo',
-                                  caption: `Beautiful moment from ${entry.title}`,
-                                  timestamp: new Date(),
-                                  addedBy: 'Child'
-                                };
-                                photos.push(newPhoto);
-                                localStorage.setItem('storybookPhotos', JSON.stringify(photos));
-                                
-                                // Award points for adding photos
-                                const memoryPoints = parseInt(localStorage.getItem('memoryPoints') || '0');
-                                const newPoints = memoryPoints + 8;
-                                localStorage.setItem('memoryPoints', newPoints.toString());
-                                
-                                setTimeout(() => {
-                                  triggerCelebration('🌟', true, 4000);
-                                  toast({
-                                    title: "Memory Master! 🌟",
-                                    description: `You earned 8 memory points! Your storybook is getting more beautiful! Total: ${newPoints} points`,
-                                    duration: 4000,
-                                  });
-                                }, 1500);
-                                
-                              } catch (error) {
-                                console.error('Failed to add photo:', error);
-                                toast({
-                                  title: "Oops! 😅",
-                                  description: "Couldn't add the photo. Let's try again!",
-                                  duration: 3000,
-                                });
-                              } finally {
-                                setIsLoading(false);
-                              }
-                            }}
-                          >
-                            <Camera className="w-4 h-4 mr-1" />
-                            Add Photo
-                          </Button>
-                          <Button 
-                            size="sm" 
-                            variant="outline" 
-                            className="rounded-xl hover:shadow-md transition-all duration-200"
-                            onClick={async () => {
-                              try {
-                                setIsLoading(true);
-                                
-                                // Simulate video recording
-                                triggerCelebration('🎥', false, 4000);
-                                toast({
-                                  title: "Video Recording! 🎥",
-                                  description: "Ready to record a special video message for your family storybook!",
+                                  title: "Enhanced Memory Added! ✨",
+                                  description: `Your ${memory.type} has enhanced this wonderful memory!`,
                                   duration: 5000,
                                 });
-                                
-                                // Simulate recording process
-                                setTimeout(() => {
-                                  triggerCelebration('🎉', true, 5000);
-                                  toast({
-                                    title: "Video Saved! 🎉",
-                                    description: "Your video has been added to the family memories! Everyone will love watching it!",
-                                    duration: 5000,
-                                  });
-                                  
-                                  // Save video record
-                                  const videos = JSON.parse(localStorage.getItem('storybookVideos') || '[]');
-                                  const newVideo = {
-                                    id: `video_${Date.now()}`,
-                                    entryId: entry.id,
-                                    type: 'video',
-                                    title: `Video from ${entry.title}`,
-                                    duration: '0:30',
-                                    timestamp: new Date(),
-                                    addedBy: 'Child'
-                                  };
-                                  videos.push(newVideo);
-                                  localStorage.setItem('storybookVideos', JSON.stringify(videos));
-                                  
-                                  // Award points for video
-                                  const memoryPoints = parseInt(localStorage.getItem('memoryPoints') || '0');
-                                  const newPoints = memoryPoints + 12;
-                                  localStorage.setItem('memoryPoints', newPoints.toString());
-                                  
-                                  setTimeout(() => {
-                                    toast({
-                                      title: "Video Star! 🎆",
-                                      description: `Amazing! You earned 12 memory points for your video! Total: ${newPoints} points`,
-                                      duration: 4000,
-                                    });
-                                  }, 1000);
-                                  
-                                }, 3000);
-                                
-                              } catch (error) {
-                                console.error('Failed to add video:', error);
-                                toast({
-                                  title: "Oops! 😅",
-                                  description: "Couldn't record the video. Let's try again!",
-                                  duration: 3000,
-                                });
-                              } finally {
-                                setTimeout(() => setIsLoading(false), 3500);
-                              }
+                                triggerCelebration('🎭', true, 4000);
+                              });
                             }}
-                          >
-                            <Play className="w-4 h-4 mr-1" />
-                            Add Video
-                          </Button>
-                          <Button 
-                            size="sm" 
-                            variant="outline" 
+                            onCancel={() => {
+                              toast({
+                                title: "Memory Enhancement Cancelled",
+                                description: "You can always add more to this memory later!",
+                                duration: 2000,
+                              });
+                            }}
+                            memoryType={undefined}
+                            onAwardPoints={addPoints}
+                            onCelebration={(type: string) => {
+                              triggerCelebration(type === '📝' ? '📝' : type === '🎤' ? '🎤' : type === '🎬' ? '🎬' : type === '📸' ? '📸' : '🌟', true, 4000);
+                            }}
+                          />
+                          <Button
+                            size="sm"
+                            variant="outline"
                             className="rounded-xl hover:shadow-md transition-all duration-200"
                             onClick={async () => {
                               try {
                                 setIsLoading(true);
-                                
+
                                 // Create a special memory reflection
                                 triggerCelebration('💖', false, 3000);
                                 toast({
@@ -1695,7 +2031,7 @@ export function KidsActivities() {
                                   description: "Let's take a moment to appreciate this beautiful memory and what it means to our family!",
                                   duration: 5000,
                                 });
-                                
+
                                 // Show reflection prompts
                                 setTimeout(() => {
                                   const reflectionPrompts = [
@@ -1704,49 +2040,32 @@ export function KidsActivities() {
                                     "What did you learn from this experience?",
                                     "Why is this important to remember?"
                                   ];
-                                  
+
                                   const randomPrompt = reflectionPrompts[Math.floor(Math.random() * reflectionPrompts.length)];
-                                  
+
                                   toast({
                                     title: "Think About This: 🤔",
                                     description: randomPrompt,
                                     duration: 6000,
                                   });
-                                  
-                                  // Save reflection
-                                  const reflections = JSON.parse(localStorage.getItem('storybookReflections') || '[]');
-                                  const newReflection = {
-                                    id: `reflection_${Date.now()}`,
-                                    entryId: entry.id,
-                                    prompt: randomPrompt,
-                                    timestamp: new Date(),
-                                    addedBy: 'Child',
-                                    importance: 'high'
-                                  };
-                                  reflections.push(newReflection);
-                                  localStorage.setItem('storybookReflections', JSON.stringify(reflections));
-                                  
-                                  // Award reflection points
-                                  const memoryPoints = parseInt(localStorage.getItem('memoryPoints') || '0');
-                                  const newPoints = memoryPoints + 10;
-                                  localStorage.setItem('memoryPoints', newPoints.toString());
-                                  
-                                  setTimeout(() => {
-                                    triggerCelebration('🎨', true, 6000);
-                                    toast({
-                                      title: "Thoughtful Remembering! 🎨",
-                                      description: `Beautiful reflection! You earned 10 memory points for thinking deeply about this moment! Total: ${newPoints} points`,
-                                      duration: 5000,
-                                    });
-                                  }, 2000);
-                                  
+
+                                  // Award reflection points directly using the new system
+                                  addPoints(10, `Reflection on "${entry.title}"`);
+                                  triggerCelebration('🎨', true, 6000);
+
+                                  toast({
+                                    title: "Thoughtful Remembering! 🎨",
+                                    description: `Beautiful reflection! You earned 10 memory points for thinking deeply about this moment!`,
+                                    duration: 5000,
+                                  });
+
                                 }, 2000);
-                                
+
                               } catch (error) {
-                                console.error('Failed to add reflection:', error);
+                                console.error('Failed to create reflection:', error);
                                 toast({
                                   title: "Oops! 😅",
-                                  description: "Couldn't save the reflection. Let's try again!",
+                                  description: "Couldn't create the reflection. Let's try again!",
                                   duration: 3000,
                                 });
                               } finally {

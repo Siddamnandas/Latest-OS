@@ -15,12 +15,12 @@ import { MemoryJukebox } from '@/components/MemoryJukebox';
 import { StreakCelebration } from '@/components/StreakCelebration';
 import { RelationshipInsights } from '@/components/RelationshipInsights';
 import { GamificationEngine } from '@/components/GamificationEngine';
-import { 
-  Sparkles, 
-  Heart, 
-  Target, 
-  TrendingUp, 
-  Gift, 
+import {
+  Sparkles,
+  Heart,
+  Target,
+  TrendingUp,
+  Gift,
   Clock,
   Trophy,
   Star,
@@ -41,6 +41,12 @@ export function HomeDashboard({ streak, coins }: HomeDashboardProps) {
   const [showLevelUp, setShowLevelUp] = useState(false);
   const [showMilestone, setShowMilestone] = useState(false);
   const [showStreakCelebration, setShowStreakCelebration] = useState(false);
+  const [showMemoryJukebox, setShowMemoryJukebox] = useState(false);
+  const [expandedInsights, setExpandedInsights] = useState(false);
+  // Add state for handling button functionalities
+  const [acceptedSuggestions, setAcceptedSuggestions] = useState<string[]>([]);
+  const [postponedSuggestions, setPostponedSuggestions] = useState<string[]>([]);
+  const [detailedSuggestions, setDetailedSuggestions] = useState<string[]>([]);
 
   // Sample data for new components
   const relationshipInsights = [
@@ -142,9 +148,41 @@ export function HomeDashboard({ streak, coins }: HomeDashboardProps) {
     setShowStreakCelebration(true);
   };
 
+  // Functional handlers for button actions
+  const handleViewMemoryJukebox = () => {
+    setShowMemoryJukebox(true);
+  };
+
+  const handleCloseMemoryJukebox = () => {
+    setShowMemoryJukebox(false);
+  };
+
+  const handleViewAllInsights = () => {
+    setExpandedInsights(!expandedInsights);
+  };
+
   const handleAchievementUnlock = (achievementId: string) => {
     console.log('Achievement unlocked:', achievementId);
     // Handle achievement unlock logic
+  };
+
+  // Functional handlers for AI suggestion buttons
+  const handleAcceptSuggestion = () => {
+    // Add to accepted suggestions
+    setAcceptedSuggestions(prev => [...prev, aiSuggestion.title]);
+    // Show some feedback
+    alert('Great! Starting your Evening Connection Ritual. You earned 25 Lakshmi Coins! 🎉');
+    // Close the card or mark as accepted
+  };
+
+  const handlePostponeSuggestion = () => {
+    setPostponedSuggestions(prev => [...prev, aiSuggestion.title]);
+    alert('No problem! We\'ll suggest this again tomorrow. 💙');
+  };
+
+  const handleShowDetails = () => {
+    setDetailedSuggestions(prev => [...prev, aiSuggestion.title]);
+    alert('This ritual draws from Radha-Krishna archetypes of divine love and playfulness. Try establishing a "magic hour" before bed for deep connection. 🌙💕');
   };
 
   const getStreakColor = () => {
@@ -180,7 +218,7 @@ export function HomeDashboard({ streak, coins }: HomeDashboardProps) {
                 </div>
                 <span className="text-xs text-white/80">Together</span>
               </div>
-              
+
               <div className="flex flex-col items-center bg-yellow-400/90 backdrop-blur-lg rounded-xl p-3 min-w-[80px]">
                 <div className="flex items-center gap-1">
                   <span className="text-xl animate-bounce">🪙</span>
@@ -190,7 +228,7 @@ export function HomeDashboard({ streak, coins }: HomeDashboardProps) {
               </div>
             </div>
           </div>
-          
+
           {/* Daily progress bar */}
           <div className="bg-white/20 backdrop-blur-lg rounded-xl p-3">
             <div className="flex items-center justify-between mb-2">
@@ -205,7 +243,7 @@ export function HomeDashboard({ streak, coins }: HomeDashboardProps) {
       </div>
 
       {/* Premium Coin & Streak Animation */}
-      <CoinStreakAnimation 
+      <CoinStreakAnimation
         coins={coins}
         streak={streak}
         onCoinClick={handleCoinClick}
@@ -226,12 +264,46 @@ export function HomeDashboard({ streak, coins }: HomeDashboardProps) {
             <Heart className="w-5 h-5 text-pink-500" />
             Memory Jukebox
           </h2>
-          <Button variant="outline" size="sm">
-            View All
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleViewAllInsights}
+          >
+            {expandedInsights ? 'Collapse' : 'View All'}
           </Button>
         </div>
-        
+
         {/* Recent Memories Preview */}
+        {showMemoryJukebox && (
+          <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl p-6 max-w-md w-full max-h-[80vh] overflow-y-auto">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-bold">Memory Jukebox</h3>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleCloseMemoryJukebox}
+                >
+                  ✕
+                </Button>
+              </div>
+              <p className="text-gray-600 mb-4">
+                Here you can access all your precious memories and moments shared with your partner.
+              </p>
+              <div className="space-y-3">
+                <div className="bg-pink-50 p-3 rounded-lg">
+                  <p className="font-medium">Baby's First Laugh (Audio)</p>
+                  <p className="text-sm text-gray-600">🎵 Available now</p>
+                </div>
+                <div className="bg-blue-50 p-3 rounded-lg">
+                  <p className="font-medium">Beach Sunset (Photo)</p>
+                  <p className="text-sm text-gray-600">📷 Available now</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="bg-gradient-to-br from-pink-50 to-purple-50 rounded-xl p-4 border border-pink-200">
             <div className="flex items-center gap-3 mb-3">
@@ -244,9 +316,16 @@ export function HomeDashboard({ streak, coins }: HomeDashboardProps) {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <div className="flex-1 bg-pink-200 rounded-full h-2">
-                <div className="bg-pink-500 h-2 rounded-full" style={{ width: '60%' }}></div>
-              </div>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="text-pink-600 hover:text-pink-700"
+                onClick={() => {
+                  alert('🎵 Playing: Baby\'s first laugh...\nEnjoy this precious memory! 💕');
+                }}
+              >
+                ▶ Play
+              </Button>
               <span className="text-xs text-gray-500">0:45</span>
             </div>
           </div>
@@ -267,7 +346,11 @@ export function HomeDashboard({ streak, coins }: HomeDashboardProps) {
           </div>
         </div>
 
-        <Button variant="outline" className="w-full">
+        <Button
+          variant="outline"
+          className="w-full"
+          onClick={handleViewMemoryJukebox}
+        >
           <Heart className="w-4 h-4 mr-2" />
           View Memory Jukebox
         </Button>
@@ -280,13 +363,28 @@ export function HomeDashboard({ streak, coins }: HomeDashboardProps) {
             <Brain className="w-5 h-5 text-purple-500" />
             AI Insights
           </h2>
-          <Button variant="outline" size="sm">
-            View All
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleViewAllInsights}
+          >
+            {expandedInsights ? 'Hide' : 'View All'}
           </Button>
         </div>
-        
-        <RelationshipInsights 
-          insights={relationshipInsights}
+
+        {expandedInsights && (
+          <div className="space-y-4">
+            {relationshipInsights.map(insight => (
+              <div key={insight.id} className="bg-white p-4 rounded-xl border shadow-sm">
+                <h3 className="font-bold">{insight.title}</h3>
+                <p>{insight.description}</p>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <RelationshipInsights
+          insights={expandedInsights ? relationshipInsights : relationshipInsights.slice(0, 1)}
           onAction={handleAchievementUnlock}
         />
       </div>
@@ -298,12 +396,18 @@ export function HomeDashboard({ streak, coins }: HomeDashboardProps) {
             <Trophy className="w-5 h-5 text-yellow-500" />
             Achievements & Rewards
           </h2>
-          <Button variant="outline" size="sm">
-            View All
-          </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            setExpandedInsights(!expandedInsights);
+          }}
+        >
+          {expandedInsights ? 'Hide' : 'View All'}
+        </Button>
         </div>
-        
-        <GamificationEngine 
+
+        <GamificationEngine
           coins={coins}
           level={Math.floor(streak / 7) + 1}
           experience={streak * 10}
@@ -323,18 +427,18 @@ export function HomeDashboard({ streak, coins }: HomeDashboardProps) {
             Personalized
           </Badge>
         </div>
-        
-        <AISuggestionCard 
+
+        <AISuggestionCard
           suggestion={aiSuggestion}
-          onAccept={() => console.log('Suggestion accepted')}
-          onLater={() => console.log('Suggestion postponed')}
-          onTellMe={() => console.log('More info requested')}
+          onAccept={handleAcceptSuggestion}
+          onLater={handlePostponeSuggestion}
+          onTellMe={handleShowDetails}
         />
       </div>
 
       {/* Streak Celebration Modal */}
       {showStreakCelebration && (
-        <StreakCelebration 
+        <StreakCelebration
           streak={streak}
           coins={coins}
           onClose={() => setShowStreakCelebration(false)}
@@ -343,7 +447,7 @@ export function HomeDashboard({ streak, coins }: HomeDashboardProps) {
 
       {/* Achievement Celebration */}
       {showAchievement && (
-        <AchievementCelebration 
+        <AchievementCelebration
           isOpen={showAchievement}
           onClose={() => setShowAchievement(false)}
           achievement={{

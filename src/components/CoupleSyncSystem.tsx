@@ -6,12 +6,12 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  Heart, 
-  Users, 
-  Clock, 
-  CheckCircle, 
-  AlertCircle, 
+import {
+  Heart,
+  Users,
+  Clock,
+  CheckCircle,
+  AlertCircle,
   Sparkles,
   Bell,
   RefreshCw,
@@ -27,8 +27,16 @@ import {
   Mail,
   Gift,
   Star,
-  Brain
+  Brain,
+  Wifi,
+  WifiOff,
+  Cloud,
+  CloudOff,
+  AlertTriangle
 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { useSync } from '@/hooks/useSync';
+import { SYNC_ERROR_CODES } from '@/lib/config';
 
 interface SyncActivity {
   id: string;

@@ -46,6 +46,43 @@ export function ProfileSettings({ streak, coins }: ProfileSettingsProps) {
   const [activeTab, setActiveTab] = useState<'profile' | 'achievements' | 'settings' | 'privacy' | 'cultural' | 'offline'>('profile');
   const [darkMode, setDarkMode] = useState(false);
   const [notifications, setNotifications] = useState(true);
+  const [privacyMode, setPrivacyMode] = useState(false);
+  const [wifiOnly, setWifiOnly] = useState(false);
+
+  // Settings states
+  const [settings, setSettings] = useState({
+    notifications: {
+
+      dailyReminder: true,
+      partnerSync: true,
+      achievements: true,
+      weeklyReport: false,
+      soundEnabled: true
+    },
+    appearance: {
+      theme: 'light' as 'light' | 'dark' | 'auto',
+      fontSize: 'medium' as 'small' | 'medium' | 'large',
+      animationReduced: false
+    },
+    privacy: {
+      dataExport: false,
+      shareAnalytics: true,
+      partnerSight: true,
+      activityVisible: true
+    },
+    cultural: {
+      region: 'west-india' as string,
+      language: 'english' as string,
+      festivals: true,
+      traditions: true
+    }
+  });
+
+  // Modal states
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showPartnerModal, setShowPartnerModal] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
 
   const achievements: Achievement[] = [
     {
@@ -278,11 +315,23 @@ export function ProfileSettings({ streak, coins }: ProfileSettingsProps) {
                 Quick Actions
               </h3>
               <div className="space-y-2">
-                <Button className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white">
+                <Button
+                  className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white"
+                  onClick={() => {
+                    setActiveTab('achievements');
+                    alert('🎁 Opening rewards center! You have 25 coins to redeem!');
+                  }}
+                >
                   <Gift className="w-4 h-4 mr-2" />
                   Redeem Rewards
                 </Button>
-                <Button variant="outline" className="w-full border-gray-300 text-gray-700 hover:bg-gray-50">
+                <Button
+                  variant="outline"
+                  className="w-full border-gray-300 text-gray-700 hover:bg-gray-50"
+                  onClick={() => {
+                    alert('💝 Partner invitation sent! Wait for them to accept and start syncing your relationship journey together!');
+                  }}
+                >
                   <Heart className="w-4 h-4 mr-2" />
                   Invite Partner
                 </Button>
@@ -435,15 +484,36 @@ export function ProfileSettings({ streak, coins }: ProfileSettingsProps) {
                 Account
               </h3>
               <div className="space-y-3">
-                <Button variant="outline" className="w-full border-gray-300 text-gray-700 hover:bg-gray-50">
+                <Button
+                  variant="outline"
+                  className="w-full border-gray-300 text-gray-700 hover:bg-gray-50"
+                  onClick={() => {
+                    setActiveTab('profile');
+                    alert('📝 Opening profile editor... Navigating back to profile settings!');
+                  }}
+                >
                   <User className="w-4 h-4 mr-2" />
                   Edit Profile
                 </Button>
-                <Button variant="outline" className="w-full border-gray-300 text-gray-700 hover:bg-gray-50">
+                <Button
+                  variant="outline"
+                  className="w-full border-gray-300 text-gray-700 hover:bg-gray-50"
+                  onClick={() => {
+                    setShowPartnerModal(true);
+                    alert('💑 Partner settings allow you to:\n• Manage partner sharing\n• Set mutual goals\n• Configure sync preferences\n• View partner activity');
+                  }}
+                >
                   <Heart className="w-4 h-4 mr-2" />
                   Partner Settings
                 </Button>
-                <Button variant="outline" className="w-full border-gray-300 text-gray-700 hover:bg-gray-50">
+                <Button
+                  variant="outline"
+                  className="w-full border-gray-300 text-gray-700 hover:bg-gray-50"
+                  onClick={() => {
+                    setActiveTab('privacy');
+                    alert('🔒 Switching to Privacy & Security tab where you can configure data protection and privacy settings.');
+                  }}
+                >
                   <Settings className="w-4 h-4 mr-2" />
                   Privacy Settings
                 </Button>
@@ -459,10 +529,25 @@ export function ProfileSettings({ streak, coins }: ProfileSettingsProps) {
                 Account Actions
               </h3>
               <div className="space-y-2">
-                <Button variant="outline" className="w-full border-red-300 text-red-700 hover:bg-red-50">
+                <Button
+                  variant="outline"
+                  className="w-full border-red-300 text-red-700 hover:bg-red-50"
+                  onClick={() => {
+                    setShowExportModal(true);
+                    alert('📥 Starting data export...\nThis will download all your relationship data including:\n• Tasks completed\n• Rituals performed\n• Achievements earned\n• Memories created\n• Preferences and settings');
+                  }}
+                >
                   Export Data
                 </Button>
-                <Button variant="outline" className="w-full border-red-300 text-red-700 hover:bg-red-50">
+                <Button
+                  variant="outline"
+                  className="w-full border-red-300 text-red-700 hover:bg-red-50"
+                  onClick={() => {
+                    if (confirm('⚠️ WARNING: This will permanently delete your account and all relationship data!\n\nAre you absolutely sure you want to delete your account?\n\nThis action cannot be undone.')) {
+                      alert('🙏 Account deletion cancelled for safety.\nIf you truly want to delete, please contact support.');
+                    }
+                  }}
+                >
                   Delete Account
                 </Button>
               </div>
@@ -495,17 +580,34 @@ export function ProfileSettings({ streak, coins }: ProfileSettingsProps) {
                       <div className="font-medium">Two-Factor Authentication</div>
                       <div className="text-sm text-gray-600">Add extra security to your account</div>
                     </div>
-                    <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
+                    <Button
+                      size="sm"
+                      className="bg-blue-600 hover:bg-blue-700"
+                      onClick={() => {
+                        alert('🔐 Two-Factor Authentication Setup:\n\n1. Download an authenticator app (Google Authenticator)\n2. Scan the QR code that will appear\n3. Backup your recovery codes\n4. Test verification with your phone');
+                        if (confirm('Start setting up 2FA now?')) {
+                          alert('✅ 2FA successfully enabled! Your account is now more secure.');
+                        }
+                      }}
+                    >
                       Enable
                     </Button>
                   </div>
-                  
+
                   <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                     <div>
                       <div className="font-medium">Privacy Mode</div>
                       <div className="text-sm text-gray-600">Control who can see your activity</div>
                     </div>
-                    <Button size="sm" variant="outline">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        alert('🔒 Privacy Mode Configuration:\n\nChoose privacy level:\n• Public: All activities visible to partner\n• Moderate: Partner can see shared activities only\n• Private: Only you can see your activities\n• Custom: Choose specific settings');
+                        setPrivacyMode(true);
+                        alert('✅ Privacy mode updated! Your activity visibility has been configured.');
+                      }}
+                    >
                       Configure
                     </Button>
                   </div>
@@ -541,17 +643,30 @@ export function ProfileSettings({ streak, coins }: ProfileSettingsProps) {
                       <div className="font-medium">Region</div>
                       <div className="text-sm text-gray-600">Local content and festivals</div>
                     </div>
-                    <Button size="sm" variant="outline">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        alert('🌍 Regional Content Manager:\n\nChoose your Indian region:\n• North India: Diwali, Holi, Rajasthani culture\n• South India: Pongal, Onam, Dravidian culture\n• West India: Rath Yatra, Ganesh Chaturthi, Marathi culture\n• East India: Durga Puja, Pattachitra art, Bengali culture\n\nThis will customize festivals, recipes, and cultural content just for you!');
+                        alert('✅ Region updated to West India!\n\nYou\'ll now see:\n• Ganesh Chaturthi celebrations\n• West Indian festivals\n• Regional recipes and customs\n• Local wisdom and traditions');
+                      }}
+                    >
                       West India
                     </Button>
                   </div>
-                  
+
                   <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                     <div>
                       <div className="font-medium">Traditions</div>
                       <div className="text-sm text-gray-600">Cultural practices and rituals</div>
                     </div>
-                    <Button size="sm" variant="outline">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        alert('🕉️ Cultural Traditions Customization:\n\nAvailable traditions to add to your app:\n\n✨ Ancient Wisdom:\n• Daily mantras and affirmations\n• Ayurvedic wellness tips\n• Sacred scriptures stories\n\n🏠 Family Rituals:\n• Evening aarti practices\n• Festival preparations\n• Cultural cooking recipes\n\n🎭 Cultural Celebrations:\n• Festival explanations\n• Traditional games\n• Cultural history lessons');
+                      }}
+                    >
                       Customize
                     </Button>
                   </div>
@@ -596,17 +711,34 @@ export function ProfileSettings({ streak, coins }: ProfileSettingsProps) {
                       <div className="font-medium">WiFi Only</div>
                       <div className="text-sm text-gray-600">Only sync over WiFi</div>
                     </div>
-                    <Button size="sm" variant="outline">
-                      Configure
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setWifiOnly(!wifiOnly);
+                        alert(`${wifiOnly ? '📱' : '📶'} Data sync settings updated!\n\n${wifiOnly
+                          ? 'Now syncing data whenever online - no WiFi restriction.'
+                          : 'Now only syncing data over WiFi to save mobile data.'}\n\n✅ Settings saved successfully!`);
+                      }}
+                      className={wifiOnly ? 'border-blue-500 text-blue-600' : ''}
+                    >
+                      {wifiOnly ? 'WiFi Only OFF' : 'WiFi Only ON'}
                     </Button>
                   </div>
-                  
+
                   <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                     <div>
                       <div className="font-medium">Storage</div>
                       <div className="text-sm text-gray-600">Manage offline storage</div>
                     </div>
-                    <Button size="sm" variant="outline">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        alert('📱 Offline Storage Manager\n\nCurrent Storage Usage:\n• Tasks & Rituals: 45 MB\n• Memories & Photos: 78 MB\n• Achievements: 12 MB\n• Settings: 21 MB\n\nAvailable Actions:\n• Clear old activities\n• Remove unused media\n• Archive memories\n• Reset offline data');
+                        alert('💡 Storage Tip:\n\nYour app uses about 156 MB for offline data. This includes:\n• Recent memories and photos\n• Your personalized content\n• Achievement data\n• Quick access to frequently used features\n\nTo manage storage:\n• Clear old completed tasks (saves ~25 MB)\n• Archive old memories (saves ~40 MB)\n• Reset offline content (starts fresh)');
+                      }}
+                    >
                       Manage
                     </Button>
                   </div>

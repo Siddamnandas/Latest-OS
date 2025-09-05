@@ -1,12 +1,14 @@
 module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'jsdom',
-  setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.js', '<rootDir>/jest.setup.ts'],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
+    '\\.(css|scss|sass)$': 'identity-obj-proxy',
+    '\\.(jpg|jpeg|png|gif|svg)$': '<rootDir>/__mocks__/fileMock.js',
   },
   transform: {
-    '^.+\\.(ts|tsx)$': ['ts-jest', { 
+    '^.+\\.(ts|tsx)$': ['ts-jest', {
       tsconfig: '<rootDir>/tsconfig.jest.json',
       useESM: false
     }],
@@ -27,12 +29,6 @@ module.exports = {
   coverageReporters: ['text', 'lcov', 'html'],
   coverageDirectory: 'coverage',
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
-  globals: {
-    'ts-jest': {
-      useESM: false,
-      tsconfig: '<rootDir>/tsconfig.jest.json'
-    }
-  },
   testTimeout: 10000,
   maxWorkers: '50%'
 };

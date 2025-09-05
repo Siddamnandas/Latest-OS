@@ -6,7 +6,7 @@ import { HomeDashboard } from '@/components/HomeDashboard';
 import { TaskManagement } from '@/components/TaskManagement';
 import { RitualSystem } from '@/components/RitualSystem';
 import { GoalsHub } from '@/components/GoalsHub';
-import { KidsActivities } from '@/components/KidsActivities';
+import { KidsPageContent } from '@/components/KidsPageContent';
 import { FloatingActionButton } from '@/components/FloatingActionButton';
 import { ProfileEditModal } from '@/components/ProfileEditModal';
 import { useToast } from '@/hooks/use-toast';
@@ -77,7 +77,7 @@ export default function Home() {
       case 'goals':
         return <GoalsHub />;
       case 'kids':
-        return <KidsActivities />;
+        return <KidsPageContent />;
       case 'profile':
         return (
           <div className="text-center p-8">
@@ -130,11 +130,18 @@ export default function Home() {
                   <Button
                     variant="outline"
                     className="w-full"
-                    onClick={() => toast({
-                      title: "Settings Coming Soon! ⚙️",
-                      description: "Settings panel is being developed.",
-                      duration: 2000,
-                    })}
+                    onClick={() => {
+                      // Show settings modal or navigate to settings page
+                      toast({
+                        title: "Opening Settings 🎛️",
+                        description: "Personalizing your experience...",
+                        duration: 2000,
+                      });
+                      // You can implement actual settings modal here
+                      setTimeout(() => {
+                        alert('Settings options:\n• Notification preferences\n• Privacy settings\n• Theme customization\n• Data export');
+                      }, 1000);
+                    }}
                   >
                     <div className="flex items-center justify-center gap-2">
                       <span>⚙️</span>

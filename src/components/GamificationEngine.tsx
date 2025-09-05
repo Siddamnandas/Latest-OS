@@ -5,17 +5,16 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { 
-  Trophy, 
-  Star, 
-  Gift, 
-  Target, 
+import {
+  Trophy,
+  Star,
+  Gift,
+  Target,
   Zap,
   Crown,
   Sparkles,
   Medal,
   Award,
-  Fire,
   TrendingUp
 } from 'lucide-react';
 
@@ -258,11 +257,20 @@ export function GamificationEngine({
                       <div className="text-lg font-bold text-purple-600 mb-2">
                         {reward.cost}
                       </div>
-                      <Button 
-                        size="sm" 
+                      <Button
+                        size="sm"
                         variant={reward.claimed ? "outline" : "default"}
                         disabled={coins < reward.cost || reward.claimed}
                         className={reward.claimed ? 'bg-green-600 text-white' : ''}
+                        onClick={() => {
+                          if (reward.claimed) {
+                            alert('✅ This reward has already been claimed!\nYou can enjoy your ' + reward.title + ' anytime.');
+                          } else if (coins >= reward.cost) {
+                            alert('🎉 Reward Redeemed Successfully!\n\n' + reward.title + '\n🎁 ' + reward.description + '\n\n' + reward.cost + ' coins deducted from your balance.');
+                          } else {
+                            alert('💰 Not enough coins!\nYou need ' + (reward.cost - coins) + ' more coins to redeem this reward.\n\nKeep completing tasks and rituals to earn more!');
+                          }
+                        }}
                       >
                         {reward.claimed ? 'Claimed' : 'Redeem'}
                       </Button>
