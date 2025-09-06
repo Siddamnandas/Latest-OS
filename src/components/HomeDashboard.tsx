@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -13,8 +13,10 @@ import { CoinStreakAnimation } from '@/components/CoinStreakAnimation';
 import { AchievementCelebration } from '@/components/AchievementCelebration';
 import { MemoryJukebox } from '@/components/MemoryJukebox';
 import { StreakCelebration } from '@/components/StreakCelebration';
-import { RelationshipInsights } from '@/components/RelationshipInsights';
+
 import { GamificationEngine } from '@/components/GamificationEngine';
+import { ArchetypalHealthCard } from '@/components/ArchetypalHealthCard';
+import { useLatestOSSocket } from '@/hooks/useSocket';
 import {
   Sparkles,
   Heart,
@@ -26,7 +28,7 @@ import {
   Star,
   Zap,
   Crown,
-  Brain
+
 } from 'lucide-react';
 
 interface HomeDashboardProps {
@@ -35,6 +37,7 @@ interface HomeDashboardProps {
 }
 
 export function HomeDashboard({ streak, coins }: HomeDashboardProps) {
+  const { socket } = useLatestOSSocket();
   const [dailySyncCompleted, setDailySyncCompleted] = useState(false);
   const [showAchievement, setShowAchievement] = useState(false);
   const [showReward, setShowReward] = useState(false);
@@ -42,37 +45,12 @@ export function HomeDashboard({ streak, coins }: HomeDashboardProps) {
   const [showMilestone, setShowMilestone] = useState(false);
   const [showStreakCelebration, setShowStreakCelebration] = useState(false);
   const [showMemoryJukebox, setShowMemoryJukebox] = useState(false);
-  const [expandedInsights, setExpandedInsights] = useState(false);
   // Add state for handling button functionalities
   const [acceptedSuggestions, setAcceptedSuggestions] = useState<string[]>([]);
   const [postponedSuggestions, setPostponedSuggestions] = useState<string[]>([]);
   const [detailedSuggestions, setDetailedSuggestions] = useState<string[]>([]);
+  const [showAllMemories, setShowAllMemories] = useState(false);
 
-  // Sample data for new components
-  const relationshipInsights = [
-    {
-      id: '1',
-      type: 'strength' as const,
-      title: 'Excellent Communication Patterns',
-      description: 'Your active listening skills have improved by 40% this month. Keep up the great work!',
-      impact: 'high' as const,
-      confidence: 92,
-      actionable: true,
-      category: 'communication',
-      timestamp: new Date().toISOString()
-    },
-    {
-      id: '2',
-      type: 'opportunity' as const,
-      title: 'Quality Time Enhancement',
-      description: 'Consider scheduling 15-minute daily check-ins to strengthen your emotional connection.',
-      impact: 'medium' as const,
-      confidence: 85,
-      actionable: true,
-      category: 'emotional',
-      timestamp: new Date().toISOString()
-    }
-  ];
 
   const achievements = [
     {
@@ -129,7 +107,9 @@ export function HomeDashboard({ streak, coins }: HomeDashboardProps) {
       trigger: 'low_quality_time',
       severity: 2,
       factors: ['high_stress', 'limited_connection_time']
-    }
+    },
+    archetypalBalance: { krishna: 45, ram: 65, shiva: 30 },
+    targetArchetype: 'krishna' as const
   };
 
   const handleSyncComplete = (data: any) => {
@@ -157,9 +137,24 @@ export function HomeDashboard({ streak, coins }: HomeDashboardProps) {
     setShowMemoryJukebox(false);
   };
 
-  const handleViewAllInsights = () => {
-    setExpandedInsights(!expandedInsights);
+
+
+  const handleToggleMemories = () => {
+    setShowAllMemories(!showAllMemories);
   };
+
+  // Live event: streak bonus
+  useEffect(() => {
+    if (!socket) return;
+    const onBonus = (data: any) => {
+      setShowStreakCelebration(true);
+      setTimeout(() => setShowStreakCelebration(false), 5000);
+    };
+    socket.on('streak:bonus', onBonus);
+    return () => {
+      socket.off('streak:bonus', onBonus);
+    };
+  }, [socket]);
 
   const handleAchievementUnlock = (achievementId: string) => {
     console.log('Achievement unlocked:', achievementId);
@@ -267,9 +262,9 @@ export function HomeDashboard({ streak, coins }: HomeDashboardProps) {
           <Button
             variant="outline"
             size="sm"
-            onClick={handleViewAllInsights}
+            onClick={handleToggleMemories}
           >
-            {expandedInsights ? 'Collapse' : 'View All'}
+            {showAllMemories ? 'Collapse' : 'View All'}
           </Button>
         </div>
 
@@ -356,65 +351,19 @@ export function HomeDashboard({ streak, coins }: HomeDashboardProps) {
         </Button>
       </div>
 
-      {/* AI Relationship Insights */}
+      {/* Archetypal Health Card - Sacred Relationship Balance */}
       <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-            <Brain className="w-5 h-5 text-purple-500" />
-            AI Insights
-          </h2>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleViewAllInsights}
-          >
-            {expandedInsights ? 'Hide' : 'View All'}
-          </Button>
-        </div>
-
-        {expandedInsights && (
-          <div className="space-y-4">
-            {relationshipInsights.map(insight => (
-              <div key={insight.id} className="bg-white p-4 rounded-xl border shadow-sm">
-                <h3 className="font-bold">{insight.title}</h3>
-                <p>{insight.description}</p>
-              </div>
-            ))}
-          </div>
-        )}
-
-        <RelationshipInsights
-          insights={expandedInsights ? relationshipInsights : relationshipInsights.slice(0, 1)}
-          onAction={handleAchievementUnlock}
-        />
-      </div>
-
-      {/* Gamification Engine */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-            <Trophy className="w-5 h-5 text-yellow-500" />
-            Achievements & Rewards
-          </h2>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => {
-            setExpandedInsights(!expandedInsights);
+        <ArchetypalHealthCard
+          balance={{ krishna: 65, ram: 45, shiva: 30 }}
+          onRebalance={() => {
+            // Navigate to Rituals tab or show rebalance modal
+            console.log('Navigate to Rituals for rebalancing');
+            // You could emit an event here or use a navigation hook
           }}
-        >
-          {expandedInsights ? 'Hide' : 'View All'}
-        </Button>
-        </div>
-
-        <GamificationEngine
-          coins={coins}
-          level={Math.floor(streak / 7) + 1}
-          experience={streak * 10}
-          achievements={achievements}
-          onAchievementUnlock={handleAchievementUnlock}
         />
       </div>
+
+
 
       {/* AI Suggestion */}
       <div className="space-y-4">

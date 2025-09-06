@@ -1,11 +1,11 @@
-// Development schema using SQLite
+// Prisma schema aligned to PostgreSQL
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model Couple {
@@ -19,6 +19,9 @@ model Couple {
   children        String   @default("[]") // JSON as String for SQLite
   premium_until   DateTime?
   encryption_key  String
+  stripe_customer_id String?
+  stripe_subscription_id String?
+  subscription_status String?
   created_at      DateTime @default(now())
   updated_at      DateTime @updatedAt
 

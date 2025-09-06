@@ -36,6 +36,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useSync } from '@/hooks/useSync';
+import { useLatestOSSocket } from '@/hooks/useSocket';
 import { SYNC_ERROR_CODES } from '@/lib/config';
 
 interface SyncActivity {
@@ -46,6 +47,8 @@ interface SyncActivity {
   timestamp: Date;
   partner: 'partner1' | 'partner2';
   priority: 'low' | 'medium' | 'high';
+  archetypalEnergy?: 'krishna' | 'ram' | 'shiva';
+  harmonyScore?: number; // How well this activity balanced relationship
 }
 
 interface SyncSession {
@@ -82,6 +85,7 @@ interface NotificationSettings {
 }
 
 export function CoupleSyncSystem() {
+  const { socket, isConnected } = useLatestOSSocket();
   const [syncStatus, setSyncStatus] = useState<'connected' | 'connecting' | 'disconnected'>('connected');
   const [lastSync, setLastSync] = useState<Date>(new Date());
   const [activities, setActivities] = useState<SyncActivity[]>([]);
@@ -98,10 +102,20 @@ export function CoupleSyncSystem() {
   });
   const [activeTab, setActiveTab] = useState('overview');
   const [isLive, setIsLive] = useState(true);
+
+  // Archetypal balance state
+  const [archetypalBalance, setArchetypalBalance] = useState<{krishna: number, ram: number, shiva: number}>({
+    krishna: Math.floor(Math.random() * 30) + 35, // 35-65%
+    ram: Math.floor(Math.random() * 30) + 35,
+    shiva: Math.floor(Math.random() * 30) + 35
+  });
   
   const syncIntervalRef = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
+    // Reflect socket connection
+    setSyncStatus(isConnected ? 'connected' : 'disconnected');
+
     // Initialize sample data
     initializeData();
     
@@ -118,6 +132,27 @@ export function CoupleSyncSystem() {
       }
     };
   }, [isLive]);
+
+  // Live socket listeners
+  useEffect(() => {
+    if (!socket) return;
+    const onPartnerActivity = (payload: any) => {
+      const a: SyncActivity = {
+        id: Date.now().toString(),
+        type: 'sync_completed',
+        title: 'Partner Activity',
+        description: `${payload.partner} ${payload.activity}`,
+        timestamp: new Date(),
+        partner: 'partner2',
+        priority: 'medium'
+      };
+      setActivities(prev => [a, ...prev]);
+    };
+    socket.on('partner:activity', onPartnerActivity);
+    return () => {
+      socket.off('partner:activity', onPartnerActivity);
+    };
+  }, [socket]);
 
   const initializeData = () => {
     // Sample sync activities
@@ -249,6 +284,9 @@ export function CoupleSyncSystem() {
 
   const handleSyncNow = () => {
     setSyncStatus('connecting');
+    if (socket) {
+      socket.emit('sync:complete', { syncData: { source: 'CoupleSyncSystem', at: new Date().toISOString() } });
+    }
     
     // Simulate sync process
     setTimeout(() => {
@@ -444,7 +482,7 @@ export function CoupleSyncSystem() {
       {/* Main Content Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="harmony">Harmony</TabsTrigger>
           <TabsTrigger value="activity">Activity</TabsTrigger>
           <TabsTrigger value="sessions">Sessions</TabsTrigger>
           <TabsTrigger value="goals">Goals</TabsTrigger>
@@ -536,6 +574,206 @@ export function CoupleSyncSystem() {
                   <Badge className="bg-blue-100 text-blue-700 text-xs">
                     {notificationSettings.syncReminders ? 'On' : 'Off'}
                   </Badge>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="harmony" className="space-y-4">
+          {/* Archetypal Relationship Harmony */}
+          <Card className="bg-gradient-to-br from-purple-50 via-blue-50 to-purple-100 border-purple-200 shadow-lg overflow-hidden mb-6">
+            <CardHeader className="bg-gradient-to-r from-purple-500 to-blue-500 text-white">
+              <CardTitle className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5" />
+                Partnership Archetypal Harmony 🕉️
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <div className="text-center mb-6">
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Sacred Energy Balance</h3>
+                <p className="text-gray-600">
+                  Your relationship's archetypal energies in real-time harmony
+                </p>
+              </div>
+
+              {/* Archetypal Balance Display */}
+              <div className="grid grid-cols-3 gap-4 mb-6">
+                <div className="text-center p-4 bg-gradient-to-br from-blue-100 to-cyan-100 rounded-xl border border-blue-200">
+                  <div className="flex items-center justify-center mb-3">
+                    <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full flex items-center justify-center text-2xl shadow-lg">
+                      💙
+                    </div>
+                  </div>
+                  <h4 className="font-bold text-blue-800 mb-1">Krishna</h4>
+                  <p className="text-sm text-blue-600 mb-2">Playful Love</p>
+                  <div className="text-2xl font-bold text-blue-700">{archetypalBalance.krishna}%</div>
+                  <Progress value={archetypalBalance.krishna} className="mt-2 h-2 bg-blue-200" />
+                </div>
+
+                <div className="text-center p-4 bg-gradient-to-br from-yellow-100 to-orange-100 rounded-xl border border-yellow-200">
+                  <div className="flex items-center justify-center mb-3">
+                    <div className="w-12 h-12 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-full flex items-center justify-center text-2xl shadow-lg">
+                      🤝
+                    </div>
+                  </div>
+                  <h4 className="font-bold text-yellow-800 mb-1">Ram</h4>
+                  <p className="text-sm text-yellow-600 mb-2">Devoted Partnership</p>
+                  <div className="text-2xl font-bold text-yellow-700">{archetypalBalance.ram}%</div>
+                  <Progress value={archetypalBalance.ram} className="mt-2 h-2 bg-yellow-200" />
+                </div>
+
+                <div className="text-center p-4 bg-gradient-to-br from-purple-100 to-violet-100 rounded-xl border border-purple-200">
+                  <div className="flex items-center justify-center mb-3">
+                    <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-violet-500 rounded-full flex items-center justify-center text-2xl shadow-lg">
+                    🧘
+                    </div>
+                  </div>
+                  <h4 className="font-bold text-purple-800 mb-1">Shiva</h4>
+                  <p className="text-sm text-purple-600 mb-2">Inner Wholeness</p>
+                  <div className="text-2xl font-bold text-purple-700">{archetypalBalance.shiva}%</div>
+                  <Progress value={archetypalBalance.shiva} className="mt-2 h-2 bg-purple-200" />
+                </div>
+              </div>
+
+              {/* Harmony Actions */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Button
+                  className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white"
+                  onClick={() => {
+                    const newBalance = {
+                      krishna: Math.floor(Math.random() * 20) + 70, // Boost Krishna 70-90%
+                      ram: Math.floor(Math.random() * 20) + 40, // Balance Ram 40-60%
+                      shiva: Math.floor(Math.random() * 20) + 40 // Balance Shiva 40-60%
+                    };
+                    setArchetypalBalance(newBalance);
+
+                    const syncActivity: SyncActivity = {
+                      id: Date.now().toString(),
+                      type: 'ritual_performed',
+                      title: 'Harmony Sync Performed',
+                      description: 'Partner synchronized archetypal energies for balance',
+                      timestamp: new Date(),
+                      partner: 'partner2',
+                      priority: 'high',
+                      archetypalEnergy: 'krishna',
+                      harmonyScore: 85
+                    };
+                    setActivities(prev => [syncActivity, ...prev]);
+                  }}
+                >
+                  <Heart className="w-4 h-4 mr-2" />
+                  Sync Energies Now
+                </Button>
+
+                <Button
+                  variant="outline"
+                  className="border-purple-300 text-purple-700 hover:bg-purple-50"
+                  onClick={() => {
+                    const harmonySession = {
+                      id: Date.now().toString(),
+                      date: new Date(),
+                      duration: 10,
+                      mood1: 5,
+                      mood2: 5,
+                      energy1: 8,
+                      energy2: 9,
+                      topics: ['Energy balance', 'Archetypal harmony'],
+                      actionItems: ['Align archetypal energies', 'Strengthen spiritual connection'],
+                      completed: true
+                    };
+                    setSessions(prev => [harmonySession, ...prev]);
+                  }}
+                >
+                  <Users className="w-4 h-4 mr-2" />
+                  Start Harmony Session
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Archetypal Activities Feed */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Target className="w-5 h-5" />
+                Energy-Flow Activities
+              </CardTitle>
+              <p className="text-sm text-gray-600">
+                Real-time archetypal energy exchanges strengthening your bond
+              </p>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {activities.slice(0, 3).map((activity, index) => (
+                  <div key={activity.id} className="p-4 bg-gradient-to-r from-gray-50 to-white rounded-xl border border-gray-200 hover:shadow-md transition-all duration-200">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white shadow-lg">
+                          <span className="text-sm">
+                            {activity.archetypalEnergy === 'krishna' ? '💙' :
+                             activity.archetypalEnergy === 'ram' ? '🤝' : '🧘'}
+                          </span>
+                        </div>
+                        <div>
+                          <h4 className="font-medium text-gray-900 text-sm">{activity.title}</h4>
+                          <p className="text-xs text-gray-600">{activity.description}</p>
+                        </div>
+                      </div>
+                      {activity.harmonyScore && (
+                        <div className="text-center">
+                          <div className={`text-sm font-bold ${
+                            activity.harmonyScore >= 80 ? 'text-green-600' :
+                            activity.harmonyScore >= 60 ? 'text-yellow-600' : 'text-red-600'
+                          }`}>
+                            {activity.harmonyScore}%
+                          </div>
+                          <div className="text-xs text-gray-500">Harmony</div>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <Badge className={`text-xs ${
+                        activity.archetypalEnergy === 'krishna' ? 'bg-blue-100 text-blue-700' :
+                        activity.archetypalEnergy === 'ram' ? 'bg-yellow-100 text-yellow-700' :
+                        'bg-purple-100 text-purple-700'
+                      }`}>
+                        {activity.archetypalEnergy || 'sacred'} energy
+                      </Badge>
+                      <span className="text-xs text-gray-500">•</span>
+                      <span className="text-xs text-gray-500">{formatTime(activity.timestamp)}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Sacred Connection Insights */}
+          <Card className="bg-gradient-to-r from-pink-50 to-purple-50 border-pink-200">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Heart className="w-5 h-5 text-pink-600" />
+                Sacred Connection Insights 💕
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="p-4 bg-white/80 rounded-xl border border-pink-200">
+                  <h4 className="font-semibold text-pink-800 mb-2">Today's Archetypal Dance</h4>
+                  <p className="text-sm text-gray-700 leading-relaxed">
+                    Your relationship is currently flowing with {Math.max(archetypalBalance.krishna, archetypalBalance.ram, archetypalBalance.shiva)}%
+                    harmony. Every shared moment strengthens the sacred bond between your souls. 🥰
+                  </p>
+                </div>
+
+                <div className="p-4 bg-white/80 rounded-xl border border-pink-200">
+                  <h4 className="font-semibold text-purple-800 mb-2">Energy Flow Reminder</h4>
+                  <p className="text-sm text-gray-700 leading-relaxed">
+                    Balance your energies like the eternal dance of Radha-Krishna. When you sync with your partner,
+                    you're participating in creation itself. 🌟
+                  </p>
                 </div>
               </div>
             </CardContent>

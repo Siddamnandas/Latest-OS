@@ -1,5 +1,8 @@
+/// <reference lib="webworker" />
 // Service Worker for Latest-OS
 // Handles caching, offline support, and push notifications
+export {};
+declare const self: ServiceWorkerGlobalScope;
 
 const CACHE_NAME = 'latest-os-v2';
 const OFFLINE_CACHE = 'latest-os-offline-v2';
@@ -419,14 +422,14 @@ self.addEventListener('notificationclick', (event: NotificationEvent) => {
   event.notification.close();
   const target = event.notification.data?.url || '/';
   event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList: readonly Client[]) => {
       for (const client of clientList) {
         if ('focus' in client) {
           return (client as WindowClient).focus();
         }
       }
-      if (clients.openWindow) {
-        return clients.openWindow(target);
+      if (self.clients.openWindow) {
+        return self.clients.openWindow(target);
       }
       return undefined;
     })

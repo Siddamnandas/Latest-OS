@@ -1,4 +1,4 @@
-import algoliasearch, { SearchClient } from 'algoliasearch';
+import { algoliasearch, SearchClient } from 'algoliasearch';
 
 const APP_ID = process.env.ALGOLIA_APP_ID;
 const API_KEY = process.env.ALGOLIA_API_KEY;

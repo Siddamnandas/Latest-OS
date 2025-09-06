@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { db } from '@/lib/db';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2023-10-16',
-});
+const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY, {
+  apiVersion: '2024-10-28.basil' as any,
+}) : null;
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -29,6 +29,10 @@ export async function POST(request: NextRequest) {
   const body = await request.text();
   const sig = request.headers.get('stripe-signature') || '';
   let event: Stripe.Event;
+
+  if (!stripe) {
+    return new NextResponse('Stripe not configured', { status: 500 });
+  }
 
   try {
     event = stripe.webhooks.constructEvent(

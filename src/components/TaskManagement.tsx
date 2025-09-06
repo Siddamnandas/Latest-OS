@@ -35,6 +35,9 @@ interface Task {
   coins: number;
   completed: boolean;
   createdAt: string;
+  archetypalAffinity?: 'krishna' | 'ram' | 'shiva';
+  archetypalTags?: string[];
+  suggestedBy?: 'user' | 'archetypal-ai';
 }
 
 export function TaskManagement() {
@@ -87,8 +90,11 @@ export function TaskManagement() {
     assignedTo: 'both' as 'partner1' | 'partner2' | 'both',
     category: 'household',
     priority: 'medium' as 'low' | 'medium' | 'high',
-    estimatedTime: 30
+    estimatedTime: 30,
+    archetypalAffinity: 'krishna' as 'krishna' | 'ram' | 'shiva'
   });
+
+  const [archetypeFilter, setArchetypeFilter] = useState<string>('all');
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -159,7 +165,8 @@ export function TaskManagement() {
       assignedTo: 'both',
       category: 'household',
       priority: 'medium',
-      estimatedTime: 30
+      estimatedTime: 30,
+      archetypalAffinity: 'krishna'
     });
     setShowAddTask(false);
   };
@@ -181,7 +188,8 @@ export function TaskManagement() {
         assignedTo: task.assignedTo,
         category: task.category,
         priority: task.priority,
-        estimatedTime: task.estimatedTime
+        estimatedTime: task.estimatedTime,
+        archetypalAffinity: task.archetypalAffinity || 'krishna'
       });
       setShowAddTask(true);
     }

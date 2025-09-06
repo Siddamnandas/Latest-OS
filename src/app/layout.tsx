@@ -11,6 +11,7 @@ import Script from "next/script";
 import { AuthProvider } from "@/components/providers/auth-provider";
 import { QueryProvider } from "@/components/providers/query-provider";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { SocketProvider } from "@/components/providers/socket-provider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -83,8 +84,10 @@ export default async function RootLayout({
         <ErrorBoundary>
           <AuthProvider session={session}>
             <QueryProvider>
-              {children}
-              <Toaster />
+              <SocketProvider>
+                {children}
+                <Toaster />
+              </SocketProvider>
             </QueryProvider>
           </AuthProvider>
         </ErrorBoundary>

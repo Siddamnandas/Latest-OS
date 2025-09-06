@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Target, Calendar, TrendingUp, Award, Plus, CheckCircle, Clock, Edit, Trash2, Star } from 'lucide-react';
+import { ArchetypalHealthCard } from '@/components/ArchetypalHealthCard';
 import { useToast } from '@/hooks/use-toast';
 
 interface Goal {
@@ -629,6 +630,78 @@ export function GoalsHub() {
         </TabsContent>
       </Tabs>
       
+      {/* Archetypal Goal Insights */}
+      <div className="space-y-4">
+        <ArchetypalHealthCard
+          balance={{ krishna: 65, ram: 45, shiva: 30 }}
+          compact={true}
+          onRebalance={() => {
+            toast({
+              title: 'Archetypal Goal Suggestions',
+              description: 'Create goals aligned with your archetypal balance',
+            });
+          }}
+        />
+
+        {/* Archetypal Goal Suggestions */}
+        <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Star className="w-5 h-5 text-blue-600" />
+              Archetypal Goal Suggestions
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="p-3 bg-white rounded-lg border border-blue-200">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-lg">💙</span>
+                  <span className="font-medium text-blue-700">Krishna Goals</span>
+                </div>
+                <p className="text-xs text-gray-600 mb-2">Enhance playful love</p>
+                <Button
+                  size="sm"
+                  className="w-full bg-blue-100 hover:bg-blue-200 text-blue-700"
+                  onClick={() => setShowNewGoalModal(true)}
+                >
+                  + Plan Adventure
+                </Button>
+              </div>
+
+              <div className="p-3 bg-white rounded-lg border border-yellow-200">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-lg">🤝</span>
+                  <span className="font-medium text-yellow-700">Ram Goals</span>
+                </div>
+                <p className="text-xs text-gray-600 mb-2">Strengthen partnership</p>
+                <Button
+                  size="sm"
+                  className="w-full bg-yellow-100 hover:bg-yellow-200 text-yellow-700"
+                  onClick={() => setShowNewGoalModal(true)}
+                >
+                  + Family Project
+                </Button>
+              </div>
+
+              <div className="p-3 bg-white rounded-lg border border-purple-200">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-lg">🧘</span>
+                  <span className="font-medium text-purple-700">Shiva Goals</span>
+                </div>
+                <p className="text-xs text-gray-600 mb-2">Cultivate inner peace</p>
+                <Button
+                  size="sm"
+                  className="w-full bg-purple-100 hover:bg-purple-200 text-purple-700"
+                  onClick={() => setShowNewGoalModal(true)}
+                >
+                  + Solo Practice
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Goal Insights */}
       <Card className="w-full bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200">
         <CardHeader>

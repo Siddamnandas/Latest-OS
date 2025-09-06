@@ -1,8 +1,10 @@
 'use client';
 
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Sparkles, Clock, Target, Info, Heart, Star, Zap } from 'lucide-react';
+import { MythologicalWisdom } from '@/components/MythologicalWisdom';
 
 interface AISuggestionCardProps {
   suggestion: {
@@ -18,6 +20,12 @@ interface AISuggestionCardProps {
       severity: number;
       factors: string[];
     };
+    archetypalBalance?: {
+      krishna: number;
+      ram: number;
+      shiva: number;
+    };
+    targetArchetype?: 'krishna' | 'ram' | 'shiva';
   };
   onAccept: () => void;
   onLater: () => void;
@@ -25,6 +33,7 @@ interface AISuggestionCardProps {
 }
 
 export function AISuggestionCard({ suggestion, onAccept, onLater, onTellMe }: AISuggestionCardProps) {
+  const [showWisdom, setShowWisdom] = useState(false);
   const getArchetypeInfo = (archetype: string) => {
     switch (archetype) {
       case 'radha_krishna':
@@ -131,31 +140,101 @@ export function AISuggestionCard({ suggestion, onAccept, onLater, onTellMe }: AI
           </ol>
         </div>
 
+        {/* Archetypal Reasoning Section */}
+        {suggestion.archetypalBalance && (
+          <div className="space-y-3 mb-4">
+            <h4 className="font-semibold text-gray-900 text-sm flex items-center gap-2">
+              <Target className="w-4 h-4 text-purple-600" />
+              Archetypal Intelligence:
+            </h4>
+
+            {/* Balance Display */}
+            <div className="grid grid-cols-3 gap-2">
+              {Object.entries(suggestion.archetypalBalance).map(([archetype, percentage]) => {
+                const archInfo = getArchetypeInfo(archetype === 'krishna' ? 'radha_krishna' :
+                    archetype === 'ram' ? 'sita_ram' : 'shiva_shakti');
+                return (
+                  <div key={archetype}
+                    className={`text-center p-2 rounded-lg ${archInfo.bgColor} border ${archInfo.borderColor}`}>
+                    <div className={`text-xs font-medium capitalize ${archInfo.textColor}`}>
+                      {archetype}
+                    </div>
+                    <div className="text-lg font-bold text-gray-900">
+                      {percentage}%
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Archetypal Reasoning */}
+            {suggestion.targetArchetype && (
+              <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg p-3 border border-purple-200">
+                <p className="text-sm text-gray-700 leading-relaxed">
+                  <span className="font-medium text-purple-700">Why this suggestion?</span><br />
+                  Your relationship needs more {suggestion.targetArchetype} energy.
+                  This practice strengthens {
+                    suggestion.targetArchetype === 'krishna' ? 'playful connection' :
+                    suggestion.targetArchetype === 'ram' ? 'devoted partnership' : 'inner wholeness'
+                  } 🌟
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="flex gap-2">
-          <Button 
+          <Button
             onClick={onAccept}
             className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold py-3 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
           >
             <Zap className="w-4 h-4 mr-2" />
             Try Now
           </Button>
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={onLater}
             className="flex-1 border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold py-3 rounded-xl"
           >
             Later
           </Button>
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             size="sm"
-            onClick={onTellMe}
+            onClick={() => setShowWisdom(true)}
             className="px-3 py-3 rounded-xl hover:bg-gray-100"
           >
             <Info className="w-4 h-4" />
           </Button>
         </div>
       </div>
+
+      {/* Mythological Wisdom Modal */}
+      {showWisdom && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-gray-900">Sacred Archetypal Wisdom 🕉️</h3>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowWisdom(false)}
+                >
+                  ✕
+                </Button>
+              </div>
+              <MythologicalWisdom
+                context={suggestion.targetArchetype}
+                onWisdomShared={(wisdom) => {
+                  // Handle wisdom shared
+                  setShowWisdom(false);
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

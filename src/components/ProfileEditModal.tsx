@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { useToast } from '@/hooks/use-toast';
+import { ArchetypalHealthCard } from '@/components/ArchetypalHealthCard';
 import {
   Dialog,
   DialogContent,
@@ -377,6 +378,34 @@ export function ProfileEditModal({ open, onOpenChange }: ProfileEditModalProps) 
                       </FormItem>
                     )}
                   />
+                </CardContent>
+              </Card>
+
+              {/* Archetypal Assessment Section */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    🕉️ Relationship Archetypes
+                  </CardTitle>
+                  <p className="text-sm text-gray-600">Discover your sacred relationship balance</p>
+                </CardHeader>
+                <CardContent>
+                  <ArchetypalHealthCard
+                    balance={{ krishna: 65, ram: 45, shiva: 30 }}
+                    compact={true}
+                    onRebalance={() => {
+                      toast({
+                        title: 'Archetypal Assessment',
+                        description: 'Navigate to Rituals tab to balance your energies',
+                      });
+                    }}
+                  />
+                  <div className="mt-4 p-3 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-200">
+                    <p className="text-sm text-gray-700 text-center">
+                      <strong>Your relationship strength:</strong> You have a beautiful balance of playful love (Krishna) with solid partnership foundations (Ram).
+                      Consider nurturing more individual wholeness practices to achieve perfect harmony 🕉️
+                    </p>
+                  </div>
                 </CardContent>
               </Card>
 

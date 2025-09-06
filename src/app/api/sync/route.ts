@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { db } from '@/lib/db';
 import { z } from 'zod';
 
-const prisma = new PrismaClient();
+const prisma = db;
 
 // Sync entry validation schema
 const syncSchema = z.object({

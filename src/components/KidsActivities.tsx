@@ -680,6 +680,122 @@ export function KidsActivities() {
     }
   ];
   
+  const archetypalActivities = [
+    // Krishna Activities (Play & Joy)
+    {
+      id: 'krishna-playful-dance',
+      name: 'Divine Dance Party 💃',
+      archetype: 'krishna',
+      type: 'dance',
+      emoji: '💃',
+      color: 'from-blue-500 to-cyan-500',
+      description: 'Express joy through movement and rhythm',
+      benefits: ['Emotional expression', 'Confidence building', 'Family bonding'],
+      ageRange: '3-12',
+      duration: '15-20 min'
+    },
+    {
+      id: 'krishna-storytime',
+      name: 'Krishna Story Adventures 📚',
+      archetype: 'krishna',
+      type: 'storytelling',
+      emoji: '📚',
+      color: 'from-blue-500 to-cyan-500',
+      description: 'Create and tell playful, imaginative stories',
+      benefits: ['Creativity', 'Language skills', 'Imagination'],
+      ageRange: '4-10',
+      duration: '20-30 min'
+    },
+    {
+      id: 'krishna-art-play',
+      name: 'Colorful Krishna Art 🎨',
+      archetype: 'krishna',
+      type: 'art',
+      emoji: '🎨',
+      color: 'from-blue-500 to-cyan-500',
+      description: 'Express emotions through colorful, free-form art',
+      benefits: ['Emotional release', 'Fine motor skills', 'Self-expression'],
+      ageRange: '3-12',
+      duration: '25-30 min'
+    },
+
+    // Ram Activities (Service & Responsibility)
+    {
+      id: 'ram-garden-helper',
+      name: 'Ram Garden Care 🌱',
+      archetype: 'ram',
+      type: 'gardening',
+      emoji: '🌱',
+      color: 'from-yellow-500 to-orange-500',
+      description: 'Care for plants and learn responsibility',
+      benefits: ['Responsibility', 'Patience', 'Nature connection'],
+      ageRange: '5-12',
+      duration: '20-30 min'
+    },
+    {
+      id: 'ram-kitchen-helper',
+      name: 'Ram Kitchen Assistant 👨‍🍳',
+      archetype: 'ram',
+      type: 'cooking',
+      emoji: '👨‍🍳',
+      color: 'from-yellow-500 to-orange-500',
+      description: 'Help prepare simple, healthy meals',
+      benefits: ['Life skills', 'Following instructions', 'Family contribution'],
+      ageRange: '6-12',
+      duration: '20-40 min'
+    },
+    {
+      id: 'ram-cleanup-hero',
+      name: 'Ram Cleanup Champion 🧹',
+      archetype: 'ram',
+      type: 'household',
+      emoji: '🧹',
+      color: 'from-yellow-500 to-orange-500',
+      description: 'Maintain home cleanliness with pride',
+      benefits: ['Self-reliance', 'Organization', 'Contribution mindset'],
+      ageRange: '4-12',
+      duration: '15-25 min'
+    },
+
+    // Shiva Activities (Inner Peace & Mindfulness)
+    {
+      id: 'shiva-quiet-time',
+      name: 'Shiva Quiet Moments 🧘',
+      archetype: 'shiva',
+      type: 'meditation',
+      emoji: '🧘',
+      color: 'from-purple-500 to-violet-500',
+      description: 'Practice gentle breathing and mindfulness',
+      benefits: ['Emotional regulation', 'Focus', 'Inner calm'],
+      ageRange: '4-12',
+      duration: '5-10 min'
+    },
+    {
+      id: 'shiva-nature-walk',
+      name: 'Shiva Nature Explorer 🌿',
+      archetype: 'shiva',
+      type: 'nature',
+      emoji: '🌿',
+      color: 'from-purple-500 to-violet-500',
+      description: 'Observe and appreciate natural beauty',
+      benefits: ['Mindfulness', 'Observation skills', 'Peace appreciation'],
+      ageRange: '5-12',
+      duration: '20-30 min'
+    },
+    {
+      id: 'shiva-gratitude-circle',
+      name: 'Shiva Gratitude Circle 🙏',
+      archetype: 'shiva',
+      type: 'reflection',
+      emoji: '🙏',
+      color: 'from-purple-500 to-violet-500',
+      description: "Share appreciation for life's blessings",
+      benefits: ['Gratitude practice', 'Emotional intelligence', 'Family bonding'],
+      ageRange: '4-12',
+      duration: '10-15 min'
+    }
+  ];
+
   const themedDays = [
     {
       id: 'krishna',

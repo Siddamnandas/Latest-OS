@@ -9,16 +9,19 @@ import { GoalsHub } from '@/components/GoalsHub';
 import { KidsPageContent } from '@/components/KidsPageContent';
 import { FloatingActionButton } from '@/components/FloatingActionButton';
 import { ProfileEditModal } from '@/components/ProfileEditModal';
+import { GamificationEngine } from '@/components/GamificationEngine';
 import { useToast } from '@/hooks/use-toast';
 import { useLiveData } from '@/hooks/useLiveData';
 import { Button } from '@/components/ui/button';
-import { X } from 'lucide-react';
+import { Trophy, X, Brain } from 'lucide-react';
+import { RelationshipInsights } from '@/components/RelationshipInsights';
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState('home');
   const [showCelebration, setShowCelebration] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [isDemoMode, setIsDemoMode] = useState(false);
+  const [showProfileInsights, setShowProfileInsights] = useState(false);
   const { toast } = useToast();
   const { data: liveData, loading, error } = useLiveData();
 
@@ -66,6 +69,89 @@ export default function Home() {
     }
   }, [toast, liveData]);
 
+  const achievements = [
+    {
+      id: '1',
+      title: 'First Sync',
+      description: 'Complete your first daily sync',
+      icon: '🎯',
+      rarity: 'common' as const,
+      progress: 1,
+      maxProgress: 1,
+      unlocked: true,
+      unlockedAt: new Date().toISOString(),
+      reward: { coins: 50, badge: 'First Steps' }
+    },
+    {
+      id: '2',
+      title: 'Week Warrior',
+      description: 'Maintain a 7-day streak',
+      icon: '🔥',
+      rarity: 'rare' as const,
+      progress: streak,
+      maxProgress: 7,
+      unlocked: streak >= 7,
+      unlockedAt: streak >= 7 ? new Date().toISOString() : undefined,
+      reward: { coins: 100, badge: 'Consistency Master' }
+    },
+    {
+      id: '3',
+      title: 'Ritual Master',
+      description: 'Complete 10 relationship rituals',
+      icon: '🕉️',
+      rarity: 'epic' as const,
+      progress: 3,
+      maxProgress: 10,
+      unlocked: false,
+      reward: { coins: 250, badge: 'Ritual Expert' }
+    }
+  ];
+
+  const handleAchievementUnlock = (achievementId: string) => {
+    console.log('Achievement unlocked:', achievementId);
+    // Handle achievement unlock logic
+  };
+
+  const profileInsights = [
+    {
+      id: 'profile-1',
+      type: 'strength' as const,
+      title: 'Strong Foundation',
+      description: 'Your consistent daily syncs are building a solid relationship foundation.',
+      impact: 'high' as const,
+      confidence: 95,
+      actionable: false,
+      category: 'foundation',
+      timestamp: new Date().toISOString()
+    },
+    {
+      id: 'profile-2',
+      type: 'opportunity' as const,
+      title: 'Deepen Emotional Connection',
+      description: 'Consider sharing more personal thoughts during your sync sessions to strengthen your bond.',
+      impact: 'medium' as const,
+      confidence: 88,
+      actionable: true,
+      category: 'emotional',
+      timestamp: new Date().toISOString()
+    },
+    {
+      id: 'profile-3',
+      type: 'milestone' as const,
+      title: 'Growth Trajectory',
+      description: 'You\'ve progressed from "Getting Started" to "Good Partners" in just 7 days. Keep up the momentum!',
+      impact: 'high' as const,
+      confidence: 92,
+      actionable: false,
+      category: 'progress',
+      timestamp: new Date().toISOString()
+    }
+  ];
+
+  const handleToggleProfileInsights = () => {
+    setShowProfileInsights(!showProfileInsights);
+  };
+
   const renderContent = () => {
     switch (activeTab) {
       case 'home':
@@ -80,9 +166,13 @@ export default function Home() {
         return <KidsPageContent />;
       case 'profile':
         return (
-          <div className="text-center p-8">
-            <h2 className="text-2xl font-bold mb-4">Profile Settings ⚙️</h2>
-            <p className="text-gray-600 mb-4">Customize your experience and preferences.</p>
+          <div className="p-4 space-y-6">
+            <div className="text-center">
+              <h2 className="text-2xl font-bold mb-4">Profile ⚙️</h2>
+              <p className="text-gray-600 mb-6">Your journey and achievements</p>
+            </div>
+
+            {/* Basic Profile Info */}
             <div className="bg-white/80 backdrop-blur-lg rounded-xl p-6 max-w-md mx-auto">
               <div className="space-y-4">
                 <div className="text-center mb-4">
@@ -160,6 +250,50 @@ export default function Home() {
                   </div>
                 )}
               </div>
+            </div>
+
+            {/* Achievements & Rewards Section */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                  <Trophy className="w-5 h-5 text-yellow-500" />
+                  Achievements & Rewards
+                </h3>
+              </div>
+
+              <GamificationEngine
+                coins={coins}
+                level={Math.floor(streak / 7) + 1}
+                experience={streak * 10}
+                achievements={achievements}
+                onAchievementUnlock={handleAchievementUnlock}
+              />
+            </div>
+
+            {/* AI Insights Section */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                  <Brain className="w-5 h-5 text-purple-500" />
+                  AI Insights
+                </h3>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleToggleProfileInsights}
+                >
+                  {showProfileInsights ? 'Hide' : 'View Insights'}
+                </Button>
+              </div>
+
+              {showProfileInsights && (
+                <div className="space-y-4">
+                  <RelationshipInsights
+                    insights={profileInsights}
+                    onAction={handleAchievementUnlock}
+                  />
+                </div>
+              )}
             </div>
           </div>
         );

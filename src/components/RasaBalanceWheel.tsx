@@ -6,6 +6,12 @@ import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { Target, TrendingUp, RefreshCw, Heart, Star, Zap } from 'lucide-react';
 
+interface ArchetypalBalance {
+  krishna: number; // Playful Love 0-100
+  ram: number;     // Devoted Partnership 0-100
+  shiva: number;   // Individual Wholeness 0-100
+}
+
 interface RasaBalanceWheelProps {
   balance: {
     play: number;
@@ -183,6 +189,67 @@ export function RasaBalanceWheel({ balance, onRebalance }: RasaBalanceWheelProps
         })}
       </div>
 
+      {/* Archetypal Boost Actions */}
+      <div className="space-y-3">
+        <h4 className="font-semibold text-gray-900 text-lg">Boost Relationship Energies</h4>
+        <div className="grid grid-cols-1 gap-3">
+          <Button
+            variant="outline"
+            className="h-auto p-4 bg-blue-50 border-blue-200 hover:bg-blue-100 text-blue-700"
+            onClick={() => console.log('Boost Krishna')}
+          >
+            <div className="flex items-center justify-between w-full">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center text-white shadow-lg">
+                  <span className="text-lg">💙</span>
+                </div>
+                <div className="text-left">
+                  <h5 className="font-semibold">Boost Krishna</h5>
+                  <p className="text-sm opacity-80">Add joy and spontaneity</p>
+                </div>
+              </div>
+              <Heart className="w-5 h-5 opacity-60" />
+            </div>
+          </Button>
+
+          <Button
+            variant="outline"
+            className="h-auto p-4 bg-yellow-50 border-yellow-200 hover:bg-yellow-100 text-yellow-700"
+            onClick={() => console.log('Boost Ram')}
+          >
+            <div className="flex items-center justify-between w-full">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-xl flex items-center justify-center text-white shadow-lg">
+                  <span className="text-lg">🤝</span>
+                </div>
+                <div className="text-left">
+                  <h5 className="font-semibold">Boost Ram</h5>
+                  <p className="text-sm opacity-80">Strengthen devotion and service</p>
+                </div>
+              </div>
+              <Heart className="w-5 h-5 opacity-60" />
+            </div>
+          </Button>
+
+          <Button
+            variant="outline"
+            className="h-auto p-4 bg-purple-50 border-purple-200 hover:bg-purple-100 text-purple-700"
+            onClick={() => console.log('Boost Shiva')}
+          >
+            <div className="flex items-center justify-between w-full">
+              <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-violet-500 rounded-xl flex items-center justify-center text-white shadow-lg">
+                <span className="text-lg">🧘</span>
+              </div>
+              <div className="text-left">
+                <h5 className="font-semibold">Boost Shiva</h5>
+                <p className="text-sm opacity-80">Cultivate inner wholeness</p>
+              </div>
+              <Heart className="w-5 h-5 opacity-60" />
+            </div>
+          </Button>
+        </div>
+      </div>
+
       {/* Rebalance Suggestion */}
       {balanceStatus.status !== 'balanced' && (
         <div className={`${lowestInfo.bgColor} rounded-xl p-4 border ${lowestInfo.borderColor} transform hover:scale-105 transition-all duration-300`}>
@@ -195,7 +262,7 @@ export function RasaBalanceWheel({ balance, onRebalance }: RasaBalanceWheelProps
           <p className="text-sm text-gray-700 mb-3">
             Focus more on <span className={`font-semibold ${lowestInfo.textColor}`}>{lowestInfo.name}</span> activities to restore harmony.
           </p>
-          <Button 
+          <Button
             onClick={onRebalance}
             className={`w-full bg-gradient-to-r ${lowestInfo.gradient} hover:opacity-90 text-white font-semibold py-2 rounded-lg shadow-lg transform hover:scale-105 transition-all duration-200`}
           >
