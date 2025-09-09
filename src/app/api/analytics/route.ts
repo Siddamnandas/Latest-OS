@@ -180,7 +180,7 @@ async function gatherRelationshipAnalytics(
     dimensions,
     key_trends: identifyKeyTrends(dimensions),
     risk_assessment: assessRelationshipRisk(dimensions),
-    ...(includePredictions && { predictions: generatePredictionModel(dimensions) })
+    ...(includePredictions && { predictions: generatePredictions({ overall_health_score: calculateOverallHealthScore(dimensions), dimensions }) })
   };
 }
 
@@ -498,7 +498,7 @@ function getAssessmentDescription(level: string, score: number): string {
 }
 
 function identifyKeyTrends(dimensions: any) {
-  const trends = [];
+  const trends: any[] = [];
 
   if (dimensions.communication?.trends?.direction) {
     trends.push({
@@ -551,7 +551,7 @@ function analyzeRelationshipTrends(dimensions: any) {
 }
 
 function generateRelationshipInsights(analytics: any, healthScore: number) {
-  const insights = [];
+  const insights: any[] = [];
 
   // Communication insights
   if (analytics.dimensions.communication) {
@@ -594,7 +594,7 @@ function generateRelationshipInsights(analytics: any, healthScore: number) {
 }
 
 function generatePersonalizedRecommendations(analytics: any, healthScore: number) {
-  const recommendations = [];
+  const recommendations: any[] = [];
 
   if (healthScore < 50) {
     recommendations.push({

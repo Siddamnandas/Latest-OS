@@ -291,9 +291,7 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
                 }`}
               >
                 <div className="relative mb-1">
-                  {React.cloneElement(item.icon as React.ReactElement, {
-                    className: 'w-5 h-5'
-                  })}
+                  {item.icon}
                   {item.badge && item.badge > 0 && (
                     <Badge 
                       variant="destructive" 

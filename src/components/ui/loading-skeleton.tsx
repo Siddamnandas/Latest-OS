@@ -95,17 +95,3 @@ export function LoadingSkeleton() {
     </div>
   );
 }
-
-interface SkeletonProps {
-  className?: string;
-}
-
-// If the Skeleton component doesn't exist in ui components, create a simple one
-export function Skeleton({ className = '' }: SkeletonProps) {
-  return (
-    <div
-      className={`animate-pulse bg-gray-200 dark:bg-gray-700 rounded ${className}`}
-      aria-hidden="true"
-    />
-  );
-}

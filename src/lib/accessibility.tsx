@@ -436,7 +436,7 @@ export function AccessibleTooltip({
         <div
           id={tooltipId}
           role="tooltip"
-          className={`absolute z-10 px-2 py-1 text-sm text-white bg-gray-900 rounded shadow-lg ${
+          className={`absolute z-10 px-2 py-1 text-sm text-gray-800 bg-gray-100 rounded shadow-lg ${
             placement === 'top' ? 'bottom-full left-1/2 transform -translate-x-1/2 mb-2' :
             placement === 'bottom' ? 'top-full left-1/2 transform -translate-x-1/2 mt-2' :
             placement === 'left' ? 'right-full top-1/2 transform -translate-y-1/2 mr-2' :

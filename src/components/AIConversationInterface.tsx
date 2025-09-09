@@ -306,7 +306,7 @@ export function AIConversationInterface({ sessionId, onSessionComplete }: AIConv
       content: inputMessage,
       timestamp: new Date(),
       sentiment: sentiment.sentiment,
-      emotion: sentiment.emotion,
+      emotion: sentiment.emotion as any,
       confidence: sentiment.confidence,
       topics: topics
     };

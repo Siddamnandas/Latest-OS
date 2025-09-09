@@ -78,10 +78,11 @@ async function createCustomServer() {
     });
 
     // Setup Socket.IO
+    const allowedOrigins = (process.env.SOCKET_CORS_ORIGIN || '').split(',').map(s => s.trim()).filter(Boolean);
     const io = new Server(server, {
       path: '/api/socketio',
       cors: {
-        origin: "*",
+        origin: dev ? "*" : (allowedOrigins.length ? allowedOrigins : []),
         methods: ["GET", "POST"]
       }
     });
@@ -95,7 +96,7 @@ async function createCustomServer() {
     });
 
   } catch (err) {
-    logger.error({ err }, 'Server startup error');
+    logger.error(`Server startup error: ${err instanceof Error ? err.message : String(err)}`);
     process.exit(1);
   }
 }

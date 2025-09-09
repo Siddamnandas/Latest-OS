@@ -2,6 +2,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { addActivity, getActivities, getStats } from '@/lib/family/activitiesStore';
 
 // Mock AI implementation to replace z-ai-web-dev-sdk
 class MockZAI {
@@ -111,34 +112,27 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Child ID, activity data, and user ID required' }, { status: 400 });
     }
 
-    // Verify the user has access to this child
+    // Verify the user has access to this child via couple ownership
+    const user = await db.user.findUnique({ where: { id: userId } });
     const child = await db.child.findFirst({
-      where: {
-        id: childId,
-        OR: [
-          { parentId: userId },
-          { coParentId: userId }
-        ]
-      }
+      where: { id: childId, couple_id: user?.couple_id || '' }
     });
 
     if (!child) {
       return NextResponse.json({ error: 'Child not found or access denied' }, { status: 404 });
     }
 
-    // Create activity record
-    const newActivity = await db.childActivity.create({
-      data: {
-        childId,
-        title: activityData.title,
-        type: activityData.type,
-        duration: activityData.duration,
-        completed: activityData.completed || false,
-        date: activityData.date || new Date().toISOString(),
-        participants: activityData.participants || [],
-        notes: activityData.notes,
-        location: activityData.location
-      }
+    // Record activity in in-memory store (schema alignment pending)
+    const newActivity = addActivity({
+      childId,
+      title: activityData.title,
+      type: activityData.type || 'general',
+      duration: Number(activityData.duration || 0),
+      completed: Boolean(activityData.completed),
+      date: activityData.date || new Date().toISOString(),
+      participants: activityData.participants || [],
+      notes: activityData.notes,
+      location: activityData.location,
     });
 
     // Get AI-powered activity recommendations based on this activity
@@ -174,17 +168,7 @@ export async function POST(request: NextRequest) {
 
     const recommendationData = JSON.parse(recommendationResponse.choices[0].message.content || '{}');
 
-    // Update child's development progress
-    await db.developmentRecord.create({
-      data: {
-        childId,
-        activityId: newActivity.id,
-        type: activityData.type,
-        duration: activityData.duration,
-        date: new Date().toISOString(),
-        impact: 'positive' // Default impact, could be calculated based on activity type and duration
-      }
-    });
+    // TODO: Persist progress using Activity/ActivityCompletion models when aligned
 
     return NextResponse.json({
       activity: newActivity,
@@ -213,39 +197,19 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Child ID and user ID required' }, { status: 400 });
     }
 
-    // Verify access
-    const child = await db.child.findFirst({
-      where: {
-        id: childId,
-        OR: [
-          { parentId: userId },
-          { coParentId: userId }
-        ]
-      }
-    });
+    // Verify access (couple ownership)
+    const user = await db.user.findUnique({ where: { id: userId } });
+    const child = await db.child.findFirst({ where: { id: childId, couple_id: user?.couple_id || '' } });
 
     if (!child) {
       return NextResponse.json({ error: 'Child not found or access denied' }, { status: 404 });
     }
 
-    // Get activities
-    const activities = await db.childActivity.findMany({
-      where: { childId },
-      orderBy: { date: 'desc' },
-      take: 50 // Limit to last 50 activities
-    });
+    // Get activities from in-memory store (limit 50)
+    const activities = getActivities(childId).slice(0, 50);
 
-    // Get activity statistics
-    const stats = await db.childActivity.groupBy({
-      by: ['type'],
-      where: { childId },
-      _count: {
-        type: true
-      },
-      _sum: {
-        duration: true
-      }
-    });
+    // Get activity statistics from store
+    const stats = getStats(childId);
 
     // Get AI-powered activity suggestions
     const zai = await MockZAI.create();

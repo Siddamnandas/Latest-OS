@@ -1,0 +1,166 @@
+{
+  "meta": {
+    "project": "Leela OS",
+    "date": "2025-09-05",
+    "prepared_by": "Software Development Manager"
+  },
+  "product_overview": "Leela OS is a mobile app designed for Indian urban parent couples aged 28-45, focused on reducing household friction, increasing affection, and managing daily life through culturally resonant, myth-inspired rituals that balance Play & Romance, Duty & Responsibility, and Self-care & Energy.",
+  "core_goals": [
+    "Reduce household friction and increase affection by balancing three relational forces weekly: Play & Romance (Radha–Krishna), Duty & Responsibility (Sita–Ram), Self-care & Energy (Shiva–Shakti).",
+    "Encourage small, voluntary exchanges within couples to foster partnership and emotional reconnection beyond co-managing logistics.",
+    "Provide AI-driven load balancing for chores and promises, ensuring fairness with partner consent.",
+    "Enable context-aware, lifecycle-integrated planning and engagement tied to family rhythms and children’s needs.",
+    "Ensure privacy and control with private-by-default data handling and granular permissions."
+  ],
+  "key_features": [
+    "Daily Home Hub featuring mood and energy check-ins, partner snapshots, family event overviews, and quick action FAB for offers and memory capture.",
+    "Balance Compass onboarding tool to assess weekly relational states and generate micro-tasks to fill and ease relational spokes.",
+    "Weekly Yagna Loop enabling couples to Plan, Do, and Reflect on micro-offers aligned to Play, Duty, and Energy.",
+    "Personal and Shared Dashboards including Energy Well, Duty Ledger, Playbook, Home Rhythm Board, Couple Pulse, and Kids Dashboard.",
+    "Opt-in ambient relationship behavior sensing integrating calendars, location, weather, voice tones, and smart home scenes with privacy controls.",
+    "AI-powered automations including Load Balancer for task reassignment, Conflict Solver for post-conflict summaries, and contextual nudges based on time, location, and events.",
+    "Couple Quests, Side Missions, and Gamified Economy featuring Lakshmi Coins redeemable for various benefits and streak repair.",
+    "Memory Jukebox and AI Memory Weaver for joyful, contextual memory capture and resurfacing.",
+    "One-Tap Weekend Planner for quick balanced weekend scheduling incorporating family outings, chores, rest, and couple time.",
+    "Secret Couple Loop for private digital intimacy with nudges and challenges.",
+    "Comprehensive privacy, safety, and data consent measures with encrypted storage and on-device processing where feasible."
+  ],
+  "user_flow_summary": [
+    "User completes onboarding with Balance Compass to establish relational balance and receive weekly micro-tasks.",
+    "Daily interaction via the Home Hub includes mood and energy check-ins and viewing partner and family updates.",
+    "Users participate in the Weekly Yagna Loop: Plan micro-offers Sunday night, perform and track completion during the week, and Reflect on progress over the weekend.",
+    "Engagement with gamified elements such as quests, Lakshmi Coins, and couple leaderboards.",
+    "Opt-in to ambient sensing and contextual AI nudges that adapt to users’ rhythms without intrusive notifications.",
+    "Parents utilize Kids Dashboard and Parenting Sync for shared child-related management and activities.",
+    "Use the One-Tap Weekend Planner to generate and accept balanced family weekend plans.",
+    "Leverage AI features like Load Balancer for chore distribution, Conflict Solver post-conflict summaries, and Gift & Celebration Assistant for timely recommendations."
+  ],
+  "validation_criteria": [
+    "At least 70% of users complete onboarding onboarding Q&A and Balance Compass mapping.",
+    "Over 60% of users create their first offer within 24 hours of onboarding.",
+    "Daily 30-Second Sync completion rate exceeds 40%.",
+    "Weekly Plan → Do → Reflect loop engagement surpasses 35% with at least one joint micro-ritual weekly.",
+    "Kids Dashboard with six parent-led modules fully functional with usage and logging.",
+    "At least 50% acceptance rate of generated One-Tap Weekend Plans among users who open it.",
+    "Comprehensive privacy controls available to users, including per-signal data toggles, data export, and deletion.",
+    "Gamification economy properly credits and debits Lakshmi Coins as per defined events and usage patterns.",
+    "AI-driven features provide accurate prompts, schedules, and balanced chore assignments with partner consent.",
+    "Strict privacy and safety measures implemented, including private-by-default data sharing, encrypted storage, and transparent consent management."
+  ],
+  "code_summary": {
+    "tech_stack": [
+      "TypeScript",
+      "Next.js",
+      "React 19",
+      "Tailwind CSS",
+      "Prisma",
+      "PostgreSQL",
+      "Node.js",
+      "Express",
+      "Socket.IO",
+      "Redis",
+      "Docker",
+      "Jest",
+      "Playwright"
+    ],
+    "features": [
+      {
+        "name": "Next.js Frontend Application",
+        "description": "Main web application built with Next.js 15, featuring routing, components, and pages",
+        "files": [
+          "src/app/page.tsx",
+          "src/app/page-complex.tsx",
+          "src/app/layout.tsx",
+          "src/app/globals.css",
+          "next.config.ts"
+        ]
+      },
+      {
+        "name": "Custom Server with Socket.IO",
+        "description": "Standalone server with real-time capabilities using Socket.IO, HTTP server, and custom middleware",
+        "files": [
+          "server.ts",
+          "src/lib/socket.ts",
+          "src/app/api/socketio/route.ts"
+        ]
+      },
+      {
+        "name": "Prisma Database Schema",
+        "description": "Database modeling and migrations using Prisma ORM for both development and production",
+        "files": [
+          "prisma/schema.prisma",
+          "prisma/schema.postgres.prisma",
+          "prisma/migrations/",
+          "src/lib/db.ts"
+        ]
+      },
+      {
+        "name": "Authentication System",
+        "description": "User authentication and session management using NextAuth.js with multiple providers",
+        "files": [
+          "src/app/api/auth/[...nextauth]/route.ts",
+          "src/components/DevelopmentAuthBypass.tsx"
+        ]
+      },
+      {
+        "name": "Component Library",
+        "description": "UI components built with Radix UI primitives and Tailwind CSS styling",
+        "files": [
+          "src/components/",
+          "src/components/AchievementCelebration.tsx",
+          "src/components/AISuggestionEngine.tsx",
+          "components.json"
+        ]
+      },
+      {
+        "name": "Real-time Features",
+        "description": "Live communication features using Socket.IO for real-time updates",
+        "files": [
+          "src/lib/socket.ts",
+          "src/middleware.ts",
+          "src/app/api/socketio/"
+        ]
+      },
+      {
+        "name": "Dashboard and Family Features",
+        "description": "Family relationship and parenting features including balance compass, memory sharing, and goal tracking",
+        "files": [
+          "src/app/(dashboard)/",
+          "src/components/DailySyncCard.tsx",
+          "src/components/CoupleSyncSystem.tsx",
+          "src/components/FamilyHub.tsx"
+        ]
+      },
+      {
+        "name": "API Routes",
+        "description": "REST API endpoints for various application features",
+        "files": [
+          "src/app/api/",
+          "src/services/",
+          "src/lib/"
+        ]
+      },
+      {
+        "name": "Testing Infrastructure",
+        "description": "Comprehensive testing setup with Jest, Playwright, and test utilities",
+        "files": [
+          "jest.config.js",
+          "playwright.config.ts",
+          "src/__tests__/",
+          "vitest.config.mts"
+        ]
+      },
+      {
+        "name": "Build and Deployment",
+        "description": "Containerization, CI/CD, and deployment configuration",
+        "files": [
+          "Dockerfile",
+          "docker-compose.yml",
+          "package.json",
+          "tsconfig.json",
+          "CI_BUILD_FIXES.md"
+        ]
+      }
+    ]
+  }
+}

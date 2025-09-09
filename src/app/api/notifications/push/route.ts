@@ -2,7 +2,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { NextRequest, NextResponse } from 'next/server';
 import webpush from 'web-push';
-import { getWebSubscriptions, getExpoPushTokens } from '../subscribe/route';
+import { getWebSubscriptions, getExpoPushTokens } from '@/lib/notifications/subscribers';
 
 const WEB_PUSH_CONTACT = process.env.WEB_PUSH_CONTACT || 'mailto:example@example.com';
 const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || '';
@@ -54,4 +54,3 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({ success: true });
 }
-

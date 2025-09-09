@@ -79,10 +79,10 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
           const permission = await Notification.requestPermission();
           if (permission === 'granted') {
             await subscribeToPush();
-            logger.info('Push notifications enabled');
+            console.info('Push notifications enabled');
           }
         } catch (error) {
-          logger.error({ error }, 'Failed to setup push notifications');
+          console.error('Failed to setup push notifications', { error });
         }
       }
     };
@@ -143,7 +143,12 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
         {/* Offline Banner */}
         {!isOnline && (
           <div className="bg-orange-100 border-b border-orange-200 px-4 py-2">
-            <OfflineMode />
+            <OfflineMode 
+              currentUserId="anonymous"
+              onRefreshCwNow={() => {}}
+              onClearOfflineData={() => {}}
+              onSettingsUpdate={() => {}}
+            />
           </div>
         )}
 
@@ -159,19 +164,19 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
       {showInstallPrompt && (
         <PWAInstallPrompt
           onInstall={() => {
-            logger.info('PWA installed from layout');
+            console.info('PWA installed from layout');
             setNotificationCount(prev => prev + 1);
           }}
           onDismiss={() => {
-            logger.info('PWA install prompt dismissed');
+            console.info('PWA install prompt dismissed');
           }}
         />
       )}
 
       {/* Search Overlay */}
       {showSearch && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-start justify-center pt-20"
+        <div
+          className="fixed inset-0 bg-gray-700 bg-opacity-50 z-50 flex items-start justify-center pt-20"
           onClick={() => setShowSearch(false)}
         >
           <div className="bg-white rounded-lg w-full max-w-md mx-4 p-4">

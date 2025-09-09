@@ -3,6 +3,7 @@ import { createAdapter } from '@socket.io/redis-adapter';
 import { logger } from '@/lib/logger';
 import { db } from '@/lib/db';
 import { redis } from '@/lib/redis';
+import { getToken } from 'next-auth/jwt';
 
 interface CoupleRoom {
   coupleId: string;
@@ -77,6 +78,26 @@ export const setupSocket = async (io: Server) => {
   
   io.adapter(createAdapter(redis, subClient));
 
+  // Authenticate socket connections via NextAuth JWT in cookies
+  io.use(async (socket, next) => {
+    try {
+      const cookie = socket.handshake.headers?.cookie || '';
+      const reqLike = { headers: { cookie } } as any;
+      const secret = process.env.NEXTAUTH_SECRET;
+      if (!secret) return next(new Error('Unauthorized'));
+      const token: any = await getToken({ req: reqLike, secret });
+      if (!token || (!token.id && !token.sub)) return next(new Error('Unauthorized'));
+
+      // Attach session data to socket
+      socket.data.userId = (token.id as string) || (token.sub as string);
+      socket.data.coupleId = token.coupleId as string | undefined;
+      socket.data.name = (token.name as string) || '';
+      return next();
+    } catch (err) {
+      return next(new Error('Unauthorized'));
+    }
+  });
+
   // Helper function to emit to couple room
   const emitToCouple = <T>(coupleId: string, event: string, data: T, excludeSocket?: string) => {
     try {
@@ -109,8 +130,26 @@ export const setupSocket = async (io: Server) => {
       try {
         const { userId, coupleId, partnerRole, name } = data;
 
+        // Validate identity: must match authenticated user and couple
+        if (!socket.data?.userId || socket.data.userId !== userId) {
+          socket.emit('error', { message: 'Unauthorized' });
+          return;
+        }
+
+        if (socket.data.coupleId && socket.data.coupleId !== coupleId) {
+          socket.emit('error', { message: 'Forbidden: wrong couple' });
+          return;
+        }
+
+        // Verify in DB that user belongs to couple
+        const userRecord = await db.user.findUnique({ where: { id: userId }, select: { couple_id: true, name: true } });
+        if (!userRecord || userRecord.couple_id !== coupleId) {
+          socket.emit('error', { message: 'Forbidden' });
+          return;
+        }
+
         // Store user info
-        await setActiveConnection(socket.id, { userId, coupleId, partnerRole, name });
+        await setActiveConnection(socket.id, { userId, coupleId, partnerRole, name: name || socket.data.name || 'Partner' });
 
         // Join couple room
         const roomName = `couple:${coupleId}`;
@@ -126,7 +165,7 @@ export const setupSocket = async (io: Server) => {
         await setCoupleRoom(coupleId, existingRoom);
 
         // Notify partner of connection
-        notifyPartnerActivity(coupleId, name, 'connected', socket.id);
+        notifyPartnerActivity(coupleId, name || socket.data.name || 'Partner', 'connected', socket.id);
 
         // Send connection confirmation
         socket.emit('couple:joined', {

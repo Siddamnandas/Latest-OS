@@ -14,20 +14,13 @@ export async function GET() {
   }
 
   try {
-    const user = await db.user.findUnique({
-      where: { id: session.user.id },
-      include: {
-        conversations: true,
-        voice_sessions: true,
-        notifications: true,
-      },
-    });
+    const user = await db.user.findUnique({ where: { id: session.user.id } });
 
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    const { password_hash, ...exportData } = user;
+    const { password: _password, ...exportData } = user as any;
 
     return NextResponse.json(exportData, {
       headers: {
@@ -39,4 +32,3 @@ export async function GET() {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
-

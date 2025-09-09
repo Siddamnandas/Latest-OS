@@ -1,15 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { db } from '@/lib/db';
+import { getWebSubscriptions } from '@/lib/notifications/subscribers';
 import { logger } from '@/lib/logger';
 import webpush from 'web-push';
 
-// Configure web-push
-webpush.setVapidDetails(
-  'mailto:support@latest-os.com',
-  process.env.VAPID_PUBLIC_KEY || 'BMqSvZyb-p4-JPH8Eq7lYKdBs1W3cqjzQmkP_g2YlI8Tr7z2ZmRqZM9Xo8Gc3vPxLKkEe0Wd-L8nF7mP4O3FsT0',
-  process.env.VAPID_PRIVATE_KEY || 'demo-private-key'
-);
+// Configure web-push guarded (avoid build-time failures)
+let pushConfigured = false;
+(() => {
+  const subject = 'mailto:support@latest-os.com';
+  const pub = process.env.VAPID_PUBLIC_KEY || process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+  const priv = process.env.VAPID_PRIVATE_KEY;
+  try {
+    if (pub && priv) {
+      webpush.setVapidDetails(subject, pub, priv);
+      pushConfigured = true;
+    }
+  } catch (e) {
+    // leave disabled
+  }
+})();
 
 const partnerActivitySchema = z.object({
   coupleId: z.string(),
@@ -113,42 +123,11 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { coupleId, partnerId, partnerName, activity, data } = partnerActivitySchema.parse(body);
 
-    // Get the couple and find the other partner
-    const couple = await db.couple.findUnique({
-      where: { id: coupleId },
-      include: {
-        users: {
-          include: {
-            push_subscriptions: {
-              where: { isActive: true }
-            }
-          }
-        }
-      }
-    });
-
-    if (!couple) {
-      return NextResponse.json(
-        { error: 'Couple not found' },
-        { status: 404 }
-      );
-    }
-
-    // Find the other partner (not the one who performed the activity)
-    const otherPartner = couple.users.find(user => user.id !== partnerId);
-    
-    if (!otherPartner || otherPartner.push_subscriptions.length === 0) {
-      logger.info({
-        coupleId,
-        partnerId,
-        activity,
-      }, 'No partner or push subscriptions found for activity notification');
-      
-      return NextResponse.json({
-        success: true,
-        message: 'No subscriptions to notify',
-        stats: { sent: 0, failed: 0 }
-      });
+    // Use in-memory web subscriptions (DB-backed lookup TBD)
+    const webSubs = getWebSubscriptions();
+    if (webSubs.length === 0) {
+      logger.info({ coupleId, partnerId, activity }, 'No web subscriptions found');
+      return NextResponse.json({ success: true, message: 'No subscriptions to notify', stats: { sent: 0, failed: 0 } });
     }
 
     // Get notification template
@@ -169,35 +148,20 @@ export async function POST(request: NextRequest) {
 
     // Send notifications to all partner's devices
     const results = await Promise.allSettled(
-      otherPartner.push_subscriptions.map(async (subscription) => {
+      webSubs.map(async (subscription: any) => {
         try {
           await webpush.sendNotification(
-            {
-              endpoint: subscription.endpoint,
-              keys: {
-                p256dh: subscription.p256dhKey,
-                auth: subscription.authKey,
-              },
-            },
+            subscription,
             payload
           );
-          return { success: true, subscriptionId: subscription.id };
+          return { success: true } as any;
         } catch (error) {
           logger.error({ 
             error, 
-            subscriptionId: subscription.id, 
-            endpoint: subscription.endpoint 
+            endpoint: subscription?.endpoint 
           }, 'Failed to send partner activity notification');
           
-          // If subscription is invalid, mark it as inactive
-          if (error.statusCode === 410 || error.statusCode === 404) {
-            await db.pushSubscription.update({
-              where: { id: subscription.id },
-              data: { isActive: false },
-            });
-          }
-          
-          return { success: false, subscriptionId: subscription.id, error };
+          return { success: false, error } as any;
         }
       })
     );
@@ -221,10 +185,10 @@ export async function POST(request: NextRequest) {
     logger.info({
       coupleId,
       partnerId,
-      otherPartnerId: otherPartner.id,
+      otherPartnerId: 'unknown',
       activity,
       title: notification.title,
-      totalSubscriptions: otherPartner.push_subscriptions.length,
+      totalSubscriptions: webSubs.length,
       successful,
       failed,
     }, 'Partner activity notification completed');
@@ -235,7 +199,7 @@ export async function POST(request: NextRequest) {
       stats: {
         sent: successful,
         failed,
-        total: otherPartner.push_subscriptions.length,
+        total: webSubs.length,
       },
     });
 

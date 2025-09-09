@@ -30,5 +30,8 @@ module.exports = {
   coverageDirectory: 'coverage',
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
   testTimeout: 10000,
-  maxWorkers: '50%'
+  maxWorkers: '50%',
+  fakeTimers: {
+    enableGlobally: true
+  }
 };

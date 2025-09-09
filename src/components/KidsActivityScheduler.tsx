@@ -100,8 +100,8 @@ export function KidsActivityScheduler() {
       const activityIndex = activityDays.indexOf(index);
       const activityType = activityIndex !== -1 ? activityTypes[activityIndex] : null;
       
-      let assignedParent = null;
-      let targetParent = null;
+      let assignedParent: string | null = null;
+      let targetParent: string | null = null;
       
       if (activityType) {
         // Assign parents with rotation logic

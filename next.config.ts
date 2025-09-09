@@ -1,24 +1,40 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  /* Minimal working config for latest Next.js 15 */
   outputFileTracingRoot: process.cwd(),
+
+  // Enable TypeScript error ignoring for demo
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false, // Enable strict mode
   },
-  // 禁用 Next.js 热重载，由 nodemon 处理重编译
+
+  // Basic performance optimizations
+  poweredByHeader: false,
+  compress: true,
   reactStrictMode: false,
+
+  // Simple image optimization
+  images: {
+    formats: ['image/webp'],
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920],
+    domains: ['localhost'],
+  },
+
+  // Minimal webpack config for stability
   webpack: (config, { dev }) => {
     if (dev) {
-      // 禁用 webpack 的热模块替换
+      // Clean webpack for development
       config.watchOptions = {
-        ignored: ['**/*'], // 忽略所有文件变化
+        poll: false, // Let Next.js handle watching
       };
     }
+
     return config;
   },
+
+  // Allow ESLint errors for demo
   eslint: {
-    // 构建时忽略ESLint错误
     ignoreDuringBuilds: true,
   },
 };

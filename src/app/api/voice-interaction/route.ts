@@ -19,13 +19,17 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
-  if (!session?.user?.id || !session.user.couple?.id) {
+  if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
+    const user = await db.user.findUnique({ where: { id: session.user.id }, select: { couple_id: true } });
+    if (!user?.couple_id) {
+      return NextResponse.json({ error: 'User not associated with a couple' }, { status: 404 });
+    }
     const sessions = await db.voiceSession.findMany({
-      where: { couple_id: session.user.couple.id },
+      where: { couple_id: user.couple_id },
       orderBy: { created_at: "desc" },
     });
     return NextResponse.json({ sessions }, { status: 200 });
@@ -41,24 +45,23 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
-  if (!session?.user?.id || !session.user.couple?.id) {
+  if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
     const body = await request.json();
     const parsed = createSchema.parse(body);
+    const user = await db.user.findUnique({ where: { id: session.user.id }, select: { couple_id: true } });
+    if (!user?.couple_id) {
+      return NextResponse.json({ error: 'User not associated with a couple' }, { status: 404 });
+    }
 
     const voiceSession = await db.voiceSession.create({
       data: {
-        couple_id: session.user.couple.id,
-        user_id: session.user.id,
-        transcript: parsed.transcript ?? null,
-        commands: parsed.commands,
+        couple_id: user.couple_id,
+        title: parsed.transcript ? parsed.transcript.slice(0, 50) : 'Voice Session',
         duration: parsed.duration,
-        sentiment: parsed.sentiment ?? null,
-        emotions: parsed.emotions ?? null,
-        session_data: parsed.sessionData ?? null,
       },
     });
 

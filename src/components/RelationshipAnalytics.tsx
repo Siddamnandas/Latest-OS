@@ -284,7 +284,7 @@ export function RelationshipAnalytics() {
   };
 
   const generatePersonalizedRecommendations = () => {
-    const recommendations = [];
+      const recommendations: any[] = [];
     
     // Based on metrics
     const lowMetrics = metrics.filter(m => m.value < m.target * 0.8);

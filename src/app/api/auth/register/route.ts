@@ -49,28 +49,14 @@ export async function POST(request: NextRequest) {
     const user = await db.user.create({
       data: {
         email,
-        password_hash: passwordHash,
+        password: passwordHash,
         name,
-        partner_role: partnerRole,
         couple_id: couple?.id || ''
       }
     });
 
-    // Create default cultural preferences
+    // Initialize Rasa balance if couple was created
     if (couple) {
-      await db.culturalPreference.create({
-        data: {
-          couple_id: couple.id,
-          region: coupleData?.region || 'north-india',
-          language: coupleData?.language || 'hindi',
-          interests: JSON.stringify(coupleData?.interests || []),
-          festival_notifications: true,
-          cultural_tips: true,
-          regional_content: true
-        }
-      });
-
-      // Initialize Rasa balance
       await db.rasaBalance.create({
         data: {
           couple_id: couple.id,
@@ -82,7 +68,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Remove password from response
-    const userWithoutPassword = (({ password_hash, ...rest }) => rest)(user);
+    const userWithoutPassword = (({ password, ...rest }) => rest)(user as any);
 
     return NextResponse.json({
       message: 'User registered successfully',

@@ -29,15 +29,13 @@ async function main() {
         couple_id: couple.id,
         name: "Arjun Kumar",
         email: "arjun@example.com",
-        password_hash: passwordHash,
-        role: "USER",
+        password: passwordHash,
       },
       {
         couple_id: couple.id,
         name: "Priya Sharma",
         email: "priya@example.com",
-        password_hash: passwordHash,
-        role: "USER",
+        password: passwordHash,
       },
     ],
   });

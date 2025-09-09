@@ -6,11 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { 
-  CheckCircle, 
-  Clock, 
-  User, 
-  Plus, 
+import {
+  CheckCircle,
+  Clock,
+  User,
+  Plus,
   Filter,
   Target,
   Star,
@@ -21,7 +21,9 @@ import {
   Brain,
   Sparkles,
   TrendingUp,
-  Calendar
+  Calendar,
+  Shuffle,
+  RefreshCw
 } from 'lucide-react';
 
 interface Task {
@@ -95,6 +97,17 @@ export function TaskManagement() {
   });
 
   const [archetypeFilter, setArchetypeFilter] = useState<string>('all');
+  const [showLoadBalancer, setShowLoadBalancer] = useState(false);
+
+  interface LoadBalancerSuggestion {
+    type: 'reassignment' | 'general';
+    message: string;
+    taskId?: string;
+    newAssignee?: string;
+    timeSaved?: number;
+  }
+
+  const [loadBalancerSuggestions, setLoadBalancerSuggestions] = useState<LoadBalancerSuggestion[]>([]);
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -175,7 +188,19 @@ export function TaskManagement() {
     // Simulate starting a task
     const task = tasks.find(t => t.id === taskId);
     if (task) {
-      alert(`Starting task: ${task.title}\nEstimated time: ${task.estimatedTime} minutes`);
+      // Mark task as in progress or provide feedback
+      console.log(`Starting task: ${task.title}\nEstimated time: ${task.estimatedTime} minutes`);
+
+      // Show toast or visual feedback
+      const event = new CustomEvent('taskStarted', { detail: { taskId, task } });
+      window.dispatchEvent(event);
+
+      // Update task status to reflect it's being worked on
+      setTasks(prev => prev.map(t =>
+        t.id === taskId
+          ? { ...t, status: 'in_progress' }
+          : t
+      ));
     }
   };
 
@@ -195,8 +220,171 @@ export function TaskManagement() {
     }
   };
 
+  const analyzeAndBalanceLoad = () => {
+    const pendingTasks = tasks.filter(t => !t.completed);
+
+    if (pendingTasks.length === 0) {
+      alert('All tasks are already completed! No balancing needed. 🎉');
+      return;
+    }
+
+    // Calculate current workload distribution
+    const partner1Tasks = pendingTasks.filter(t => t.assignedTo === 'partner1' || t.assignedTo === 'both');
+    const partner2Tasks = pendingTasks.filter(t => t.assignedTo === 'partner2' || t.assignedTo === 'both');
+
+    const partner1Time = partner1Tasks.reduce((sum, t) => sum + t.estimatedTime, 0);
+    const partner2Time = partner2Tasks.reduce((sum, t) => sum + t.estimatedTime, 0);
+
+    // Generate balancing suggestions
+    const suggestions: any[] = [];
+    const imbalanceThreshold = 20; // 20 minutes difference threshold
+
+    if (Math.abs(partner1Time - partner2Time) > imbalanceThreshold) {
+      const heavierPartner = partner1Time > partner2Time ? 'You' : 'Partner';
+      const lighterPartner = partner1Time > partner2Time ? 'Partner' : 'You';
+
+      const heavyTasks = partner1Time > partner2Time ?
+        partner1Tasks.filter(t => t.assignedTo !== 'both') :
+        partner2Tasks.filter(t => t.assignedTo !== 'both');
+
+      // Find low-time tasks to suggest swapping
+      const lowPriorityTasks = heavyTasks
+        .filter(t => t.estimatedTime < 30)
+        .sort((a, b) => a.estimatedTime - b.estimatedTime);
+
+      if (lowPriorityTasks.length > 0) {
+        const taskToReassign = lowPriorityTasks[0];
+        suggestions.push({
+          type: 'reassignment',
+          message: `${heavierPartner} has ${partner1Time > partner2Time ? partner1Time - partner2Time : partner2Time - partner1Time} more minutes. Suggest reassign "${taskToReassign.title}" to ${lighterPartner}?`,
+          taskId: taskToReassign.id,
+          newAssignee: partner1Time > partner2Time ? 'partner2' : 'partner1',
+          timeSaved: taskToReassign.estimatedTime
+        });
+      }
+    }
+
+    // Add general suggestions
+    if (suggestions.length === 0) {
+      suggestions.push({
+        type: 'general',
+        message: 'Task distribution looks balanced! Good job maintaining fairness. 💝',
+        taskId: null,
+        newAssignee: null
+      });
+    }
+
+    setLoadBalancerSuggestions(suggestions);
+    setShowLoadBalancer(true);
+  };
+
+  const applyLoadBalancerSuggestion = (suggestion: any) => {
+    if (suggestion.type === 'reassignment' && suggestion.taskId) {
+      setTasks(prev => prev.map(task =>
+        task.id === suggestion.taskId
+          ? { ...task, assignedTo: suggestion.newAssignee }
+          : task
+      ));
+
+      alert(`✅ Task reassigned! ${suggestion.timeSaved} minutes redistributed for better balance.`);
+      setShowLoadBalancer(false);
+      setLoadBalancerSuggestions([]);
+    }
+  };
+
+  const workloads = {
+    partner1: tasks.filter(t => !t.completed && (t.assignedTo === 'partner1' || t.assignedTo === 'both'))
+      .reduce((sum, t) => sum + t.estimatedTime, 0),
+    partner2: tasks.filter(t => !t.completed && (t.assignedTo === 'partner2' || t.assignedTo === 'both'))
+      .reduce((sum, t) => sum + t.estimatedTime, 0),
+    both: tasks.filter(t => !t.completed && t.assignedTo === 'both')
+      .reduce((sum, t) => sum + t.estimatedTime, 0)
+  };
+
   return (
     <div className="p-4 space-y-6">
+      {/* Load Balancer Modal */}
+      {showLoadBalancer && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                <Shuffle className="w-5 h-5 text-orange-600" />
+                AI Load Balancer
+              </h3>
+              <Button variant="ghost" size="sm" onClick={() => setShowLoadBalancer(false)}>
+                ✕
+              </Button>
+            </div>
+
+            <div className="space-y-4">
+              {/* Current Workload Stats */}
+              <div className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl p-4">
+                <h4 className="font-semibold text-gray-900 mb-3">Current Workload</h4>
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-700">You:</span>
+                    <span className="font-semibold text-blue-600">{workloads.partner1} min</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-700">Partner:</span>
+                    <span className="font-semibold text-cyan-600">{workloads.partner2} min</span>
+                  </div>
+                  <div className="flex justify-between items-center border-t pt-2">
+                    <span className="text-sm font-medium text-gray-900">Difference:</span>
+                    <span className={`font-bold ${Math.abs(workloads.partner1 - workloads.partner2) > 30 ? 'text-red-600' : 'text-green-600'}`}>
+                      {Math.abs(workloads.partner1 - workloads.partner2)} min
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* AI Suggestions */}
+              <div className="space-y-3">
+                {loadBalancerSuggestions.map((suggestion: LoadBalancerSuggestion, index) => (
+                  <div key={index} className="bg-gradient-to-r from-orange-50 to-red-50 rounded-xl p-4 border border-orange-200">
+                    <div className="flex items-start gap-3">
+                      <div className="w-8 h-8 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
+                        🧠
+                      </div>
+                      <div className="flex-1">
+                        <h5 className="font-medium text-gray-900 mb-2">AI Suggestion</h5>
+                        <p className="text-sm text-gray-700">{suggestion.message}</p>
+                        {suggestion.type === 'reassignment' && (
+                          <div className="mt-3 flex gap-2">
+                            <Button
+                              size="sm"
+                              className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white"
+                              onClick={() => applyLoadBalancerSuggestion(suggestion)}
+                            >
+                              Apply
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="border-gray-300"
+                              onClick={() => setShowLoadBalancer(false)}
+                            >
+                              Keep As Is
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-6 p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl">
+                <p className="text-sm text-gray-700 text-center">
+                  "Perfect balance comes from communication, not calculation" 💕
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header with stats */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 p-6 shadow-xl">
         <div className="absolute inset-0 bg-white/10 backdrop-blur-sm"></div>
@@ -274,10 +462,16 @@ export function TaskManagement() {
                   <Filter className="w-4 h-4" />
                   Filters
                 </h3>
-                <Button size="sm" className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white" onClick={() => setShowAddTask(true)}>
-                  <Plus className="w-4 h-4 mr-1" />
-                  Add Task
-                </Button>
+                <div className="flex gap-2">
+                  <Button size="sm" className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white" onClick={() => analyzeAndBalanceLoad()}>
+                    <RefreshCw className="w-4 h-4 mr-1" />
+                    Balance Load
+                  </Button>
+                  <Button size="sm" className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white" onClick={() => setShowAddTask(true)}>
+                    <Plus className="w-4 h-4 mr-1" />
+                    Add Task
+                  </Button>
+                </div>
               </div>
               
               <div className="flex gap-2 flex-wrap">

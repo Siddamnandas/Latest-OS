@@ -1,0 +1,116 @@
+{
+  "tech_stack": [
+    "TypeScript",
+    "Next.js",
+    "React 19",
+    "Tailwind CSS",
+    "Prisma",
+    "PostgreSQL",
+    "Node.js",
+    "Express",
+    "Socket.IO",
+    "Redis",
+    "Docker",
+    "Jest",
+    "Playwright"
+  ],
+  "features": [
+    {
+      "name": "Next.js Frontend Application",
+      "description": "Main web application built with Next.js 15, featuring routing, components, and pages",
+      "files": [
+        "src/app/page.tsx",
+        "src/app/page-complex.tsx",
+        "src/app/layout.tsx",
+        "src/app/globals.css",
+        "next.config.ts"
+      ]
+    },
+    {
+      "name": "Custom Server with Socket.IO",
+      "description": "Standalone server with real-time capabilities using Socket.IO, HTTP server, and custom middleware",
+      "files": [
+        "server.ts",
+        "src/lib/socket.ts",
+        "src/app/api/socketio/route.ts"
+      ]
+    },
+    {
+      "name": "Prisma Database Schema",
+      "description": "Database modeling and migrations using Prisma ORM for both development and production",
+      "files": [
+        "prisma/schema.prisma",
+        "prisma/schema.postgres.prisma",
+        "prisma/migrations/",
+        "src/lib/db.ts"
+      ]
+    },
+    {
+      "name": "Authentication System",
+      "description": "User authentication and session management using NextAuth.js with multiple providers",
+      "files": [
+        "src/app/api/auth/[...nextauth]/route.ts",
+        "src/components/DevelopmentAuthBypass.tsx"
+      ]
+    },
+    {
+      "name": "Component Library",
+      "description": "UI components built with Radix UI primitives and Tailwind CSS styling",
+      "files": [
+        "src/components/",
+        "src/components/AchievementCelebration.tsx",
+        "src/components/AISuggestionEngine.tsx",
+        "components.json"
+      ]
+    },
+    {
+      "name": "Real-time Features",
+      "description": "Live communication features using Socket.IO for real-time updates",
+      "files": [
+        "src/lib/socket.ts",
+        "src/middleware.ts",
+        "src/app/api/socketio/"
+      ]
+    },
+    {
+      "name": "Dashboard and Family Features",
+      "description": "Family relationship and parenting features including balance compass, memory sharing, and goal tracking",
+      "files": [
+        "src/app/(dashboard)/",
+        "src/components/DailySyncCard.tsx",
+        "src/components/CoupleSyncSystem.tsx",
+        "src/components/FamilyHub.tsx"
+      ]
+    },
+    {
+      "name": "API Routes",
+      "description": "REST API endpoints for various application features",
+      "files": [
+        "src/app/api/",
+        "src/services/",
+        "src/lib/"
+      ]
+    },
+    {
+      "name": "Testing Infrastructure",
+      "description": "Comprehensive testing setup with Jest, Playwright, and test utilities",
+      "files": [
+        "jest.config.js",
+        "playwright.config.ts",
+        "src/__tests__/",
+        "vitest.config.mts"
+      ]
+    },
+    {
+      "name": "Build and Deployment",
+      "description": "Containerization, CI/CD, and deployment configuration",
+      "files": [
+        "Dockerfile",
+        "docker-compose.yml",
+        "package.json",
+        "tsconfig.json",
+        "CI_BUILD_FIXES.md"
+      ]
+    }
+  ]
+}

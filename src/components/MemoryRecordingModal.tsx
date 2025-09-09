@@ -575,7 +575,7 @@ export function MemoryRecordingModal({ open, onOpenChange }: MemoryRecordingModa
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange} className="max-w-[600px]">
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent flex items-center gap-2">

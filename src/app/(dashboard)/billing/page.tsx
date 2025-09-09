@@ -1,4 +1,4 @@
-import { PremiumModal } from '@/components/PremiumModal';
+// Premium modal available via plans; placeholder page content only
 
 export default function BillingPage() {
   return (
@@ -7,7 +7,7 @@ export default function BillingPage() {
       <p className="text-sm text-gray-600">
         Manage your subscription and payment details.
       </p>
-      <PremiumModal />
+      {/* Upgrade modal is triggered from Plans page */}
     </div>
   );
 }

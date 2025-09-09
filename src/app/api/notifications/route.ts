@@ -26,31 +26,12 @@ export async function GET(request: NextRequest) {
     }
 
     const where: any = { couple_id: coupleId };
-    if (userId) {
-      where.user_id = userId;
-    }
     if (unreadOnly) {
-      where.is_read = false;
-    }
-    if (userGroup || locale) {
-      where.user = {};
-      if (userGroup) {
-        // @ts-ignore - dynamic field for segmentation
-        where.user.group = userGroup;
-      }
-      if (locale) {
-        // @ts-ignore - dynamic field for segmentation
-        where.user.locale = locale;
-      }
+      where.read = false;
     }
 
     const notifications = await db.notification.findMany({
       where,
-      include: {
-        user: {
-          select: { id: true, name: true, email: true, partner_role: true }
-        }
-      },
       orderBy: { created_at: 'desc' }
     });
 
@@ -72,74 +53,28 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const {
-      coupleId,
-      userId,
-      type,
-      title,
-      message,
-      data,
-      userGroup,
-      locale,
-      sendAt
-    } = await request.json();
+    const { coupleId, title, message } = await request.json();
 
-    if (!coupleId || !type || !title || !message) {
+    if (!coupleId || !title || !message) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
       );
     }
 
-    const targetUserIds: string[] = [];
-    if (userId) {
-      targetUserIds.push(userId);
-    } else if (userGroup || locale) {
-      const userWhere: any = { couple_id: coupleId };
-      if (userGroup) {
-        // @ts-ignore
-        userWhere.group = userGroup;
+    const notification = await db.notification.create({
+      data: {
+        couple_id: coupleId,
+        title,
+        message,
+        read: false,
       }
-      if (locale) {
-        // @ts-ignore
-        userWhere.locale = locale;
-      }
-      const users = await db.user.findMany({ where: userWhere, select: { id: true } });
-      targetUserIds.push(...users.map(u => u.id));
-    }
-
-    if (targetUserIds.length === 0) {
-      return NextResponse.json(
-        { error: 'No target users found' },
-        { status: 400 }
-      );
-    }
-
-    const notifications = await Promise.all(
-      targetUserIds.map((uid) =>
-        db.notification.create({
-          data: {
-            couple_id: coupleId,
-            user_id: uid,
-            type,
-            title,
-            message,
-            data: data || null,
-            is_delivered: false
-          }
-        })
-      )
-    );
-
-    const scheduleDate = sendAt ? new Date(sendAt) : undefined;
-    for (const n of notifications) {
-      await addNotificationJob({ notificationId: n.id }, scheduleDate);
-    }
+    });
 
     return NextResponse.json(
       {
         message: 'Notification(s) created successfully',
-        notifications
+        notification
       },
       { status: 201 }
     );
@@ -174,10 +109,7 @@ export async function PATCH(request: NextRequest) {
     let updateData = {};
     switch (action) {
       case 'mark_read':
-        updateData = { is_read: true };
-        break;
-      case 'mark_delivered':
-        updateData = { is_delivered: true, delivered_at: new Date() };
+        updateData = { read: true } as any;
         break;
       default:
         return NextResponse.json(

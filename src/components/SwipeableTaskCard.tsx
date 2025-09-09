@@ -5,7 +5,6 @@ import { Check, X, MoreVertical, Star, Clock, User } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { useSwipeGesture, useLongPress } from '@/hooks/useMobileGestures';
 import { logger } from '@/lib/logger';
 
 interface Task {
@@ -43,72 +42,20 @@ export const SwipeableTaskCard: React.FC<SwipeableTaskCardProps> = ({
   const cardRef = useRef<HTMLDivElement>(null);
   const maxSwipeDistance = 100;
 
-  // Swipe gesture handling
-  const { gestureState, bindGestures } = useSwipeGesture({
-    onSwipeRight: async () => {
-      if (task.status !== 'COMPLETED' && gestureState.distance > 80) {
-        await handleComplete();
-      }
-    },
-    onSwipeLeft: async () => {
-      if (gestureState.distance > 80) {
-        await handleDelete();
-      }
-    },
-    threshold: 50,
-    preventScroll: false
-  });
-
-  // Long press for actions menu
-  const { isPressed, bindLongPress } = useLongPress(() => {
-    setShowActions(true);
-    // Haptic feedback if available
-    if ('vibrate' in navigator) {
-      navigator.vibrate(50);
-    }
-  }, 500);
-
-  // Update swipe offset based on gesture
-  useEffect(() => {
-    if (gestureState.isDragging) {
-      const { startPos, currentPos, direction } = gestureState;
-      if (startPos && currentPos) {
-        let offset = 0;
-        if (direction === 'right' && task.status !== 'COMPLETED') {
-          offset = Math.min(currentPos.x - startPos.x, maxSwipeDistance);
-        } else if (direction === 'left') {
-          offset = Math.max(currentPos.x - startPos.x, -maxSwipeDistance);
-        }
-        setSwipeOffset(offset);
-      }
-    } else {
-      // Reset offset when not dragging
-      setSwipeOffset(0);
-    }
-  }, [gestureState, task.status, maxSwipeDistance]);
-
-  // Bind gestures to card element
-  useEffect(() => {
-    if (cardRef.current) {
-      bindGestures(cardRef.current);
-      bindLongPress(cardRef.current);
-    }
-  }, [bindGestures, bindLongPress]);
-
   const handleComplete = async () => {
     if (task.status === 'COMPLETED' || isCompleting) return;
     
     setIsCompleting(true);
     try {
       await onComplete(task.id);
-      logger.info({ taskId: task.id }, 'Task completed via swipe gesture');
+      console.info('Task completed via swipe gesture', { taskId: task.id });
       
       // Haptic feedback
       if ('vibrate' in navigator) {
         navigator.vibrate([50, 50, 50]);
       }
-    } catch (error) {
-      logger.error({ error, taskId: task.id }, 'Failed to complete task');
+      } catch (error) {
+        console.error('Failed to complete task', { error, taskId: task.id });
     } finally {
       setIsCompleting(false);
     }
@@ -120,14 +67,14 @@ export const SwipeableTaskCard: React.FC<SwipeableTaskCardProps> = ({
     setIsDeleting(true);
     try {
       await onDelete(task.id);
-      logger.info({ taskId: task.id }, 'Task deleted via swipe gesture');
+      console.info('Task deleted via swipe gesture', { taskId: task.id });
       
       // Haptic feedback
       if ('vibrate' in navigator) {
         navigator.vibrate(100);
       }
     } catch (error) {
-      logger.error({ error, taskId: task.id }, 'Failed to delete task');
+      console.error('Failed to delete task', { error, taskId: task.id });
       setIsDeleting(false);
     }
   };
@@ -201,8 +148,6 @@ export const SwipeableTaskCard: React.FC<SwipeableTaskCardProps> = ({
       <Card
         ref={cardRef}
         className={`transition-all duration-200 cursor-pointer ${
-          isPressed ? 'scale-98 shadow-lg' : ''
-        } ${
           swipeAction === 'complete' ? 'bg-green-50 border-green-200' :
           swipeAction === 'delete' ? 'bg-red-50 border-red-200' : ''
         } ${
@@ -303,8 +248,8 @@ export const SwipeableTaskCard: React.FC<SwipeableTaskCardProps> = ({
       
       {/* Action menu overlay */}
       {showActions && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-30 z-50 flex items-center justify-center"
+        <div
+          className="fixed inset-0 bg-gray-700 bg-opacity-50 z-50 flex items-center justify-center"
           onClick={() => setShowActions(false)}
         >
           <div className="bg-white rounded-lg p-4 m-4 max-w-sm w-full">

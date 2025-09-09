@@ -295,5 +295,6 @@ function getSessionDifficulty(type: string): 'beginner' | 'intermediate' | 'adva
     goal_setting: 'advanced',
     conflict_resolution: 'intermediate'
   };
-  return difficulties[type as keyof typeof difficulties] || 'beginner';
+  const value = difficulties[type as keyof typeof difficulties];
+  return (value ?? 'beginner') as 'beginner' | 'intermediate' | 'advanced';
 }

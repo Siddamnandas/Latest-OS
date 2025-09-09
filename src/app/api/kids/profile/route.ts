@@ -287,7 +287,7 @@ export async function POST(request: NextRequest) {
           birthDate: new Date(profileData.birthDate),
           avatar: profileData.avatar,
           parentId: session.user.id,
-          preferences: profileData.preferences || {
+          preferences: JSON.stringify(profileData.preferences || {
             learningStyle: 'mixed',
             favoriteActivities: ['emotion', 'kindness'],
             difficulty: 'easy',
@@ -303,7 +303,7 @@ export async function POST(request: NextRequest) {
               highContrastMode: false,
               textToSpeechEnabled: false
             }
-          }
+          })
         }
       });
 
@@ -426,11 +426,12 @@ export async function PUT(request: NextRequest) {
       if (updates.birthDate) updateData.birthDate = new Date(updates.birthDate);
       if (updates.avatar) updateData.avatar = updates.avatar;
       if (updates.preferences) {
-        // Merge preferences with existing ones
-        updateData.preferences = {
-          ...existingChild.preferences,
-          ...updates.preferences
-        };
+        // Merge preferences with existing ones (stored as JSON string)
+        const currentPrefs = (() => {
+          try { return JSON.parse((existingChild as any).preferences || '{}'); } catch { return {}; }
+        })();
+        const merged = { ...currentPrefs, ...updates.preferences };
+        updateData.preferences = JSON.stringify(merged);
       }
       updateData.updatedAt = new Date();
 

@@ -1,10 +1,16 @@
 import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
-  testDir: './src/__tests__',
+  testDir: './tests/e2e',
   testMatch: '**/*.e2e.ts',
   use: {
     headless: true,
+  },
+  webServer: {
+    command: 'npm run dev',
+    url: 'http://localhost:3000',
+    reuseExistingServer: true,
+    timeout: 120000,
   },
   projects: [
     {

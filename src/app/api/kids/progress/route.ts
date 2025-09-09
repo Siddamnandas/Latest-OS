@@ -104,15 +104,24 @@ export async function GET(request: NextRequest) {
       let progress = child.progress;
       if (!progress) {
         progress = await prisma.childProgress.create({
-          data: {
-            childId: validatedChildId,
-            ...createDefaultProgress()
-          }
+          data: { childId: validatedChildId }
         });
       }
 
-      // Calculate current achievements
-      const achievements = calculateAchievements(validatedChildId, progress);
+      // Calculate current achievements (convert DB progress to domain view)
+      const progressView: UserProgress = {
+        totalActivitiesCompleted: progress.totalActivitiesCompleted,
+        skillsAcquired: (() => { try { return JSON.parse(progress.skillsAcquired || '[]'); } catch { return []; } })(),
+        currentStreak: progress.currentStreak,
+        longestStreak: progress.longestStreak,
+        kindnessPoints: progress.kindnessPoints,
+        creativityScore: progress.creativityScore,
+        emotionalIntelligenceLevel: progress.emotionalIntelligenceLevel,
+        weeklyGoals: [],
+        monthlyMilestones: [],
+        learningPath: (() => { try { return JSON.parse(progress.learningPath || '{}'); } catch { return { currentLevel: 1, nextMilestone: { id: 'first', title: 'First', description: '', achieved: false }, recommendedActivities: [], weakAreas: [], strengthAreas: [], adaptiveContent: true }; } })(),
+      };
+      const achievements = calculateAchievements(validatedChildId, progressView);
 
       // Get recent activity history
       const recentActivities = await prisma.activityCompletion.findMany({
@@ -469,24 +478,36 @@ export async function PUT(request: NextRequest) {
         );
       }
 
-      // Update progress in database
-      const updatedProgress = await prisma.childProgress.upsert({
-        where: {
-          childId: childId
-        },
-        update: {
-          ...updates,
-          updatedAt: new Date()
-        },
-        create: {
-          childId: childId,
-          ...createDefaultProgress(),
-          ...updates
-        }
+      // Map updates to DB shape
+      const updateData: any = { updatedAt: new Date() };
+      if (typeof updates.totalActivitiesCompleted === 'number') updateData.totalActivitiesCompleted = updates.totalActivitiesCompleted;
+      if (typeof updates.currentStreak === 'number') updateData.currentStreak = updates.currentStreak;
+      if (typeof updates.longestStreak === 'number') updateData.longestStreak = updates.longestStreak;
+      if (typeof updates.kindnessPoints === 'number') updateData.kindnessPoints = updates.kindnessPoints;
+      if (typeof updates.creativityScore === 'number') updateData.creativityScore = updates.creativityScore;
+      if (typeof updates.emotionalIntelligenceLevel === 'number') updateData.emotionalIntelligenceLevel = updates.emotionalIntelligenceLevel;
+      if (updates.skillsAcquired) updateData.skillsAcquired = JSON.stringify(updates.skillsAcquired);
+
+      const updatedRow = await prisma.childProgress.upsert({
+        where: { childId },
+        update: updateData,
+        create: { childId, ...updateData }
       });
 
       // Calculate new achievements
-      const achievements = calculateAchievements(childId, updatedProgress);
+      const updatedProgressView: UserProgress = {
+        totalActivitiesCompleted: updatedRow.totalActivitiesCompleted,
+        skillsAcquired: (() => { try { return JSON.parse(updatedRow.skillsAcquired || '[]'); } catch { return []; } })(),
+        currentStreak: updatedRow.currentStreak,
+        longestStreak: updatedRow.longestStreak,
+        kindnessPoints: updatedRow.kindnessPoints,
+        creativityScore: updatedRow.creativityScore,
+        emotionalIntelligenceLevel: updatedRow.emotionalIntelligenceLevel,
+        weeklyGoals: [],
+        monthlyMilestones: [],
+        learningPath: (() => { try { return JSON.parse(updatedRow.learningPath || '{}'); } catch { return { currentLevel: 1, nextMilestone: { id: 'first', title: 'First', description: '', achieved: false }, recommendedActivities: [], weakAreas: [], strengthAreas: [], adaptiveContent: true }; } })(),
+      };
+      const achievements = calculateAchievements(childId, updatedProgressView);
       
       // Store new achievements in database
       for (const achievement of achievements) {
@@ -518,9 +539,9 @@ export async function PUT(request: NextRequest) {
 
       return NextResponse.json({
         childId,
-        progress: updatedProgress,
+        progress: updatedProgressView,
         achievements,
-        lastUpdated: updatedProgress.updatedAt
+        lastUpdated: updatedRow.updatedAt
       });
 
     } catch (dbError) {

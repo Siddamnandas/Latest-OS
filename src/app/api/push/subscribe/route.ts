@@ -1,7 +1,7 @@
 import { getServerSession } from 'next-auth';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { db } from '@/lib/db';
+import { addWebSubscription } from '@/lib/notifications/subscribers';
 import { logger } from '@/lib/logger';
 import { authOptions } from '@/lib/auth';
 
@@ -30,39 +30,15 @@ export async function POST(request: NextRequest) {
     }
     const userId = session.user.id;
 
-    // Store or update push subscription
-    const existingSubscription = await db.pushSubscription.findFirst({
-      where: {
-        userId: userId,
-        endpoint: subscription.endpoint,
+    // Store subscription in in-memory registry for now
+    addWebSubscription({
+      endpoint: subscription.endpoint,
+      keys: {
+        p256dh: subscription.keys.p256dh,
+        auth: subscription.keys.auth,
       },
+      userAgent: userAgent || null,
     });
-
-    if (existingSubscription) {
-      // Update existing subscription
-      await db.pushSubscription.update({
-        where: { id: existingSubscription.id },
-        data: {
-          p256dhKey: subscription.keys.p256dh,
-          authKey: subscription.keys.auth,
-          userAgent: userAgent || null,
-          isActive: true,
-          updatedAt: new Date(),
-        },
-      });
-    } else {
-      // Create new subscription
-      await db.pushSubscription.create({
-        data: {
-          userId: userId,
-          endpoint: subscription.endpoint,
-          p256dhKey: subscription.keys.p256dh,
-          authKey: subscription.keys.auth,
-          userAgent: userAgent || null,
-          isActive: true,
-        },
-      });
-    }
 
     logger.info(
       {

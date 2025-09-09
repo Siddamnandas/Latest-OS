@@ -99,19 +99,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'User ID required' }, { status: 400 });
     }
 
-    // Get children data from database
+    // Get children data by user's couple (schema-aligned)
+    const parent = await db.user.findUnique({ where: { id: userId } });
     const children = await db.child.findMany({
-      where: { 
-        OR: [
-          { parentId: userId },
-          { coParentId: userId }
-        ]
-      },
-      include: {
-        milestones: true,
-        activities: true,
-        developmentRecords: true
-      }
+      where: { couple_id: parent?.couple_id || '' },
+      orderBy: { created_at: 'desc' }
     });
 
     // Calculate development scores using Mock AI
@@ -121,9 +113,9 @@ export async function GET(request: NextRequest) {
       children.map(async (child) => {
         const developmentData = {
           age: child.age,
-          milestones: child.milestones,
-          activities: child.activities,
-          developmentRecords: child.developmentRecords
+          milestones: [],
+          activities: [],
+          developmentRecords: []
         };
 
         const analysis = await zai.chat.completions.create({
@@ -185,16 +177,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'User ID and child data required' }, { status: 400 });
     }
 
-    // Create new child record
+    // Create new child record under the parent's couple; extra fields packed in preferences JSON
+    const parent = await db.user.findUnique({ where: { id: userId } });
+    const prefs = {
+      avatar: childData.avatar || null,
+      birthDate: childData.birthDate || null,
+      gender: childData.gender || null,
+      coParentId: childData.coParentId || null
+    };
     const newChild = await db.child.create({
       data: {
+        couple_id: parent?.couple_id || '',
         name: childData.name,
-        age: childData.age,
-        parentId: userId,
-        coParentId: childData.coParentId || null,
-        avatar: childData.avatar || null,
-        birthDate: childData.birthDate,
-        gender: childData.gender
+        age: Number(childData.age || 0),
+        preferences: JSON.stringify(prefs)
       }
     });
 
@@ -229,22 +225,7 @@ export async function POST(request: NextRequest) {
 
     const milestonesData = JSON.parse(milestonesResponse.choices[0].message.content || '{"milestones": []}');
     
-    // Create milestone records
-    await Promise.all(
-      milestonesData.milestones.map((milestone: any) =>
-        db.childMilestone.create({
-          data: {
-            childId: newChild.id,
-            title: milestone.title,
-            category: milestone.category,
-            ageAchieved: milestone.ageAchieved,
-            importance: milestone.importance,
-            description: milestone.description,
-            isAchieved: false
-          }
-        })
-      )
-    );
+    // TODO: Persist milestones when milestone model is available; return generated list for now
 
     return NextResponse.json({ 
       child: newChild,

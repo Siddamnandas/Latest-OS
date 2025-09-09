@@ -1455,19 +1455,19 @@ export function KidsActivities() {
         {/* Streamlined Mobile-Optimized Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6">
           <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 bg-white/90 backdrop-blur-sm shadow-xl border border-white/50 rounded-3xl p-2 mx-auto max-w-2xl">
-            <TabsTrigger value="activities" className="text-xs sm:text-sm font-semibold rounded-2xl py-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300">
+            <TabsTrigger value="activities" className="text-xs sm:text-sm font-semibold text-gray-800 rounded-2xl py-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 hover:bg-gray-100 hover:text-gray-900">
               <Baby className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
               Today's Fun
             </TabsTrigger>
-            <TabsTrigger value="development" className="text-xs sm:text-sm font-semibold rounded-2xl py-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300">
+            <TabsTrigger value="development" className="text-xs sm:text-sm font-semibold text-gray-800 rounded-2xl py-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 hover:bg-gray-100 hover:text-gray-900">
               <Brain className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
               My Growth
             </TabsTrigger>
-            <TabsTrigger value="ai-coaching" className="text-xs sm:text-sm font-semibold rounded-2xl py-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300">
+            <TabsTrigger value="ai-coaching" className="text-xs sm:text-sm font-semibold text-gray-800 rounded-2xl py-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 hover:bg-gray-100 hover:text-gray-900">
               <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
               Ask Leela
             </TabsTrigger>
-            <TabsTrigger value="milestones" className="text-xs sm:text-sm font-semibold rounded-2xl py-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-yellow-500 data-[state=active]:to-orange-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300">
+            <TabsTrigger value="milestones" className="text-xs sm:text-sm font-semibold text-gray-800 rounded-2xl py-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-yellow-500 data-[state=active]:to-orange-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 hover:bg-gray-100 hover:text-gray-900">
               <Trophy className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
               My Stars
             </TabsTrigger>
@@ -2029,11 +2029,11 @@ export function KidsActivities() {
           <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl p-1 border-2 border-indigo-200 shadow-lg mb-6">
             <div className="bg-white/90 backdrop-blur-sm rounded-xl p-6">
               <div className="text-center mb-6">
-                <h3 className="text-xl sm:text-2xl font-bold text-gray-800 mb-2 flex items-center justify-center gap-2">
+                <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2 flex items-center justify-center gap-2">
                   <span className="text-2xl">📚</span>
-                  Family Storybook
+                  <span className="text-gray-800">Family Storybook</span>
                 </h3>
-                <p className="text-gray-600">Your magical memories and adventures</p>
+                <p className="text-gray-700">Your magical memories and adventures</p>
               </div>
 
               {storybookEntries.length === 0 ? (
@@ -2080,9 +2080,14 @@ export function KidsActivities() {
                               </div>
                             </div>
                             <p className="text-sm text-gray-600 mb-3">{entry.description}</p>
-                            <div className="flex items-center gap-4 text-sm text-gray-500">
-                              <span>{new Date(entry.date).toLocaleDateString()}</span>
-                              <span>{entry.participants.join(', ')}</span>
+                            <div className="flex items-center gap-4 text-sm text-gray-600">
+                              <span className="text-gray-700">
+                                {entry.timestamp
+                                  ? new Date(entry.timestamp).toLocaleDateString()
+                                  : 'Recently added'
+                                }
+                              </span>
+                              <span className="text-gray-700">{entry.participants.join(', ')}</span>
                             </div>
                           </div>
                         </div>

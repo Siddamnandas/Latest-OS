@@ -25,7 +25,7 @@ import {
   Unlock,
   Lock,
   Medal,
-  Reward
+  Gift as Reward
 } from 'lucide-react';
 
 interface Achievement {

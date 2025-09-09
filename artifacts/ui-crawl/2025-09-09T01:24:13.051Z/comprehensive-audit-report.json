@@ -1,0 +1,18 @@
+{
+  "timestamp": "2025-09-09T01:24:42.595Z",
+  "totalConsoleErrors": 3,
+  "totalNetworkErrors": 0,
+  "consoleErrors": [
+    "2025-09-09T01:24:38.693Z - Console Error: Service worker registration failed TypeError: Failed to register a ServiceWorker for scope ('http://localhost:3000/') with script ('http://localhost:3000/service-worker.js'): ServiceWorker script evaluation failed",
+    "2025-09-09T01:24:39.678Z - Console Error: WebSocket connection to 'ws://localhost:3000/api/socketio?EIO=4&transport=websocket' failed: Connection closed before receiving a handshake response",
+    "2025-09-09T01:24:41.477Z - Console Error: WebSocket connection to 'ws://localhost:3000/api/socketio?EIO=4&transport=websocket' failed: Connection closed before receiving a handshake response"
+  ],
+  "networkErrors": [],
+  "recommendations": [
+    "Fix any console errors that appear in production",
+    "Verify all buttons have proper click handlers",
+    "Ensure accessibility labels are present",
+    "Test on mobile devices for responsive issues",
+    "Review network error patterns for API issues"
+  ]
+}

@@ -1,683 +1,323 @@
-// Kids Activities API Route
-// Production-ready API for activity management with filtering, pagination, and progress tracking
-// Parent-managed system: Parents authenticate and track children's activities
-
 import { NextRequest, NextResponse } from 'next/server';
+import { PrismaClient } from '@prisma/client';
 import { getServerSession } from 'next-auth';
-import { z } from 'zod';
-import { BaseActivity, ActivityResult, EmotionScenario, CreativeActivity } from '@/types/kids-activities';
 import { authOptions } from '@/lib/auth';
-import { logger, apiLogger, performanceLogger } from '@/lib/logger';
-import { prisma } from '@/lib/prisma';
-import { kidsCache, cacheHelpers } from '@/lib/kids-cache';
-import { performanceMonitor } from '@/lib/performance-monitor';
-import { monitoring } from '@/lib/monitoring';
 
-// Validation schemas
-const ActivityFilterSchema = z.object({
-  childId: z.string().uuid('Invalid child ID format').optional(),
-  type: z.array(z.enum(['emotion', 'mythology', 'creativity', 'kindness', 'story', 'music', 'movement'])).optional(),
-  difficulty: z.array(z.enum(['easy', 'medium', 'hard'])).optional(),
-  ageMin: z.number().min(3).max(18).optional(),
-  ageMax: z.number().min(3).max(18).optional(),
-  durationMin: z.number().min(1).optional(),
-  durationMax: z.number().min(1).optional(),
-  tags: z.array(z.string()).optional(),
-  completed: z.boolean().optional(),
-  limit: z.number().min(1).max(100).default(20),
-  offset: z.number().min(0).default(0)
-});
+const prisma = new PrismaClient();
 
-const ActivityResultSchema = z.object({
-  activityId: z.string(),
-  childId: z.string().uuid('Invalid child ID format'),
-  startTime: z.string().datetime(),
-  endTime: z.string().datetime(),
-  completed: z.boolean(),
-  score: z.number().min(0).max(100).optional(),
-  answers: z.record(z.string(), z.any()).optional(),
-  reflection: z.string().optional(),
-  parentFeedback: z.string().optional(),
-  media: z.array(z.object({
-    type: z.enum(['photo', 'video', 'audio', 'drawing']),
-    url: z.string().url(),
-    caption: z.string().optional(),
-    timestamp: z.string().datetime(),
-    createdBy: z.string()
-  })).optional()
-});
-
-
-
-// GET /api/kids/activities - Retrieve activities with filtering and pagination (parent-authenticated)
+// GET /api/kids/activities - Fetch activities for kids
 export async function GET(request: NextRequest) {
-  const startTime = Date.now();
-  
   try {
-    // Authenticate parent user
     const session = await getServerSession(authOptions);
+
     if (!session?.user?.id) {
-      const responseTime = Date.now() - startTime;
-      monitoring.recordAPIMetric('/api/kids/activities', 'GET', 401, responseTime);
-      apiLogger.warn('Unauthorized access attempt to kids activities API');
-      return NextResponse.json(
-        { error: 'Authentication required. Parents must be logged in to access activities.' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { searchParams } = new URL(request.url);
-    
-    // Parse and validate query parameters
-    const filters = {
-      childId: searchParams.get('childId') || undefined,
-      type: searchParams.get('type')?.split(','),
-      difficulty: searchParams.get('difficulty')?.split(','),
-      ageMin: searchParams.get('ageMin') ? parseInt(searchParams.get('ageMin')!) : undefined,
-      ageMax: searchParams.get('ageMax') ? parseInt(searchParams.get('ageMax')!) : undefined,
-      durationMin: searchParams.get('durationMin') ? parseInt(searchParams.get('durationMin')!) : undefined,
-      durationMax: searchParams.get('durationMax') ? parseInt(searchParams.get('durationMax')!) : undefined,
-      tags: searchParams.get('tags')?.split(','),
-      completed: searchParams.get('completed') === 'true' ? true : searchParams.get('completed') === 'false' ? false : undefined,
-      limit: parseInt(searchParams.get('limit') || '20'),
-      offset: parseInt(searchParams.get('offset') || '0')
+    // Find the couple this user belongs to
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      include: { couple: true },
+    });
+
+    if (!user?.couple) {
+      return NextResponse.json({ error: 'User not associated with a couple' }, { status: 404 });
+    }
+
+    const url = new URL(request.url);
+    const type = url.searchParams.get('type'); // emotion, mythology, creativity, etc.
+    const ageMin = parseInt(url.searchParams.get('ageMin') || '3');
+    const ageMax = parseInt(url.searchParams.get('ageMax') || '12');
+    const limit = parseInt(url.searchParams.get('limit') || '20');
+    const childId = url.searchParams.get('childId');
+
+    // Build where clause
+    const where: any = {
+      isActive: true,
+      ageMin: { lte: ageMax },
+      ageMax: { gte: ageMin },
     };
 
-    // Validate filters
-    const validationResult = ActivityFilterSchema.safeParse(filters);
-    if (!validationResult.success) {
-      logger.warn({ filters, errors: validationResult.error.issues }, 'Invalid activity filter parameters');
-      return NextResponse.json(
-        {
-          error: 'Invalid filter parameters',
-          details: validationResult.error.issues
-        },
-        { status: 400 }
-      );
+    if (type) {
+      where.type = type;
     }
 
-    const validatedFilters = validationResult.data;
-    
-    // Check cache first
-    const cacheKey = { ...validatedFilters, parentId: session.user.id };
-    const cachedActivities = cacheHelpers.getCachedActivityList(cacheKey);
-    
-    if (cachedActivities) {
-      const responseTime = Date.now() - startTime;
-      monitoring.recordAPIMetric('/api/kids/activities', 'GET', 200, responseTime);
-      monitoring.recordUserActivity(session.user.id, 'get_activities_cached', validatedFilters.childId);
-      
-      apiLogger.info({
-        parentId: session.user.id,
-        childId: validatedFilters.childId,
-        cacheHit: true,
-        totalResults: cachedActivities.length,
-        responseTime
-      }, 'Activities retrieved from cache');
-      
-      return NextResponse.json({
-        activities: cachedActivities,
-        cached: true,
-        timestamp: new Date()
+    // Get child profile if specified
+    let childProfile: any = null;
+    if (childId) {
+      childProfile = await prisma.childProfile.findFirst({
+        where: { id: childId, parentId: session.user.id },
+        include: { progress: true },
       });
     }
-    
-    // If childId is specified, verify parent-child relationship
-    if (validatedFilters.childId) {
-      try {
-        const child = await prisma.childProfile.findFirst({
-          where: {
-            id: validatedFilters.childId,
-            parentId: session.user.id
-          }
-        });
 
-        if (!child) {
-          logger.warn({
-            parentId: session.user.id,
-            childId: validatedFilters.childId
-          }, 'Parent attempted to access unauthorized child activities');
-          return NextResponse.json(
-            { error: 'Child not found or access denied. You can only access activities for your own children.' },
-            { status: 404 }
-          );
-        }
-      } catch (dbError) {
-        logger.error({
-          error: dbError,
-          parentId: session.user.id,
-          childId: validatedFilters.childId
-        }, 'Database error verifying child access');
-        return NextResponse.json(
-          { error: 'Database error occurred while verifying access' },
-          { status: 500 }
-        );
-      }
-    }
-    
-    try {
-      // Build database query based on filters
-      const whereClause: any = {
-        isActive: true
-      };
-      
-      // Add filters to where clause
-      if (validatedFilters.type && validatedFilters.type.length > 0) {
-        whereClause.type = { in: validatedFilters.type };
-      }
-      
-      if (validatedFilters.difficulty && validatedFilters.difficulty.length > 0) {
-        whereClause.difficulty = { in: validatedFilters.difficulty };
-      }
-      
-      if (validatedFilters.ageMin || validatedFilters.ageMax) {
-        whereClause.AND = [];
-        if (validatedFilters.ageMin) {
-          whereClause.AND.push({ ageMax: { gte: validatedFilters.ageMin } });
-        }
-        if (validatedFilters.ageMax) {
-          whereClause.AND.push({ ageMin: { lte: validatedFilters.ageMax } });
-        }
-      }
-      
-      if (validatedFilters.durationMin || validatedFilters.durationMax) {
-        if (!whereClause.AND) whereClause.AND = [];
-        if (validatedFilters.durationMin) {
-          whereClause.AND.push({ estimatedDuration: { gte: validatedFilters.durationMin } });
-        }
-        if (validatedFilters.durationMax) {
-          whereClause.AND.push({ estimatedDuration: { lte: validatedFilters.durationMax } });
-        }
-      }
-      
-      // Get total count for pagination
-      const totalCount = await prisma.activity.count({ where: whereClause });
-      
-      // Get activities from database
-      let activities = await prisma.activity.findMany({
-        where: whereClause,
-        orderBy: {
-          createdAt: 'desc'
+    // Fetch activities
+    const activities = await prisma.activity.findMany({
+      where,
+      take: limit,
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        type: true,
+        difficulty: true,
+        ageMin: true,
+        ageMax: true,
+        estimatedDuration: true,
+        tags: true,
+        instructions: true,
+        materials: true,
+        learningObjectives: true,
+        parentGuidance: true,
+        safetyNotes: true,
+        accessibility: true,
+        createdAt: true,
+      },
+    });
+
+    // Process JSON fields
+    const processedActivities = activities.map(activity => ({
+      ...activity,
+      tags: JSON.parse(activity.tags),
+      instructions: JSON.parse(activity.instructions),
+      materials: JSON.parse(activity.materials),
+      learningObjectives: JSON.parse(activity.learningObjectives),
+      safetyNotes: JSON.parse(activity.safetyNotes),
+      accessibility: JSON.parse(activity.accessibility),
+    }));
+
+    // If child profile is provided, add completion status
+    let activitiesWithProgress = processedActivities;
+    if (childProfile) {
+      // Get activity completions for this child
+      const completions = await prisma.activityCompletion.findMany({
+        where: {
+          childId: childId as string,
+          completed: true,
         },
-        skip: validatedFilters.offset,
-        take: validatedFilters.limit
+        select: {
+          activityId: true,
+          completedAt: true,
+          score: true,
+        },
       });
-      
-      // Apply age-based filtering if childId is provided
-      if (validatedFilters.childId) {
-        const child = await prisma.childProfile.findUnique({
-          where: { id: validatedFilters.childId },
-          select: { birthDate: true }
-        });
-        
-        if (child?.birthDate) {
-          const childAge = Math.floor((Date.now() - child.birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000));
-          activities = activities.filter(activity => 
-            activity.ageMin <= childAge && activity.ageMax >= childAge
-          );
-        }
-      }
-      
-      // Apply tag filtering (if implemented)
-      if (validatedFilters.tags && validatedFilters.tags.length > 0) {
-        activities = activities.filter(activity => {
-          const activityTags = JSON.parse(activity.tags || '[]');
-          return validatedFilters.tags!.some(tag => activityTags.includes(tag));
-        });
-      }
 
-      // Get completion status if childId is provided
-      let activitiesWithProgress = activities.map(activity => ({
+      const completionMap = new Map(completions.map(c => [c.activityId, c]));
+
+      activitiesWithProgress = processedActivities.map(activity => ({
         ...activity,
-        tags: JSON.parse(activity.tags || '[]'),
-        instructions: JSON.parse(activity.instructions || '[]'),
-        materials: JSON.parse(activity.materials || '[]'),
-        learningObjectives: JSON.parse(activity.learningObjectives || '[]'),
-        safetyNotes: JSON.parse(activity.safetyNotes || '[]'),
-        accessibility: JSON.parse(activity.accessibility || '{}')
+        completed: completionMap.has(activity.id),
+        lastCompleted: completionMap.get(activity.id)?.completedAt,
+        bestScore: completionMap.get(activity.id)?.score,
       }));
-      
-      if (validatedFilters.childId) {
-        const completions = await prisma.activityCompletion.findMany({
-          where: {
-            childId: validatedFilters.childId,
-            activityId: { in: activities.map(a => a.id) }
-          },
-          select: {
-            activityId: true,
-            completed: true,
-            score: true,
-            completedAt: true
-          }
-        });
-
-        activitiesWithProgress = activitiesWithProgress.map(activity => ({
-          ...activity,
-          completion: completions.find(c => c.activityId === activity.id)
-        }));
-      }
-        
-      // Cache the results
-      const resultWithMeta = {
-        activities: activitiesWithProgress,
-        meta: {
-          total: totalCount,
-          offset: validatedFilters.offset,
-          limit: validatedFilters.limit,
-          hasMore: validatedFilters.offset + validatedFilters.limit < totalCount
-        },
-        filters: validatedFilters
-      };
-      
-      cacheHelpers.cacheActivityList(cacheKey, activitiesWithProgress);
-
-      const responseTime = Date.now() - startTime;
-      monitoring.recordAPIMetric('/api/kids/activities', 'GET', 200, responseTime);
-      monitoring.recordUserActivity(session.user.id, 'get_activities', validatedFilters.childId);
-
-      apiLogger.info({
-        parentId: session.user.id,
-        childId: validatedFilters.childId,
-        totalResults: totalCount,
-        returnedResults: activitiesWithProgress.length,
-        cached: false,
-        responseTime
-      }, 'Activities retrieved successfully');
-
-      return NextResponse.json({
-        ...resultWithMeta,
-        timestamp: new Date()
-      });
-      
-    } catch (dbError) {
-      const responseTime = Date.now() - startTime;
-      monitoring.recordAPIMetric('/api/kids/activities', 'GET', 500, responseTime);
-      apiLogger.error({
-        error: dbError,
-        parentId: session.user.id,
-        childId: validatedFilters.childId,
-        responseTime
-      }, 'Database error retrieving activities');
-      return NextResponse.json(
-        { error: 'Database error occurred while retrieving activities' },
-        { status: 500 }
-      );
     }
-    
+
+    return NextResponse.json({
+      activities: activitiesWithProgress,
+      childProfile: childProfile ? {
+        id: childProfile.id,
+        name: childProfile.name,
+        currentLevel: childProfile.progress?.emotionalIntelligenceLevel || 1,
+        totalPoints: childProfile.progress?.kindnessPoints || 0,
+      } : null,
+    });
+
   } catch (error) {
-    const responseTime = Date.now() - startTime;
-    monitoring.recordAPIMetric('/api/kids/activities', 'GET', 500, responseTime);
-    apiLogger.error({ 
-      error, 
-      responseTime 
-    }, 'Unexpected error in kids activities GET endpoint');
+    console.error('Error fetching kids activities:', error);
     return NextResponse.json(
-      { error: 'An unexpected error occurred' },
+      { error: 'Failed to fetch activities', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
+  } finally {
+    await prisma.$disconnect();
   }
 }
 
-// POST /api/kids/activities - Submit activity result (parent-authenticated)
+// POST /api/kids/activities - Create or complete an activity
 export async function POST(request: NextRequest) {
-  const startTime = Date.now();
-  
   try {
-    // Authenticate parent user
     const session = await getServerSession(authOptions);
+
     if (!session?.user?.id) {
-      const responseTime = Date.now() - startTime;
-      monitoring.recordAPIMetric('/api/kids/activities', 'POST', 401, responseTime);
-      apiLogger.warn('Unauthorized access attempt to submit activity result');
-      return NextResponse.json(
-        { error: 'Authentication required. Parents must be logged in to submit activity results.' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const body = await request.json();
-    
-    // Validate activity result
-    const validationResult = ActivityResultSchema.safeParse(body);
-    if (!validationResult.success) {
-      logger.warn({ errors: validationResult.error.issues }, 'Invalid activity result data');
+    const { activityId, childId, action, data } = body;
+
+    // Validate required fields
+    if (!activityId || !childId || !action) {
       return NextResponse.json(
-        {
-          error: 'Invalid activity result data',
-          details: validationResult.error.issues
-        },
+        { error: 'activityId, childId, and action are required' },
         { status: 400 }
       );
     }
 
-    const resultData = validationResult.data;
-    
-    try {
-      // Verify parent-child relationship
-      const child = await prisma.childProfile.findFirst({
-        where: {
-          id: resultData.childId,
-          parentId: session.user.id
-        }
-      });
-
-      if (!child) {
-        logger.warn({
-          parentId: session.user.id,
-          childId: resultData.childId
-        }, 'Parent attempted to submit result for unauthorized child');
-        return NextResponse.json(
-          { error: 'Child not found or access denied. You can only submit results for your own children.' },
-          { status: 404 }
-        );
-      }
-
-      // Verify activity exists
-      const activity = await prisma.activity.findUnique({
-        where: { id: resultData.activityId }
-      });
-      
-      if (!activity) {
-        logger.warn({
-          activityId: resultData.activityId,
-          childId: resultData.childId
-        }, 'Activity not found for result submission');
-        return NextResponse.json(
-          { error: 'Activity not found' },
-          { status: 404 }
-        );
-      }
-
-      // Create activity completion record
-      const completion = await prisma.activityCompletion.create({
-        data: {
-          childId: resultData.childId,
-          activityId: resultData.activityId,
-          startTime: new Date(resultData.startTime),
-          endTime: new Date(resultData.endTime),
-          completed: resultData.completed,
-          score: resultData.score,
-          answers: JSON.stringify(resultData.answers || {}),
-          reflection: resultData.reflection,
-          parentFeedback: resultData.parentFeedback,
-          media: JSON.stringify(resultData.media || [])
-        }
-      });
-
-      // Update child progress if activity was completed
-      if (resultData.completed) {
-        await updateChildProgress(resultData.childId, activity, resultData.score || 0);
-        // Invalidate progress cache since it changed
-        cacheHelpers.invalidateChildData(resultData.childId);
-      }
-
-      // Calculate new achievements
-      const achievements = await calculateAndAwardAchievements(resultData.childId);
-
-      const responseTime = Date.now() - startTime;
-      monitoring.recordAPIMetric('/api/kids/activities', 'POST', 201, responseTime);
-      monitoring.recordUserActivity(session.user.id, 'submit_activity', resultData.childId);
-      
-      // Record kids activity metrics
-      if (activity) {
-        monitoring.recordKidsActivity(
-          activity.type,
-          resultData.completed,
-          // Calculate child age based on birth date if available
-          18 // Default age for now
-        );
-      }
-
-      apiLogger.info({
+    // Verify child ownership
+    const childProfile = await prisma.childProfile.findFirst({
+      where: {
+        id: childId,
         parentId: session.user.id,
-        childId: resultData.childId,
-        activityId: resultData.activityId,
-        completed: resultData.completed,
-        newAchievements: achievements.length,
-        responseTime
-      }, 'Activity result submitted successfully');
+      },
+      include: { progress: true },
+    });
 
-      return NextResponse.json({
-        completion,
-        achievements,
-        message: 'Activity result submitted successfully'
-      }, { status: 201 });
-
-    } catch (dbError) {
-      logger.error({
-        error: dbError,
-        parentId: session.user.id,
-        childId: resultData.childId
-      }, 'Database error submitting activity result');
-      return NextResponse.json(
-        { error: 'Database error occurred while submitting result' },
-        { status: 500 }
-      );
+    if (!childProfile) {
+      return NextResponse.json({ error: 'Child profile not found or access denied' }, { status: 404 });
     }
 
-  } catch (error) {
-    logger.error({ error }, 'Unexpected error in kids activities POST endpoint');
-    return NextResponse.json(
-      { error: 'An unexpected error occurred' },
-      { status: 500 }
-    );
-  }
-}
+    switch (action) {
+      case 'start':
+        // Create or update activity completion record (no composite unique key in schema)
+        {
+          const existing = await prisma.activityCompletion.findFirst({
+            where: { childId: childId as string, activityId: activityId as string },
+          });
+          const completion = existing
+            ? await prisma.activityCompletion.update({
+                where: { id: existing.id },
+                data: {
+                  startTime: new Date(),
+                  answers: JSON.stringify(data?.answers || {}),
+                },
+              })
+            : await prisma.activityCompletion.create({
+                data: {
+                  childId: childId as string,
+                  activityId: activityId as string,
+                  startTime: new Date(),
+                  endTime: new Date(),
+                  answers: JSON.stringify(data?.answers || {}),
+                },
+              });
 
-// Helper function to update child progress
-async function updateChildProgress(childId: string, activity: any, score: number) {
-  try {
-    const currentProgress = await prisma.childProgress.findUnique({
-      where: { childId }
-    });
-
-    if (!currentProgress) {
-      // Create initial progress record
-      await prisma.childProgress.create({
-        data: {
-          childId,
-          totalActivitiesCompleted: 1,
-          currentStreak: 1,
-          longestStreak: 1,
-          kindnessPoints: activity.type === 'kindness' ? 10 : 0,
-          creativityScore: activity.type === 'creativity' ? score : 0,
-          emotionalIntelligenceLevel: activity.type === 'emotion' ? 2 : 1
+          return NextResponse.json({
+            success: true,
+            action: 'started',
+            completion,
+            message: 'Activity started',
+          });
         }
-      });
-    } else {
-      // Update existing progress
-      const updates: any = {
-        totalActivitiesCompleted: currentProgress.totalActivitiesCompleted + 1,
-        currentStreak: currentProgress.currentStreak + 1,
-        longestStreak: Math.max(currentProgress.longestStreak, currentProgress.currentStreak + 1)
-      };
 
-      // Update category-specific scores
-      if (activity.type === 'kindness') {
-        updates.kindnessPoints = currentProgress.kindnessPoints + 10;
-      }
-      if (activity.type === 'creativity') {
-        updates.creativityScore = currentProgress.creativityScore + score;
-      }
-      if (activity.type === 'emotion') {
-        updates.emotionalIntelligenceLevel = Math.min(10, currentProgress.emotionalIntelligenceLevel + 1);
-      }
+      case 'complete':
+        // Mark activity as completed and award points
+        {
+          const existing = await prisma.activityCompletion.findFirst({
+            where: { childId: childId as string, activityId: activityId as string },
+          });
+          const completedActivity = existing
+            ? await prisma.activityCompletion.update({
+                where: { id: existing.id },
+                data: {
+                  endTime: new Date(),
+                  completed: true,
+                  score: data?.score || 100,
+                  reflection: data?.reflection,
+                  completedAt: new Date(),
+                },
+              })
+            : await prisma.activityCompletion.create({
+                data: {
+                  childId: childId as string,
+                  activityId: activityId as string,
+                  startTime: new Date(),
+                  endTime: new Date(),
+                  completed: true,
+                  score: data?.score || 100,
+                  answers: JSON.stringify(data?.answers || {}),
+                  reflection: data?.reflection,
+                  completedAt: new Date(),
+                },
+              });
 
-      await prisma.childProgress.update({
-        where: { childId },
-        data: updates
-      });
-    }
-  } catch (error) {
-    logger.error({ error, childId }, 'Error updating child progress');
-    throw error;
-  }
-}
-
-// Helper function to calculate and award achievements
-async function calculateAndAwardAchievements(childId: string) {
-  try {
-    const progress = await prisma.childProgress.findUnique({
-      where: { childId }
-    });
-
-    if (!progress) return [];
-
-    const newAchievements = [];
-    const existingAchievements = await prisma.childAchievement.findMany({
-      where: { childId },
-      select: { achievementId: true }
-    });
-
-    const existingIds = existingAchievements.map(a => a.achievementId);
-
-    // Define achievement criteria
-    const achievementCriteria = [
-      {
-        id: 'first_activity',
-        name: 'First Steps',
-        description: 'Completed your very first activity!',
-        icon: '👶',
-        rarity: 'common',
-        condition: () => progress.totalActivitiesCompleted >= 1
-      },
-      {
-        id: 'learning_explorer',
-        name: 'Learning Explorer',
-        description: 'Completed 5 activities - you love learning!',
-        icon: '🗺️',
-        rarity: 'common',
-        condition: () => progress.totalActivitiesCompleted >= 5
-      },
-      {
-        id: 'super_learner',
-        name: 'Super Learner',
-        description: 'Completed 20 activities - amazing dedication!',
-        icon: '🚀',
-        rarity: 'rare',
-        condition: () => progress.totalActivitiesCompleted >= 20
-      },
-      {
-        id: 'kind_heart',
-        name: 'Kind Heart',
-        description: 'Earned 10 kindness points - you have a beautiful heart!',
-        icon: '💖',
-        rarity: 'common',
-        condition: () => progress.kindnessPoints >= 10
-      },
-      {
-        id: 'kindness_champion',
-        name: 'Kindness Champion',
-        description: 'Earned 50 kindness points - you make the world brighter!',
-        icon: '🏆',
-        rarity: 'rare',
-        condition: () => progress.kindnessPoints >= 50
-      },
-      {
-        id: 'consistency_star',
-        name: 'Consistency Star',
-        description: '3 days in a row - building great habits!',
-        icon: '⭐',
-        rarity: 'common',
-        condition: () => progress.currentStreak >= 3
-      },
-      {
-        id: 'week_warrior',
-        name: 'Week Warrior',
-        description: '7 days in a row - incredible dedication!',
-        icon: '🛡️',
-        rarity: 'rare',
-        condition: () => progress.longestStreak >= 7
-      }
-    ];
-
-    // Check and award new achievements
-    for (const achievement of achievementCriteria) {
-      if (!existingIds.includes(achievement.id) && achievement.condition()) {
-        const newAchievement = await prisma.childAchievement.create({
-          data: {
-            childId,
-            achievementId: achievement.id,
-            name: achievement.name,
-            description: achievement.description,
-            icon: achievement.icon,
-            rarity: achievement.rarity,
-            requirements: JSON.stringify([achievement.description])
-          }
+        // Award points based on activity type and difficulty
+        const activity = await prisma.activity.findUnique({
+          where: { id: activityId },
         });
-        newAchievements.push(newAchievement);
-      }
+
+        let pointsAwarded = 10; // Base points
+        if (activity) {
+          switch (activity.difficulty) {
+            case 'easy': pointsAwarded = 15; break;
+            case 'medium': pointsAwarded = 25; break;
+            case 'hard': pointsAwarded = 40; break;
+          }
+
+          switch (activity.type) {
+            case 'emotion': pointsAwarded += 5; break;
+            case 'mythology': pointsAwarded += 10; break;
+            case 'creativity': pointsAwarded += 7; break;
+          }
+        }
+
+        // Update child progress
+        await prisma.childProgress.upsert({
+          where: { childId: childId },
+          create: {
+            childId: childId,
+            emotionalIntelligenceLevel: 1,
+            skillsAcquired: JSON.stringify([activity?.type || 'activity']),
+            kindnessPoints: pointsAwarded,
+          },
+          update: {
+            totalActivitiesCompleted: { increment: 1 },
+            kindnessPoints: { increment: pointsAwarded },
+            skillsAcquired: JSON.stringify(
+              [
+                ...JSON.parse(childProfile.progress?.skillsAcquired || '[]'),
+                activity?.type || 'activity'
+              ].filter((v, i, a) => a.indexOf(v) === i) // Unique
+            ),
+          },
+        });
+
+        // Create achievement if milestones reached
+        const completedCount = await prisma.activityCompletion.count({
+          where: {
+            childId: childId,
+            completed: true,
+          },
+        });
+
+        if (completedCount === 5 || completedCount === 10 || completedCount === 25) {
+          await prisma.childAchievement.create({
+            data: {
+              childId: childId,
+              achievementId: `activities-${completedCount}`,
+              name: `${completedCount} Activities Completed!`,
+              description: `Amazing! You've completed ${completedCount} activities!`,
+              icon: '🏆',
+              rarity: completedCount >= 25 ? 'legendary' : completedCount >= 10 ? 'epic' : 'rare',
+              requirements: JSON.stringify({ activitiesCompleted: completedCount }),
+            },
+          });
+        }
+
+        return NextResponse.json({
+          success: true,
+          action: 'completed',
+          completion: completedActivity,
+          pointsAwarded,
+          totalActivities: completedCount,
+          message: `Activity completed! You earned ${pointsAwarded} points!`,
+        });
+        }
+
+      default:
+        return NextResponse.json(
+          { error: 'Invalid action. Use "start" or "complete"' },
+          { status: 400 }
+        );
     }
 
-    return newAchievements;
   } catch (error) {
-    logger.error({ error, childId }, 'Error calculating achievements');
-    return [];
-  }
-}
-
-// PUT /api/kids/activities - Update activity (admin only)
-export async function PUT(request: NextRequest) {
-  try {
-    // Authenticate user
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: 'Authentication required' },
-        { status: 401 }
-      );
-    }
-
-    // Check admin role (implement based on your auth system)
-    // if (session.user.role !== 'ADMIN') {
-    //   return NextResponse.json(
-    //     { error: 'Admin privileges required for activity updates' },
-    //     { status: 403 }
-    //   );
-    // }
-
+    console.error('Error managing activity completion:', error);
     return NextResponse.json(
-      { error: 'Activity updates require admin privileges' },
-      { status: 403 }
-    );
-  } catch (error) {
-    logger.error({ error }, 'Error in activities PUT endpoint');
-    return NextResponse.json(
-      { error: 'An unexpected error occurred' },
+      { error: 'Failed to manage activity', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
-  }
-}
-
-// DELETE /api/kids/activities - Delete activity (admin only)
-export async function DELETE(request: NextRequest) {
-  try {
-    // Authenticate user
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: 'Authentication required' },
-        { status: 401 }
-      );
-    }
-
-    // Check admin role (implement based on your auth system)
-    // if (session.user.role !== 'ADMIN') {
-    //   return NextResponse.json(
-    //     { error: 'Admin privileges required for activity deletion' },
-    //     { status: 403 }
-    //   );
-    // }
-
-    return NextResponse.json(
-      { error: 'Activity deletion requires admin privileges' },
-      { status: 403 }
-    );
-  } catch (error) {
-    logger.error({ error }, 'Error in activities DELETE endpoint');
-    return NextResponse.json(
-      { error: 'An unexpected error occurred' },
-      { status: 500 }
-    );
+  } finally {
+    await prisma.$disconnect();
   }
 }

@@ -1,406 +1,327 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { z } from 'zod';
-import fs from 'fs';
-import path from 'path';
+import { PrismaClient } from '@prisma/client';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 
-const prisma = db;
+const prisma = new PrismaClient();
 
-// Memory creation validation schema
-const createMemorySchema = z.object({
-  title: z.string().min(1, 'Title is required'),
-  description: z.string().optional(),
-  type: z.enum(['text', 'audio', 'video', 'image']),
-  content: z.string().optional(), // Text content or media URL
-  memory_type: z.enum(['kindness', 'storybook', 'general']).optional(),
-  is_private: z.boolean().optional(),
-  tags: z.array(z.string()).optional(),
-});
-
-// Search query validation
-const searchQuerySchema = z.object({
-  q: z.string().min(1, 'Search query is required'),
-  type: z.enum(['text', 'audio', 'video', 'image']).optional(),
-  memory_type: z.enum(['kindness', 'storybook', 'general']).optional(),
-  sentiment: z.enum(['positive', 'neutral', 'negative']).optional(),
-  from_date: z.string().optional(),
-  to_date: z.string().optional(),
-  limit: z.number().min(1).max(100).optional(),
-  offset: z.number().min(0).optional(),
-});
-
-// Helper function to analyze emotions from text
-async function analyzeEmotion(text: string): Promise<string> {
-  // Simple emotion analysis (in production, use AI service)
-  const lowerText = text.toLowerCase();
-
-  // Emotional keywords mapping to sentiment
-  const positiveWords = ['happy', 'love', 'joy', 'amazing', 'wonderful', 'great', 'beautiful', 'excited', 'proud', 'fulfilled'];
-  const negativeWords = ['sad', 'angry', 'frustrated', 'disappointed', 'upset', 'difficult', 'challenging', 'worried'];
-
-  const positiveCount = positiveWords.reduce((count, word) =>
-    count + (lowerText.includes(word) ? 1 : 0), 0);
-  const negativeCount = negativeWords.reduce((count, word) =>
-    count + (lowerText.includes(word) ? 1 : 0), 0);
-
-  if (positiveCount > negativeCount) return 'positive';
-  if (negativeCount > positiveCount) return 'negative';
-  return 'neutral';
-}
-
-// Helper function to generate AI-powered tags
-async function generateTags(content: string, type: string): Promise<string[]> {
-  const tags: string[] = [];
-
-  // Basic tag generation based on content patterns
-  if (content.includes('birthday') || content.includes('anniversary')) {
-    tags.push('celebration');
-  }
-  if (content.includes('beach') || content.includes('vacation')) {
-    tags.push('travel', 'vacation');
-  }
-  if (content.includes('family') || content.includes('parents') || content.includes('kids')) {
-    tags.push('family');
-  }
-  if (content.includes('food') || content.includes('restaurant') || content.includes('cooking')) {
-    tags.push('food', 'cooking');
-  }
-
-  // Media type specific tags
-  if (type === 'image') tags.push('photo', 'visual');
-  if (type === 'video') tags.push('video', 'motion');
-  if (type === 'audio') tags.push('audio', 'sound');
-
-  return [...new Set(tags)]; // Remove duplicates
-}
-
-// Helper function to determine memory type
-async function categorizeMemory(content: string): Promise<string> {
-  const lowerContent = content.toLowerCase();
-
-  if (lowerContent.includes('kind') || lowerContent.includes('helped') ||
-      lowerContent.includes('support') || lowerContent.includes('caring')) {
-    return 'kindness';
-  }
-
-  if (lowerContent.includes('story') || lowerContent.includes('read') ||
-      lowerContent.includes('fairytale') || lowerContent.includes('storybook')) {
-    return 'storybook';
-  }
-
-  return 'general';
-}
-
-// Helper function to analyze relationship insights from memories
-async function extractRelationshipInsights(coupleId: string): Promise<{
-  totalMemories: number;
-  emotionalBalance: 'positive' | 'neutral' | 'negative';
-  dominantCategories: string[];
-  memoryFrequency: string;
-  topEmotions: string[];
-  growthAreas: string[];
-}> {
-  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-
-  const recentMemories = await prisma.memory.findMany({
-    where: {
-      couple_id: coupleId,
-      created_at: {
-        gte: thirtyDaysAgo,
-      },
-    },
-  });
-
-  if (recentMemories.length === 0) {
-    return {
-      totalMemories: 0,
-      emotionalBalance: 'neutral',
-      dominantCategories: [],
-      memoryFrequency: 'No data',
-      topEmotions: [],
-      growthAreas: [],
-    };
-  }
-
-  // Analyze emotional patterns
-  const sentiments = recentMemories.map(mem => mem.sentiment);
-  const positiveCount = sentiments.filter(s => s === 'positive').length;
-  const emotionalBalance = positiveCount > sentiments.length * 0.6 ? 'positive' :
-                          positiveCount < sentiments.length * 0.3 ? 'negative' : 'neutral';
-
-  // Identify dominant categories
-  const categories = recentMemories.map(mem => mem.memory_type).filter(Boolean);
-  const categoryCounts = categories.reduce((acc: Record<string, number>, cat) => {
-    acc[cat] = (acc[cat] || 0) + 1;
-    return acc;
-  }, {});
-
-  const dominantCategories = Object.entries(categoryCounts)
-    .sort(([,a], [,b]) => b - a)
-    .slice(0, 3)
-    .map(([cat,]) => cat);
-
-  // Calculate memory frequency
-  const totalDays = 30;
-  const uniqueDays = new Set(
-    recentMemories.map(mem => mem.created_at.toISOString().split('T')[0])
-  ).size;
-
-  const frequencyRate = uniqueDays / totalDays;
-  let memoryFrequency = 'Rare';
-  if (frequencyRate > 0.8) memoryFrequency = 'Excellent';
-  else if (frequencyRate > 0.6) memoryFrequency = 'Good';
-  else if (frequencyRate > 0.4) memoryFrequency = 'Fair';
-  else if (frequencyRate > 0.2) memoryFrequency = 'Poor';
-
-  // Analyze common emotions
-  const emotionTags = recentMemories.flatMap(mem =>
-    JSON.parse(mem.tags || '[]') as string[]
-  );
-  const emotionCounts = emotionTags.reduce((acc: Record<string, number>, tag) => {
-    acc[tag] = (acc[tag] || 0) + 1;
-    return acc;
-  }, {});
-
-  const topEmotions = Object.entries(emotionCounts)
-    .sort(([,a], [,b]) => b - a)
-    .slice(0, 5)
-    .map(([emotion,]) => emotion);
-
-  // Identify growth areas
-  const growthAreas: string[] = [];
-  if (positiveCount < sentiments.length * 0.3) {
-    growthAreas.push('Emotional connection needs strengthening');
-  }
-  if (dominantCategories.length === 0) {
-    growthAreas.push('Categorizing memories could improve insights');
-  }
-  if (memoryFrequency === 'Rare') {
-    growthAreas.push('Regular memory sharing could enhance relationship');
-  }
-
-  return {
-    totalMemories: recentMemories.length,
-    emotionalBalance,
-    dominantCategories,
-    memoryFrequency,
-    topEmotions: topEmotions.length > 0 ? topEmotions : ['neutral'],
-    growthAreas,
-  };
-}
-
-// POST - Create new memory with AI processing
-export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json();
-
-    // Validate the incoming data
-    const validationResult = createMemorySchema.safeParse(body);
-
-    if (!validationResult.success) {
-      return NextResponse.json(
-        {
-          error: 'Validation failed',
-          details: validationResult.error.issues
-        },
-        { status: 400 }
-      );
-    }
-
-    const memoryData = validationResult.data;
-
-    // For now, get user ID from mock (in real app, from session/auth)
-    const mockCoupleId = '1';
-    const mockPartners = ['partner1']; // In real app, determine based on request
-
-    // AI Processing Pipeline
-    const contentToAnalyze = memoryData.content || memoryData.title;
-
-    // Run AI analysis concurrently
-    const [sentiment, aiTags, memoryType] = await Promise.all([
-      analyzeEmotion(contentToAnalyze),
-      generateTags(contentToAnalyze, memoryData.type),
-      categorizeMemory(contentToAnalyze),
-    ]);
-
-    // Combine user tags with AI tags
-    const allTags = [...(memoryData.tags || []), ...aiTags];
-    const uniqueTags = [...new Set(allTags)];
-
-    // Create memory in database
-    const memory = await prisma.memory.create({
-      data: {
-        couple_id: mockCoupleId,
-        title: memoryData.title,
-        description: memoryData.description || null,
-        type: memoryData.type,
-        content: memoryData.content || null,
-        tags: JSON.stringify(uniqueTags),
-        sentiment: sentiment,
-        partners: JSON.stringify(mockPartners),
-        is_private: memoryData.is_private || false,
-        memory_type: memoryData.memory_type || memoryType,
-        date: new Date(),
-        created_at: new Date(),
-        updated_at: new Date(),
-      },
-    });
-
-    // Update couple's reward transactions with memory creation
-    await prisma.rewardTransaction.create({
-      data: {
-        couple_id: mockCoupleId,
-        coins_earned: memoryData.memory_type === 'kindness' ? 25 : 15,
-        coins_spent: 0,
-        activity: `Created ${memoryData.type} memory: ${memoryData.title}`,
-      },
-    });
-
-    // Transform response
-    const responseMemory = {
-      id: memory.id,
-      title: memory.title,
-      description: memory.description,
-      type: memory.type,
-      content: memory.content,
-      tags: uniqueTags,
-      sentiment: memory.sentiment,
-      memory_type: memory.memory_type,
-      is_private: memory.is_private,
-      date: memory.date.toISOString(),
-      created_at: memory.created_at.toISOString(),
-      updated_at: memory.updated_at.toISOString(),
-      aiInsights: {
-        generatedTags: aiTags,
-        emotionAnalysis: sentiment,
-        category: memoryType,
-        emotionalScore: sentiment === 'positive' ? 8 : sentiment === 'neutral' ? 5 : 3,
-      },
-    };
-
-    return NextResponse.json({
-      memory: responseMemory,
-      insights: {
-        message: `${sentiment === 'positive' ? 'Beautiful memory!' : sentiment === 'neutral' ? 'Happy milestone!' : 'Memory captured for reflection.'}`,
-        suggestions: uniqueTags.length > 0 ? `Consider exploring memories tagged with: ${uniqueTags.slice(0, 2).join(', ')}` : '',
-      },
-    });
-
-  } catch (error) {
-    console.error('Error creating memory:', error);
-    return NextResponse.json(
-      { error: 'Failed to create memory' },
-      { status: 500 }
-    );
-  }
-}
-
-// GET - Fetch memories with intelligent filtering and search
+// GET /api/memories - Fetch memories for the user's couple
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
+    const session = await getServerSession(authOptions);
 
-    // Parse query parameters
-    const searchQuery = searchParams.get('q');
-    const typeFilter = searchParams.get('type');
-    const memoryTypeFilter = searchParams.get('memory_type');
-    const sentimentFilter = searchParams.get('sentiment');
-    const fromDate = searchParams.get('from_date');
-    const toDate = searchParams.get('to_date');
-    const limit = Math.min(parseInt(searchParams.get('limit') || '20'), 100);
-    const offset = Math.max(parseInt(searchParams.get('offset') || '0'), 0);
-    const sortBy = searchParams.get('sort_by') || 'created_at';
-    const sortOrder = searchParams.get('sort_order') || 'desc';
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
-    // For now, get mock couple ID
-    const mockCoupleId = '1';
+    // Find the couple this user belongs to
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      include: { couple: true },
+    });
 
-    // Build query conditions
-    const whereClause: any = {
-      couple_id: mockCoupleId,
+    if (!user?.couple) {
+      return NextResponse.json({ error: 'User not associated with a couple' }, { status: 404 });
+    }
+
+    const url = new URL(request.url);
+    const limit = parseInt(url.searchParams.get('limit') || '20');
+    const offset = parseInt(url.searchParams.get('offset') || '0');
+    const type = url.searchParams.get('type');
+
+    // Build where clause
+    const where: any = {
+      couple_id: user.couple.id,
     };
 
-    // Add filters
-    if (typeFilter) whereClause.type = typeFilter;
-    if (memoryTypeFilter) whereClause.memory_type = memoryTypeFilter;
-    if (sentimentFilter) whereClause.sentiment = sentimentFilter;
-
-    // Date filters
-    if (fromDate || toDate) {
-      whereClause.date = {};
-      if (fromDate) whereClause.date.gte = new Date(fromDate);
-      if (toDate) whereClause.date.lte = new Date(toDate);
+    if (type) {
+      where.type = type;
     }
-
-    // Text search across title, description, and content
-    if (searchQuery) {
-      whereClause.OR = [
-        { title: { contains: searchQuery, mode: 'insensitive' } },
-        { description: { contains: searchQuery, mode: 'insensitive' } },
-        { content: { contains: searchQuery, mode: 'insensitive' } },
-        {
-          AND: [
-            { tags: { contains: searchQuery.toLowerCase() } }
-          ]
-        }
-      ];
-    }
-
-    // Get total count for pagination
-    const totalCount = await prisma.memory.count({
-      where: whereClause,
-    });
 
     // Fetch memories with pagination and sorting
-    const memories = await prisma.memory.findMany({
-      where: whereClause,
-      orderBy: {
-        [sortBy as string]: sortOrder === 'desc' ? 'desc' : 'asc',
-      },
-      take: limit,
-      skip: offset,
-    });
+    const [memories, total] = await Promise.all([
+      prisma.memory.findMany({
+        where,
+        orderBy: { created_at: 'desc' },
+        take: limit,
+        skip: offset,
+        select: {
+          id: true,
+          type: true,
+          content: true,
+          title: true,
+          description: true,
+          date: true,
+          tags: true,
+          sentiment: true,
+          partners: true,
+          is_private: true,
+          created_at: true,
+        },
+      }),
+      prisma.memory.count({ where }),
+    ]);
 
-    // Transform memories for response
-    const transformedMemories = memories.map(memory => ({
-      id: memory.id,
-      title: memory.title,
-      description: memory.description,
-      type: memory.type,
-      content: memory.content,
-      tags: JSON.parse(memory.tags || '[]'),
-      sentiment: memory.sentiment,
-      memory_type: memory.memory_type,
-      is_private: memory.is_private,
-      date: memory.date.toISOString(),
-      created_at: memory.created_at.toISOString(),
-      updated_at: memory.updated_at.toISOString(),
+    // Process tags (stored as JSON string in SQLite)
+    const processedMemories = memories.map(memory => ({
+      ...memory,
+      tags: JSON.parse(memory.tags),
+      partners: JSON.parse(memory.partners),
     }));
 
-    // Get relationship insights if not searching
-    const shouldIncludeInsights = !searchQuery && sortBy === 'created_at';
-    const insights = shouldIncludeInsights ?
-      await extractRelationshipInsights(mockCoupleId) : null;
-
-    const response = {
-      memories: transformedMemories,
-      pagination: {
-        total: totalCount,
-        limit: limit,
-        offset: offset,
-        hasMore: offset + limit < totalCount,
-        pages: Math.ceil(totalCount / limit),
-      },
-      ...(insights && { relationshipInsights: insights }),
-    };
-
-    return NextResponse.json(response);
+    return NextResponse.json({
+      memories: processedMemories,
+      total,
+      limit,
+      offset,
+      hasMore: offset + limit < total,
+    });
 
   } catch (error) {
     console.error('Error fetching memories:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch memories' },
+      { error: 'Failed to fetch memories', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
+  } finally {
+    await prisma.$disconnect();
+  }
+}
+
+// POST /api/memories - Create a new memory
+export async function POST(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Find the couple this user belongs to
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      include: { couple: true },
+    });
+
+    if (!user?.couple) {
+      return NextResponse.json({ error: 'User not associated with a couple' }, { status: 404 });
+    }
+
+    const body = await request.json();
+
+    // Validate required fields
+    const requiredFields = ['type', 'title'];
+    for (const field of requiredFields) {
+      if (!body[field]) {
+        return NextResponse.json(
+          { error: `Missing required field: ${field}` },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Validate memory type
+    const validTypes = ['text', 'audio', 'video', 'image'];
+    if (!validTypes.includes(body.type)) {
+      return NextResponse.json(
+        { error: `Invalid memory type. Must be one of: ${validTypes.join(', ')}` },
+        { status: 400 }
+      );
+    }
+
+    // Process content based on type
+    let content = body.content;
+    if (body.type !== 'text' && !body.content) {
+      if (body.mediaUrl) {
+        content = body.mediaUrl;
+      } else {
+        return NextResponse.json(
+          { error: 'Content or mediaUrl is required for non-text memories' },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Create the memory
+    const memory = await prisma.memory.create({
+      data: {
+        couple_id: user.couple.id,
+        type: body.type,
+        content: content,
+        title: body.title,
+        description: body.description || '',
+        date: body.date ? new Date(body.date) : new Date(),
+        tags: JSON.stringify(body.tags || []),
+        sentiment: body.sentiment || 'positive',
+        partners: JSON.stringify(body.partners || ['current_user']),
+        is_private: body.is_private || false,
+      },
+    });
+
+    // Award points based on memory creation
+    // This would typically trigger gamification events
+
+    return NextResponse.json(
+      {
+        memory,
+        success: true,
+        message: 'Memory created successfully',
+      },
+      { status: 201 }
+    );
+
+  } catch (error) {
+    console.error('Error creating memory:', error);
+    return NextResponse.json(
+      { error: 'Failed to create memory', details: error instanceof Error ? error.message : 'Unknown error' },
+      { status: 500 }
+    );
+  } finally {
+    await prisma.$disconnect();
+  }
+}
+
+// PUT /api/memories - Batch update memories
+export async function PUT(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      include: { couple: true },
+    });
+
+    if (!user?.couple) {
+      return NextResponse.json({ error: 'User not associated with a couple' }, { status: 404 });
+    }
+
+    const body = await request.json();
+
+    if (!body.memories || !Array.isArray(body.memories)) {
+      return NextResponse.json(
+        { error: 'memories array is required' },
+        { status: 400 }
+      );
+    }
+
+    const updates: any[] = [];
+    const errors: any[] = [];
+
+    for (const update of body.memories) {
+      if (!update.id) {
+        errors.push({ memory: null, error: 'Memory ID is required' });
+        continue;
+      }
+
+      try {
+        const memory = await prisma.memory.findFirst({
+          where: {
+            id: update.id,
+            couple_id: user.couple.id,
+          },
+        });
+
+        if (!memory) {
+          errors.push({ memory: update.id, error: 'Memory not found or access denied' });
+          continue;
+        }
+
+        const updatedMemory = await prisma.memory.update({
+          where: { id: update.id },
+          data: {
+            ...(update.title !== undefined && { title: update.title }),
+            ...(update.description !== undefined && { description: update.description }),
+            ...(update.tags !== undefined && { tags: JSON.stringify(update.tags) }),
+            ...(update.sentiment !== undefined && { sentiment: update.sentiment }),
+            ...(update.is_private !== undefined && { is_private: update.is_private }),
+            updated_at: new Date(),
+          },
+        });
+
+        updates.push(updatedMemory);
+
+      } catch (error) {
+        errors.push({
+          memory: update.id,
+          error: error instanceof Error ? error.message : 'Unknown error'
+        });
+      }
+    }
+
+    return NextResponse.json({
+      success: true,
+      updated: updates.length,
+      errors: errors.length,
+      memories: updates,
+      errorDetails: errors.length > 0 ? errors : undefined,
+    });
+
+  } catch (error) {
+    console.error('Error batch updating memories:', error);
+    return NextResponse.json(
+      { error: 'Failed to update memories', details: error instanceof Error ? error.message : 'Unknown error' },
+      { status: 500 }
+    );
+  } finally {
+    await prisma.$disconnect();
+  }
+}
+
+// DELETE /api/memories - Batch delete memories
+export async function DELETE(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      include: { couple: true },
+    });
+
+    if (!user?.couple) {
+      return NextResponse.json({ error: 'User not associated with a couple' }, { status: 404 });
+    }
+
+    const url = new URL(request.url);
+    const ids = url.searchParams.get('ids');
+
+    if (!ids) {
+      return NextResponse.json(
+        { error: 'Memory IDs are required (ids parameter)' },
+        { status: 400 }
+      );
+    }
+
+    const memoryIds = ids.split(',');
+
+    // Delete memories (only those belonging to this couple)
+    const result = await prisma.memory.deleteMany({
+      where: {
+        id: { in: memoryIds },
+        couple_id: user.couple.id,
+      },
+    });
+
+    return NextResponse.json({
+      success: true,
+      deleted: result.count,
+      message: `Successfully deleted ${result.count} memories`,
+    });
+
+  } catch (error) {
+    console.error('Error deleting memories:', error);
+    return NextResponse.json(
+      { error: 'Failed to delete memories', details: error instanceof Error ? error.message : 'Unknown error' },
+      { status: 500 }
+    );
+  } finally {
+    await prisma.$disconnect();
   }
 }

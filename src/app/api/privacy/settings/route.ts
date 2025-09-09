@@ -1,7 +1,7 @@
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { getSettings as getSettingsStore, setSettings as setSettingsStore, getAudits, addAudit } from '@/lib/privacy/settingsStore';
 
 export async function GET(request: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -17,17 +17,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'User ID required' }, { status: 400 });
     }
 
-    // Get user privacy settings
-    const privacySettings = await db.privacySetting.findUnique({
-      where: { userId }
-    });
-
-    // Get security audit log
-    const securityAudits = await db.securityAudit.findMany({
-      where: { userId },
-      orderBy: { timestamp: 'desc' },
-      take: 50
-    });
+    // Get user privacy settings and audit log from in-memory store
+    const privacySettings = getSettingsStore(userId);
+    const securityAudits = getAudits(userId).slice(0, 50);
 
     // Calculate security score
     const securityScore = calculateSecurityScore(privacySettings);
@@ -56,27 +48,19 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'User ID and settings required' }, { status: 400 });
     }
 
-    // Update privacy settings
-    const updatedSettings = await db.privacySetting.upsert({
-      where: { userId },
-      update: settings,
-      create: {
-        userId,
-        ...settings
-      }
-    });
+    // Update privacy settings in in-memory store
+    setSettingsStore(userId, settings);
+    const updatedSettings = getSettingsStore(userId);
 
     // Log the settings change
-    await db.securityAudit.create({
-      data: {
-        userId,
-        type: 'settings_change',
-        action: 'Privacy settings updated',
-        timestamp: new Date().toISOString(),
-        device: request.headers.get('user-agent') || 'Unknown',
-        location: 'Unknown', // In real app, would get from IP geolocation
-        status: 'success'
-      }
+    addAudit({
+      userId,
+      type: 'settings_change',
+      action: 'Privacy settings updated',
+      timestamp: new Date().toISOString(),
+      device: request.headers.get('user-agent') || 'Unknown',
+      location: 'Unknown',
+      status: 'success'
     });
 
     return NextResponse.json({ settings: updatedSettings });

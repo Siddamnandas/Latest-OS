@@ -1,0 +1,1 @@
+2025-09-09T01:24:55.598Z - Console Error: Service worker registration failed TypeError: Failed to register a ServiceWorker for scope ('http://localhost:3000/') with script ('http://localhost:3000/service-worker.js'): ServiceWorker script evaluation failed

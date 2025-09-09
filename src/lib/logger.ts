@@ -1,16 +1,16 @@
 // Temporary logger for development - avoid complex Pino issues
 export const logger = {
-  info: (message: string) => console.log(`[INFO] ${message}`),
-  warn: (message: string) => console.warn(`[WARN] ${message}`),
-  error: (message: string | object) => console.error(`[ERROR]`, message),
-  debug: (message: string) => console.debug(`[DEBUG] ${message}`),
+  info: (...args: any[]) => console.log(`[INFO]`, ...args),
+  warn: (...args: any[]) => console.warn(`[WARN]`, ...args),
+  error: (...args: any[]) => console.error(`[ERROR]`, ...args),
+  debug: (...args: any[]) => console.debug(`[DEBUG]`, ...args),
 };
 
 export const createContextLogger = (context: any) => ({
   ...logger,
-  info: (message: string) => console.log(`[${context.module}] ${message}`),
-  warn: (message: string) => console.warn(`[${context.module}] ${message}`),
-  error: (message: string | object) => console.error(`[${context.module}]`, message),
+  info: (...args: any[]) => console.log(`[${context.module}]`, ...args),
+  warn: (...args: any[]) => console.warn(`[${context.module}]`, ...args),
+  error: (...args: any[]) => console.error(`[${context.module}]`, ...args),
 });
 
 // Simple loggers for different modules

@@ -5,9 +5,10 @@ import { Smile, Battery, Clock, CheckCircle, Heart, Sparkles } from 'lucide-reac
 
 interface DailySyncCardProps {
   onCompleteSync: (data: any) => void;
+  onContinueToPlan?: () => void;
 }
 
-export function DailySyncCard({ onCompleteSync }: DailySyncCardProps) {
+export function DailySyncCard({ onCompleteSync, onContinueToPlan }: DailySyncCardProps) {
   const [mood, setMood] = useState<number>(3);
   const [energy, setEnergy] = useState<number>(7);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
@@ -48,11 +49,13 @@ export function DailySyncCard({ onCompleteSync }: DailySyncCardProps) {
     }, 500);
   };
 
-  if (step === 3) {
-    return (
-      <div className="relative">
-        <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl blur opacity-75"></div>
-        <div className="relative bg-gradient-to-r from-purple-600 to-pink-600 text-white border-0 shadow-2xl transform transition-all duration-500 scale-105 rounded-2xl p-6">
+    console.log('DailySyncCard: Rendering with step =', step);
+    if (step === 3) {
+      console.log('DailySyncCard: CONDITION MET - step === 3, should show success screen');
+      return (
+        <div className="relative">
+          <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl blur opacity-75"></div>
+          <div className="relative bg-gradient-to-r from-purple-600 to-pink-600 text-white border-0 shadow-2xl transform transition-all duration-500 scale-105 rounded-2xl p-6">
           <div className="flex flex-col items-center">
             <div className="relative mb-4">
               <div className="w-16 h-16 bg-white/20 backdrop-blur-lg rounded-full flex items-center justify-center animate-pulse">
@@ -63,12 +66,35 @@ export function DailySyncCard({ onCompleteSync }: DailySyncCardProps) {
               </div>
             </div>
             <h3 className="text-xl font-bold text-center mb-2">Sync Complete!</h3>
-            <p className="text-sm text-center opacity-90 mb-4">
+            <p className="text-sm text-center opacity-90 mb-6">
               {partnerSynced ? 'Both partners synced today!' : 'Waiting for your partner...'}
             </p>
-            <div className="flex items-center gap-2 bg-white/20 backdrop-blur-lg rounded-full px-4 py-2">
-              <span className="text-2xl animate-bounce">🪙</span>
-              <span className="font-semibold">+10 Lakshmi Coins</span>
+
+            <div className="space-y-4 w-full">
+              <div className="flex items-center justify-center gap-2 bg-white/20 backdrop-blur-lg rounded-full px-4 py-2">
+                <span className="text-2xl animate-bounce">🪙</span>
+                <span className="font-semibold">+10 Lakshmi Coins</span>
+              </div>
+
+              {onContinueToPlan && (
+                <div className="bg-white/30 backdrop-blur-sm rounded-xl p-4 border border-white/20">
+                  <div className="text-center mb-3">
+                    <div className="text-lg font-semibold text-white mb-2">🎯 Next Step</div>
+                    <p className="text-sm text-white/80">Ready to plan this week's sacrifices?</p>
+                  </div>
+                  <button
+                    onClick={onContinueToPlan}
+                    className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold py-3 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 flex items-center justify-center gap-2"
+                  >
+                    <span className="text-lg">🔥</span>
+                    <span>Continue to Weekly Yagna Plan</span>
+                    <span className="text-sm">→</span>
+                  </button>
+                  <p className="text-xs text-white/70 mt-2 text-center">
+                    Plan micro-offers for relationship growth
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -117,8 +143,8 @@ export function DailySyncCard({ onCompleteSync }: DailySyncCardProps) {
                     key={index}
                     onClick={() => setMood(index + 1)}
                     className={`text-3xl p-2 rounded-xl transition-all duration-300 transform hover:scale-110 ${
-                      mood === index + 1 
-                        ? 'bg-white shadow-lg scale-110 ring-2 ring-purple-400' 
+                      mood === index + 1
+                        ? 'bg-white shadow-lg scale-110 ring-2 ring-purple-400'
                         : 'hover:bg-white/50'
                     }`}
                   >
@@ -145,9 +171,9 @@ export function DailySyncCard({ onCompleteSync }: DailySyncCardProps) {
                   onChange={(e) => setEnergy(parseInt(e.target.value))}
                   className="w-full h-3 bg-gradient-to-r from-red-200 via-yellow-200 to-green-200 rounded-lg appearance-none cursor-pointer"
                   style={{
-                    background: `linear-gradient(to right, 
-                      rgb(239 68 68) 0%, 
-                      rgb(245 158 11) 50%, 
+                    background: `linear-gradient(to right,
+                      rgb(239 68 68) 0%,
+                      rgb(245 158 11) 50%,
                       rgb(34 197 94) 100%)`
                   }}
                 />
@@ -158,8 +184,8 @@ export function DailySyncCard({ onCompleteSync }: DailySyncCardProps) {
               </div>
             </div>
 
-            <button 
-              onClick={() => setStep(2)} 
+            <button
+              onClick={() => setStep(2)}
               className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold py-3 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
             >
               Next Step
@@ -192,13 +218,13 @@ export function DailySyncCard({ onCompleteSync }: DailySyncCardProps) {
             </div>
 
             <div className="flex gap-3">
-              <button 
+              <button
                 onClick={() => setStep(1)}
                 className="flex-1 border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold py-3 rounded-xl border"
               >
                 Back
               </button>
-              <button 
+              <button
                 onClick={handleSubmit}
                 disabled={isAnimating}
                 className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold py-3 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 disabled:opacity-50"

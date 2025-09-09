@@ -7,11 +7,11 @@ import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { RasaBalanceWheel } from '@/components/RasaBalanceWheel';
-import { 
-  Heart, 
-  Clock, 
-  Star, 
-  Play, 
+import {
+  Heart,
+  Clock,
+  Star,
+  Play,
   Pause,
   Sparkles,
   Award,
@@ -24,9 +24,11 @@ import {
   Brain,
   Mic,
   Activity,
-  TrendingUp
+  TrendingUp,
+  Calendar
 } from 'lucide-react';
 import Image from 'next/image';
+import { WeekendPlanner } from './WeekendPlanner';
 
 interface Ritual {
   id: string;
@@ -497,8 +499,11 @@ export function RitualSystem() {
             Balance
             <span className="absolute -top-1 -right-1 w-2 h-2 bg-purple-500 rounded-full"></span>
           </TabsTrigger>
-          <TabsTrigger value="wellness">Wellness</TabsTrigger>
           <TabsTrigger value="voice">Voice</TabsTrigger>
+          <TabsTrigger value="weekend-planner" className="relative">
+            Weekend
+            <span className="absolute -top-1 -right-1 w-2 h-2 bg-pink-500 rounded-full"></span>
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="rituals" className="space-y-4">
@@ -733,63 +738,7 @@ export function RitualSystem() {
           </div>
         </TabsContent>
 
-        <TabsContent value="wellness" className="space-y-4">
-          {/* Meditation couple for wellness */}
-          <div className="text-center mb-6">
-            <Image
-              src="/images/couples/couple-meditation.svg"
-              alt="Couple meditating together"
-              width={260}
-              height={140}
-              className="mx-auto mb-3 opacity-90"
-            />
-            <h3 className="text-lg font-semibold text-gray-800 mb-1">Spiritual Wellness Together</h3>
-            <p className="text-sm text-gray-600">Enhance your relationship wellness through mindful practices</p>
-          </div>
-          
-          {/* Wellness Content */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Activity className="w-5 h-5" />
-                Relationship Wellness
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg">
-                  <div className="text-3xl font-bold text-green-600 mb-2">85/100</div>
-                  <Progress value={85} className="h-2 mb-3" />
-                  <p className="text-gray-700">Your relationship wellness score is excellent!</p>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <Card className="bg-purple-50 border-purple-200">
-                    <CardContent className="p-4">
-                      <h4 className="font-medium mb-2">Wellness Tips</h4>
-                      <ul className="text-sm text-gray-700 space-y-1">
-                        <li>• Practice daily gratitude</li>
-                        <li>• Maintain open communication</li>
-                        <li>• Support each other's growth</li>
-                      </ul>
-                    </CardContent>
-                  </Card>
-                  
-                  <Card className="bg-blue-50 border-blue-200">
-                    <CardContent className="p-4">
-                      <h4 className="font-medium mb-2">Recommended Activities</h4>
-                      <ul className="text-sm text-gray-700 space-y-1">
-                        <li>• Weekly check-ins</li>
-                        <li>• Shared meditation</li>
-                        <li>• Couples yoga</li>
-                      </ul>
-                    </CardContent>
-                  </Card>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+
 
         <TabsContent value="voice" className="space-y-4">
           {/* Intimate communication couple for voice */}
@@ -848,6 +797,10 @@ export function RitualSystem() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="weekend-planner" className="space-y-4">
+          <WeekendPlanner />
         </TabsContent>
       </Tabs>
     </div>

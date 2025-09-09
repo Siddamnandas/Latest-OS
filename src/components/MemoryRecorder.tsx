@@ -609,7 +609,7 @@ export function MemoryRecorder({ coupleId, onSuccess, onCancel }: MemoryRecorder
                       autoPlay
                       muted
                       playsInline
-                      className="w-full h-64 bg-black rounded-lg mb-4"
+                      className="w-full h-64 bg-gray-100 rounded-lg mb-4"
                     />
 
                     <div className="flex justify-center gap-4">
@@ -663,7 +663,7 @@ export function MemoryRecorder({ coupleId, onSuccess, onCancel }: MemoryRecorder
                       </div>
                     </div>
 
-                    <video controls className="w-full h-64 bg-black rounded-lg mb-4" src={mediaUrl} />
+                    <video controls className="w-full h-64 bg-gray-100 rounded-lg mb-4" src={mediaUrl} />
 
                     <div className="flex gap-2 mt-4">
                       <Button variant="outline" size="sm" onClick={resetRecorder}>
@@ -761,7 +761,7 @@ export function MemoryRecorder({ coupleId, onSuccess, onCancel }: MemoryRecorder
                       }}
                       autoPlay
                       playsInline
-                      className="w-full h-64 bg-black rounded-lg mb-4 object-cover"
+                      className="w-full h-64 bg-gray-100 rounded-lg mb-4 object-cover"
                     />
 
                     <div className="flex justify-center gap-4">

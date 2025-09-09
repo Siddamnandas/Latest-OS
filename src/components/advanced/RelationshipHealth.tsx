@@ -259,7 +259,11 @@ export function RelationshipHealth() {
   const refreshAssessment = () => {
     setLoading(true);
     setTimeout(() => {
-      fetchAssessment();
+      setAssessment(prev => prev ? {
+        ...prev,
+        scores: { ...prev.scores, lastUpdated: new Date().toISOString() }
+      } : prev);
+      setLoading(false);
     }, 1000);
   };
 
@@ -415,7 +419,7 @@ export function RelationshipHealth() {
           {/* Recommendations List */}
           <div className="space-y-4">
             {assessment.recommendations
-              .filter(rec => selectedTimeframe === 'all' || rec.priority === selectedTimeframe)
+              .filter(rec => rec)
               .map((recommendation) => (
                 <Card key={recommendation.id} className="transition-all hover:shadow-lg">
                   <CardHeader>

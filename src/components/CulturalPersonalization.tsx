@@ -23,7 +23,7 @@ import {
   Settings,
   Bell,
   Flag,
-  Temple,
+  Landmark as Temple,
   Utensils,
   Camera,
   Palette,

@@ -1,0 +1,2 @@
+2025-09-09T01:24:27.972Z - Console Error: Service worker registration failed TypeError: Failed to register a ServiceWorker for scope ('http://localhost:3000/') with script ('http://localhost:3000/service-worker.js'): ServiceWorker script evaluation failed
+2025-09-09T01:24:28.956Z - Console Error: WebSocket connection to 'ws://localhost:3000/api/socketio?EIO=4&transport=websocket' failed: Connection closed before receiving a handshake response

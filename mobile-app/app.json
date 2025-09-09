@@ -1,0 +1,41 @@
+{
+  "expo": {
+    "name": "Latest OS",
+    "slug": "latest-os-mobile",
+    "scheme": "latestos",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "../public/icons/icon-192x192.png",
+    "splash": {
+      "image": "../public/icons/icon-384x384.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "updates": {
+      "fallbackToCacheTimeout": 0
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.latest.os"
+    },
+    "android": {
+      "package": "com.latest.os",
+      "adaptiveIcon": {
+        "foregroundImage": "../public/icons/icon-384x384.png",
+        "backgroundColor": "#ffffff"
+      }
+    },
+    "plugins": [
+      ["expo-notifications", {
+        "icon": "../public/icons/icon-192x192.png",
+        "color": "#111827"
+      }]
+    ],
+    "extra": {
+      "webAppUrl": "${EXPO_PUBLIC_WEB_APP_URL}"
+    }
+  }
+}

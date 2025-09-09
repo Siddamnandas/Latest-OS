@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, MessageSquare, Heart, Brain, Mic, X } from 'lucide-react';
+import { Plus, MessageSquare, Heart, Brain, Mic, Calendar, Lightbulb, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface FABAction {
@@ -18,13 +18,15 @@ interface FloatingActionButtonProps {
   mainIcon?: any;
   position?: 'bottom-right' | 'bottom-left' | 'center-bottom';
   hide?: boolean;
+  onWeeklyPlanNavigate?: () => void;
 }
 
-export function FloatingActionButton({ 
-  actions, 
+export function FloatingActionButton({
+  actions,
   mainIcon: MainIcon = Plus,
   position = 'bottom-right',
-  hide = false
+  hide = false,
+  onWeeklyPlanNavigate
 }: FloatingActionButtonProps) {
   // All hooks must be declared at the top - no early returns allowed
   const [isOpen, setIsOpen] = useState(false);
@@ -33,6 +35,57 @@ export function FloatingActionButton({
 
   // Default actions if none provided
   const defaultActions: FABAction[] = [
+    {
+      id: 'secret-couple-loop',
+      icon: Heart,
+      label: 'Secret Love',
+      color: 'bg-pink-500 hover:bg-pink-600',
+      onClick: () => {
+        toast({
+          title: "Secret Couple Loop",
+          description: "Private intimacy and romantic surprises! 💕",
+          duration: 2000,
+        });
+        // Navigate to secret couple loop
+        const event = new CustomEvent('navigateToSecretCouple');
+        window.dispatchEvent(event);
+        setIsOpen(false);
+      }
+    },
+    {
+      id: 'conflict-solver',
+      icon: Lightbulb,
+      label: 'Resolve Conflict',
+      color: 'bg-blue-500 hover:bg-blue-600',
+      onClick: () => {
+        toast({
+          title: "Conflict Resolution",
+          description: "AI-guided conflict analysis and resolution! 🧠",
+          duration: 2000,
+        });
+        // Navigate to conflict solver
+        const event = new CustomEvent('navigateToConflictSolver');
+        window.dispatchEvent(event);
+        setIsOpen(false);
+      }
+    },
+    {
+      id: 'weekly-plan',
+      icon: Calendar,
+      label: 'Weekly Plan',
+      color: 'bg-amber-500 hover:bg-amber-600',
+      onClick: () => {
+        toast({
+          title: "Weekly Yagna Plan",
+          description: "Create micro-offers for your relationship! 🔥",
+          duration: 2000,
+        });
+        if (onWeeklyPlanNavigate) {
+          onWeeklyPlanNavigate();
+        }
+        setIsOpen(false);
+      }
+    },
     {
       id: 'daily-sync',
       icon: MessageSquare,
@@ -154,18 +207,18 @@ export function FloatingActionButton({
                     transition: { delay: index * 0.1 + 0.1 }
                   }}
                   exit={{ opacity: 0, x: -10 }}
-                  className="bg-gray-800 text-white text-sm px-3 py-1 rounded-lg whitespace-nowrap shadow-lg"
+                  className="bg-gray-100 text-gray-800 text-sm px-3 py-1 rounded-lg whitespace-nowrap shadow-lg"
                 >
                   {action.label}
                 </motion.span>
               <motion.button
-                  whileHover={{ scale: 1.1 }}
+                  whileHover={{ scale: 1.15, y: -2 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={action.onClick}
                   aria-label={action.label}
-                  className={`${action.color} w-12 h-12 rounded-full text-white shadow-lg flex items-center justify-center`}
+                  className={`${action.color} w-12 h-12 rounded-full text-white shadow-lg shadow-current/50 hover:shadow-xl hover:shadow-current/70 transition-all duration-200 flex items-center justify-center transform hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-white/50`}
                 >
-                  <action.icon className="w-5 h-5" />
+                  <action.icon className="w-5 h-5 transform transition-transform duration-200" />
                 </motion.button>
               </motion.div>
             ))}

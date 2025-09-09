@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Home, List, Heart, Users, Settings, Baby } from 'lucide-react';
+import { Home, List, Heart, Users, Settings, Baby, Calendar, Sparkles } from 'lucide-react';
 
 interface BottomNavigationProps {
   activeTab: string;
@@ -14,6 +14,7 @@ export function BottomNavigation({ activeTab, onTabChange }: BottomNavigationPro
   const tabs = [
     { id: 'home', label: 'Home', icon: Home, color: 'from-purple-500 to-pink-500' },
     { id: 'tasks', label: 'Tasks', icon: List, color: 'from-blue-500 to-cyan-500' },
+    { id: 'together', label: 'Together', icon: Sparkles, color: 'from-red-500 to-pink-500' },
     { id: 'rituals', label: 'Rituals', icon: Heart, color: 'from-pink-500 to-rose-500' },
     { id: 'goals', label: 'Goals', icon: Users, color: 'from-green-500 to-emerald-500' },
     { id: 'kids', label: 'Kids', icon: Baby, color: 'from-teal-500 to-cyan-500' },

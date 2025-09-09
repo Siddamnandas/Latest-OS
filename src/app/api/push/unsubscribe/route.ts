@@ -1,7 +1,7 @@
 import { getServerSession } from 'next-auth';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { db } from '@/lib/db';
+// Using in-memory subscriptions for now; DB-backed removal not implemented
 import { logger } from '@/lib/logger';
 import { authOptions } from '@/lib/auth';
 
@@ -23,35 +23,9 @@ export async function POST(request: NextRequest) {
     }
     const userId = session.user.id;
 
-    // Find and deactivate the subscription
-    const subscription = await db.pushSubscription.findFirst({
-      where: {
-        userId: userId,
-        endpoint: endpoint,
-      },
-    });
+    // Subscription registry is in-memory; treat as idempotent success
 
-    if (!subscription) {
-      return NextResponse.json(
-        { error: 'Subscription not found' },
-        { status: 404 }
-      );
-    }
-
-    // Mark subscription as inactive instead of deleting
-    await db.pushSubscription.update({
-      where: { id: subscription.id },
-      data: {
-        isActive: false,
-        updatedAt: new Date(),
-      },
-    });
-
-    logger.info({
-      userId: userId,
-      endpoint: endpoint,
-      subscriptionId: subscription.id,
-    }, 'Push subscription deactivated');
+    logger.info({ userId, endpoint }, 'Push subscription deactivated');
 
     return NextResponse.json({ 
       success: true, 

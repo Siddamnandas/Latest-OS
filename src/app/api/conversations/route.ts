@@ -23,11 +23,6 @@ export async function GET(request: NextRequest) {
 
     const conversations = await db.conversation.findMany({
       where: { couple_id: coupleId },
-      include: {
-        user: {
-          select: { id: true, name: true, email: true, partner_role: true }
-        }
-      },
       orderBy: { created_at: 'desc' }
     });
 
@@ -49,9 +44,9 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { coupleId, userId, title, messages, sessionSummary, duration, sentiment, topics, insights } = await request.json();
+    const { coupleId, title, messages } = await request.json();
 
-    if (!coupleId || !userId || !messages) {
+    if (!coupleId || !messages) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
@@ -61,19 +56,8 @@ export async function POST(request: NextRequest) {
     const conversation = await db.conversation.create({
       data: {
         couple_id: coupleId,
-        user_id: userId,
         title,
-        messages,
-        session_summary: sessionSummary || null,
-        duration: duration || 0,
-        sentiment: sentiment || null,
-        topics: topics || null,
-        insights: insights || null
-      },
-      include: {
-        user: {
-          select: { id: true, name: true, email: true, partner_role: true }
-        }
+        content: typeof messages === 'string' ? messages : JSON.stringify(messages),
       }
     });
 

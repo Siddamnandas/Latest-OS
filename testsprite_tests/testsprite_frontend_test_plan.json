@@ -1,0 +1,442 @@
+[
+  {
+    "id": "TC001",
+    "title": "Onboarding Completion with Balance Compass",
+    "description": "Verify that users can complete the onboarding process including the Balance Compass assessment, and receive generated weekly micro-tasks based on relational balance inputs.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Launch the app for a new user and navigate to onboarding."
+      },
+      {
+        "type": "action",
+        "description": "Complete onboarding Q&A and Balance Compass survey fully and submit responses."
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm onboarding completes successfully with a summary screen."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify micro-tasks are generated based on Balance Compass results."
+      }
+    ]
+  },
+  {
+    "id": "TC002",
+    "title": "Create First Offer within 24 Hours",
+    "description": "Ensure that users can create their first micro-offer within 24 hours of completing onboarding and that the offer is saved and visible to partners.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Complete onboarding including Balance Compass."
+      },
+      {
+        "type": "action",
+        "description": "Navigate to the Weekly Yagna Loop Plan stage within 24 hours."
+      },
+      {
+        "type": "action",
+        "description": "Create a valid micro-offer for Play, Duty, or Energy spokes."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify micro-offer is saved and visible on shared dashboard."
+      }
+    ]
+  },
+  {
+    "id": "TC003",
+    "title": "Daily 30-Second Sync Completion",
+    "description": "Verify that users can complete the daily Home Hub 30-second sync including mood and energy check-ins and viewing partner/family updates.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Open Home Hub daily."
+      },
+      {
+        "type": "action",
+        "description": "Input current mood and energy levels."
+      },
+      {
+        "type": "action",
+        "description": "View partner snapshot and family event overview."
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm sync completion is recorded with UI confirmation."
+      }
+    ]
+  },
+  {
+    "id": "TC004",
+    "title": "Weekly Plan → Do → Reflect Loop Engagement",
+    "description": "Verify the full weekly Yagna Loop workflow: planning micro-offers Sunday night, tracking progress during the week, and reflecting on completion over the weekend.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "On Sunday night, navigate to Plan stage and create micro-offers."
+      },
+      {
+        "type": "action",
+        "description": "During the week, navigate to Do stage and mark micro-offers as completed."
+      },
+      {
+        "type": "action",
+        "description": "Over the weekend, navigate to Reflect stage and view progress and reflections."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify data consistency between Plan, Do, and Reflect stages including timestamps and statuses."
+      }
+    ]
+  },
+  {
+    "id": "TC005",
+    "title": "Kids Dashboard Parent-led Modules Functionality",
+    "description": "Verify that all six parent-led modules within the Kids Dashboard are functional including usage tracking and event logging.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Access Kids Dashboard as a parent user."
+      },
+      {
+        "type": "action",
+        "description": "Navigate through each of the six parent-led modules."
+      },
+      {
+        "type": "action",
+        "description": "Perform representative actions for each module (e.g., add child activity, sync parenting schedule)."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify actions are recorded, logged, and reflected in the dashboard UI."
+      }
+    ]
+  },
+  {
+    "id": "TC006",
+    "title": "One-Tap Weekend Plan Generation and Acceptance",
+    "description": "Ensure users can generate balanced weekend plans with one tap and that receiving users can accept or reject the proposed plan, with acceptance rate verified.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Trigger One-Tap Weekend Planner to generate a weekend plan."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the generated plan balances family outings, chores, rest, and couple time."
+      },
+      {
+        "type": "action",
+        "description": "Send the plan to partner for acceptance."
+      },
+      {
+        "type": "action",
+        "description": "Partner accepts the plan."
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm acceptance status is saved and a confirmation is shown."
+      }
+    ]
+  },
+  {
+    "id": "TC007",
+    "title": "Privacy Settings and Data Consent Controls",
+    "description": "Verify comprehensive privacy controls, including toggles for per-signal data sharing, data export, deletion, and verifying encrypted storage and on-device processing.",
+    "category": "security",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to privacy settings in app."
+      },
+      {
+        "type": "action",
+        "description": "Toggle various data sharing signals on/off (e.g., location, voice tones, calendar)."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify toggles persist after app restart and reflect correctly in telemetry."
+      },
+      {
+        "type": "action",
+        "description": "Export user data using data export function."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify exported data matches user data and is correctly formatted."
+      },
+      {
+        "type": "action",
+        "description": "Request account data deletion."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify user data is removed securely and app responds appropriately."
+      }
+    ]
+  },
+  {
+    "id": "TC008",
+    "title": "AI Load Balancer Fairness and Partner Consent",
+    "description": "Validate AI-driven chore load balancer feature distributes tasks fairly between partners and requires explicit partner consent for reassignment.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Assign multiple chores unevenly between partners."
+      },
+      {
+        "type": "action",
+        "description": "Invoke Load Balancer to suggest chore reassignment."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify task reassignment suggestions balance workloads based on predefined fairness criteria."
+      },
+      {
+        "type": "action",
+        "description": "Request partner consent for chore reassignment."
+      },
+      {
+        "type": "action",
+        "description": "Partner accepts or declines reassignment."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify that chores are reassigned only upon acceptance and that proper notifications are sent."
+      }
+    ]
+  },
+  {
+    "id": "TC009",
+    "title": "Conflict Solver Post-Conflict Summaries",
+    "description": "Verify that after a logged conflict event, the Conflict Solver generates accurate, helpful summaries and suggestions for resolution.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Log a conflict event via the app's interface."
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm Conflict Solver analyzes event and generates summary."
+      },
+      {
+        "type": "assertion",
+        "description": "Validate summary includes actionable suggestions and is accessible to both partners."
+      }
+    ]
+  },
+  {
+    "id": "TC010",
+    "title": "Gamification Economy: Lakshmi Coins Credit and Debit",
+    "description": "Verify that Lakshmi Coins are properly credited and debited according to defined events like quests completion, streak repair, and couple leaderboards.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Complete a Couple Quest or Side Mission."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify Lakshmi Coins credit is applied correctly to user balance."
+      },
+      {
+        "type": "action",
+        "description": "Perform a streak repair operation."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify correct debit of Lakshmi Coins from user balance."
+      },
+      {
+        "type": "action",
+        "description": "View couple leaderboard rankings."
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm Lakshmi Coins totals and rankings update in real-time accurately."
+      }
+    ]
+  },
+  {
+    "id": "TC011",
+    "title": "Memory Jukebox and AI Memory Weaver Functionality",
+    "description": "Ensure users can capture, save, and resurface joyful contextual memories via the Memory Jukebox and AI Memory Weaver features with proper media handling.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Capture a memory using Memory Jukebox (photo, audio, text)."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify memory is saved with correct context metadata."
+      },
+      {
+        "type": "action",
+        "description": "Use AI Memory Weaver to resurface relevant memories based on current context."
+      },
+      {
+        "type": "assertion",
+        "description": "Ensure surfaced memories relate accurately to user context and are presented with media intact."
+      }
+    ]
+  },
+  {
+    "id": "TC012",
+    "title": "Secret Couple Loop Private Intimacy Features",
+    "description": "Verify the Secret Couple Loop feature allows private digital intimacy, including nudges and challenges, maintaining strict privacy controls.",
+    "category": "security",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Enable Secret Couple Loop and send a private nudge or challenge."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify receipt and visibility only to intended partner."
+      },
+      {
+        "type": "action",
+        "description": "Attempt to access Secret Couple Loop content from another user account."
+      },
+      {
+        "type": "assertion",
+        "description": "Assert that access is denied and data remains secure."
+      }
+    ]
+  },
+  {
+    "id": "TC013",
+    "title": "Opt-in Ambient Sensing and Contextual AI Nudges",
+    "description": "Verify users can opt-in/out of ambient relationship behavior sensing and receive contextual AI nudges that respect privacy, do not trigger intrusive notifications, and adapt to rhythms.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Enable ambient sensing with several signals (calendar, location, weather)."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify sensing activates and data is collected respecting privacy toggles."
+      },
+      {
+        "type": "action",
+        "description": "Simulate contextual triggers (time of day, location change)."
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm AI nudges appear contextually without intrusive notification methods."
+      },
+      {
+        "type": "action",
+        "description": "Disable ambient sensing."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify sensors stop collecting data immediately."
+      }
+    ]
+  },
+  {
+    "id": "TC014",
+    "title": "Real-Time Communication via Socket.IO",
+    "description": "Test real-time updates and communication features implemented with Socket.IO ensuring low latency and correct message delivery.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Connect two clients logged in as partners."
+      },
+      {
+        "type": "action",
+        "description": "Send real-time update (e.g., chore reassignment, message) from one client."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify update is received immediately on the second client."
+      },
+      {
+        "type": "action",
+        "description": "Simulate network interruption and reconnection."
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm message delivery and state synchronization is restored after reconnection."
+      }
+    ]
+  },
+  {
+    "id": "TC015",
+    "title": "Error Handling for Data Export and Deletion",
+    "description": "Test error scenarios during sensitive operations such as data export and deletion, ensure user receives meaningful feedback and system recovers gracefully.",
+    "category": "error handling",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Trigger data export during simulated backend failure."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify error message is shown explaining failure with retry options."
+      },
+      {
+        "type": "action",
+        "description": "Initiate account deletion while network connection is lost."
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm system prevents deletion and informs user to retry when connected."
+      }
+    ]
+  },
+  {
+    "id": "TC016",
+    "title": "UI Component Rendering and Responsiveness",
+    "description": "Verify critical UI components render correctly and maintain responsiveness across different devices and screen sizes.",
+    "category": "ui",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Load primary UI components (Home Hub, Balance Compass, Dashboards) on desktop resolution."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify components render fully without layout issues and interactive elements respond."
+      },
+      {
+        "type": "action",
+        "description": "Repeat loading and interaction on mobile portrait and landscape orientations."
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm components adapt layout properly and maintain usability."
+      }
+    ]
+  }
+]

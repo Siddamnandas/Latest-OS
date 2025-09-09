@@ -23,11 +23,6 @@ export async function GET(request: NextRequest) {
 
     const voiceSessions = await db.voiceSession.findMany({
       where: { couple_id: coupleId },
-      include: {
-        user: {
-          select: { id: true, name: true, email: true, partner_role: true }
-        }
-      },
       orderBy: { created_at: 'desc' }
     });
 
@@ -49,7 +44,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { coupleId, userId, transcript, commands, duration, sentiment, emotions, sessionData } = await request.json();
+    const { coupleId, userId, transcript, duration } = await request.json();
 
     if (!coupleId || !userId) {
       return NextResponse.json(
@@ -61,19 +56,9 @@ export async function POST(request: NextRequest) {
     const voiceSession = await db.voiceSession.create({
       data: {
         couple_id: coupleId,
-        user_id: userId,
-        transcript: transcript || null,
-        commands: commands || [],
-        duration: duration || 0,
-        sentiment: sentiment || null,
-        emotions: emotions || null,
-        session_data: sessionData || null
+        title: transcript ? String(transcript).slice(0, 50) : 'Voice Session',
+        duration: Number(duration || 0),
       },
-      include: {
-        user: {
-          select: { id: true, name: true, email: true, partner_role: true }
-        }
-      }
     });
 
     return NextResponse.json({

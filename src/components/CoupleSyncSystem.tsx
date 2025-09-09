@@ -36,7 +36,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useSync } from '@/hooks/useSync';
-import { useLatestOSSocket } from '@/hooks/useSocket';
+import { useSocket } from '@/hooks/useSocket';
 import { SYNC_ERROR_CODES } from '@/lib/config';
 
 interface SyncActivity {
@@ -85,7 +85,7 @@ interface NotificationSettings {
 }
 
 export function CoupleSyncSystem() {
-  const { socket, isConnected } = useLatestOSSocket();
+  const { socket, isConnected } = useSocket();
   const [syncStatus, setSyncStatus] = useState<'connected' | 'connecting' | 'disconnected'>('connected');
   const [lastSync, setLastSync] = useState<Date>(new Date());
   const [activities, setActivities] = useState<SyncActivity[]>([]);
@@ -110,7 +110,7 @@ export function CoupleSyncSystem() {
     shiva: Math.floor(Math.random() * 30) + 35
   });
   
-  const syncIntervalRef = useRef<NodeJS.Timeout>();
+  const syncIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     // Reflect socket connection

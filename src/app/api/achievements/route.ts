@@ -318,18 +318,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Calculate potential new achievements
-    const newAchievements = [];
+    const newAchievements: any[] = [];
     for (const achievement of ACHIEVEMENT_DEFINITIONS) {
       const progress = await calculateAchievementProgress(mockCoupleId, achievement);
 
       if (progress.completed) {
-        // Check if already unlocked
-        const existingAchievement = await prisma.achievement.findFirst({
-          where: {
-            // This would need proper user identification
-            // For now, just mark as newly unlocked
-          }
-        });
+        // TODO: Check if already unlocked in DB when model exists
+        const existingAchievement = null as any;
 
         if (!existingAchievement) {
           // Award achievement

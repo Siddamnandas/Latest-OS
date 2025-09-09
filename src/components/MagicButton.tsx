@@ -10,15 +10,16 @@ interface MagicButtonProps {
   className?: string;
   variant?: 'default' | 'secondary' | 'outline' | 'ghost';
   size?: 'default' | 'sm' | 'lg' | 'icon';
+  disabled?: boolean;
 }
 
-export function MagicButton({ children, onClick, className = '', variant = 'default', size = 'default' }: MagicButtonProps) {
+export function MagicButton({ children, onClick, className = '', variant = 'default', size = 'default', disabled = false }: MagicButtonProps) {
   const [isHovering, setIsHovering] = useState(false);
   const [sparkles, setSparkles] = useState<Array<{id: number, x: number, y: number}>>([]);
 
   const handleMouseEnter = () => {
     setIsHovering(true);
-    const newSparkles = [];
+    const newSparkles: Array<{id: number, x: number, y: number}> = [];
     for (let i = 0; i < 6; i++) {
       newSparkles.push({
         id: Date.now() + i,
@@ -53,6 +54,7 @@ export function MagicButton({ children, onClick, className = '', variant = 'defa
       
       <Button
         onClick={onClick}
+        disabled={disabled}
         className={`${className} transition-all duration-300 transform ${
           isHovering ? 'scale-105 shadow-lg' : ''
         } relative overflow-hidden`}

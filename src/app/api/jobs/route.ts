@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { emailQueue } from '@/queues/email';
+import { addEmailJob } from '@/queues/email';
 
 export async function POST(request: NextRequest) {
   try {
     const data = await request.json();
-    await emailQueue.add('send', data);
+    await addEmailJob(data);
     return NextResponse.json({ status: 'queued' });
   } catch (err) {
     console.error('Failed to schedule job', err);

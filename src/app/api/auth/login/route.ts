@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check password
-    const isPasswordValid = await bcrypt.compare(password, user.password_hash);
+    const isPasswordValid = await bcrypt.compare(password, user.password ?? '');
     if (!isPasswordValid) {
       return NextResponse.json(
         { error: 'Invalid credentials' },
@@ -43,14 +43,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Update last login
-    await db.user.update({
-      where: { id: user.id },
-      data: { last_login: new Date() }
-    });
+    // Optionally update login metadata if your schema supports it
 
     // Remove password from response
-    const { password_hash, ...userWithoutPassword } = user;
+    const { password: _password, ...userWithoutPassword } = user as any;
 
     return NextResponse.json({
       message: 'Login successful',

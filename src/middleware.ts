@@ -33,45 +33,52 @@ export default function middleware(request: NextRequest) {
     const limited = rateLimit(request);
     if (limited) return limited;
   }
-  
-  // DEVELOPMENT MODE: Bypass authentication for most routes except admin
+
+  // In production, enforce authentication (no global bypass)
+  const isProd = process.env.NODE_ENV === 'production';
+  if (isProd) {
+    const ua = request.headers.get('user-agent') || '';
+    const isMobileAppUA = ua.includes('LatestOS-Mobile');
+    // Allow access to auth pages, static files, images and API auth routes
+    if (
+      pathname.startsWith('/login') ||
+      pathname.startsWith('/register') ||
+      pathname.startsWith('/api/auth') ||
+      pathname.startsWith('/_next') ||
+      pathname.startsWith('/api/health') ||
+      pathname.includes('/favicon.ico') ||
+      pathname.startsWith('/icons') ||
+      pathname.startsWith('/manifest.json') ||
+      pathname.startsWith('/robots.txt') ||
+      pathname.startsWith('/mobile-only')
+    ) {
+      return NextResponse.next();
+    }
+
+    // Redirect admin routes to login if not authenticated
+    if (pathname.startsWith('/admin')) {
+      const loginUrl = new URL('/login', request.url);
+      loginUrl.searchParams.set('callbackUrl', request.url);
+      return NextResponse.redirect(loginUrl);
+    }
+
+    // Block non-API UI routes unless coming from the mobile app WebView
+    if (!pathname.startsWith('/api/') && !isMobileAppUA) {
+      const url = new URL('/mobile-only', request.url);
+      return NextResponse.redirect(url, 302);
+    }
+
+    return NextResponse.next();
+  }
+
+  // Development mode: keep existing bypass for faster iteration
   if (pathname.startsWith('/admin')) {
-    // Protect admin routes - redirect to login if no session
-    console.log('🔒 Admin route - checking authentication for:', pathname);
-    // For demo, we'll redirect to login for admin routes
     const loginUrl = new URL('/login', request.url);
     loginUrl.searchParams.set('callbackUrl', request.url);
     return NextResponse.redirect(loginUrl);
   }
-  
-  console.log('🚀 Development Mode: Authentication bypassed for:', pathname);
+
   return NextResponse.next();
-  
-  // Original authentication logic (commented out for development)
-  /*
-  // Allow access to auth pages, static files, and API auth routes
-  if (
-    pathname.startsWith('/login') ||
-    pathname.startsWith('/register') ||
-    pathname.startsWith('/api/auth') ||
-    pathname.startsWith('/_next') ||
-    pathname.includes('/favicon.ico')
-  ) {
-    return NextResponse.next();
-  }
-  
-  // Check for demo mode cookie
-  const demoMode = request.cookies.get('demo-mode')?.value === 'true';
-  
-  if (demoMode) {
-    return NextResponse.next();
-  }
-  
-  // For all other routes, redirect to NextAuth signin
-  const signInUrl = new URL('/api/auth/signin', request.url);
-  signInUrl.searchParams.set('callbackUrl', request.url);
-  return NextResponse.redirect(signInUrl);
-  */
 }
 
 export const config = {

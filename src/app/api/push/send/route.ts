@@ -1,15 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { db } from '@/lib/db';
+import { getWebSubscriptions } from '@/lib/notifications/subscribers';
 import { logger } from '@/lib/logger';
 import webpush from 'web-push';
 
-// Configure web-push with VAPID keys
-webpush.setVapidDetails(
-  'mailto:support@latest-os.com',
-  process.env.VAPID_PUBLIC_KEY || 'BMqSvZyb-p4-JPH8Eq7lYKdBs1W3cqjzQmkP_g2YlI8Tr7z2ZmRqZM9Xo8Gc3vPxLKkEe0Wd-L8nF7mP4O3FsT0',
-  process.env.VAPID_PRIVATE_KEY || 'demo-private-key'
-);
+// Guard web-push initialization to avoid build-time failures when keys are missing/invalid
+let pushConfigured = false;
+(() => {
+  const subject = 'mailto:support@latest-os.com';
+  const pub = process.env.VAPID_PUBLIC_KEY || process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+  const priv = process.env.VAPID_PRIVATE_KEY;
+  try {
+    if (pub && priv) {
+      webpush.setVapidDetails(subject, pub, priv);
+      pushConfigured = true;
+    }
+  } catch (e) {
+    // Leave pushConfigured as false and continue; server can still run without web push
+  }
+})();
+
 
 const sendNotificationSchema = z.object({
   recipientId: z.string(),
@@ -33,16 +43,17 @@ const sendNotificationSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
+    if (!pushConfigured) {
+      return NextResponse.json(
+        { error: 'Push not configured', details: 'VAPID keys not set on server' },
+        { status: 503 }
+      );
+    }
     const body = await request.json();
     const { recipientId, notification } = sendNotificationSchema.parse(body);
 
-    // Get all active push subscriptions for the recipient
-    const subscriptions = await db.pushSubscription.findMany({
-      where: {
-        userId: recipientId,
-        isActive: true,
-      },
-    });
+    // Use in-memory web subscriptions for now
+    const subscriptions = getWebSubscriptions();
 
     if (subscriptions.length === 0) {
       return NextResponse.json(
@@ -65,35 +76,19 @@ export async function POST(request: NextRequest) {
     });
 
     const results = await Promise.allSettled(
-      subscriptions.map(async (sub) => {
+      subscriptions.map(async (sub: any) => {
         try {
           await webpush.sendNotification(
-            {
-              endpoint: sub.endpoint,
-              keys: {
-                p256dh: sub.p256dhKey,
-                auth: sub.authKey,
-              },
-            },
+            sub,
             payload
           );
-          return { success: true, subscriptionId: sub.id };
+          return { success: true } as any;
         } catch (error) {
           logger.error({ 
             error, 
-            subscriptionId: sub.id, 
-            endpoint: sub.endpoint 
+            endpoint: sub?.endpoint 
           }, 'Failed to send push notification');
-          
-          // If subscription is invalid, mark it as inactive
-          if (error.statusCode === 410 || error.statusCode === 404) {
-            await db.pushSubscription.update({
-              where: { id: sub.id },
-              data: { isActive: false },
-            });
-          }
-          
-          return { success: false, subscriptionId: sub.id, error };
+          return { success: false, error } as any;
         }
       })
     );
