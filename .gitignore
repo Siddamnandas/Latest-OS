@@ -1,59 +1,46 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# Dependencies
+node_modules/
 
-# dependencies
-/node_modules
-/.pnp
-.pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
+# Next.js / build outputs
+.next/
+out/
+dist/
+build/
+storybook-static/
 
-# testing
-/coverage
-
-# next.js
-/.next/
-/out/
-
-# production
-/build
-
-# misc
-.DS_Store
-*.pem
-
-# debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
-
-# env files (can opt-in for committing if needed)
-.env*
-!.env.example
-
-# vercel
-.vercel
-
-# typescript
-*.tsbuildinfo
-next-env.d.ts
-local-*
-.claude
-.z-ai-config
+# Logs
+*.log
 dev.log
-test
-prompt
-
 server.log
 
-# terraform
-*.tfstate
-*.tfstate.*
-.terraform/
-.terraform.lock.hcl
-terraform.tfvars
-*.tfplan
-*.tfplan.*
+# Environment files
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Testing and coverage
+coverage/
+.nyc_output/
+playwright-report/
+test-results/
+
+# Artifacts and generated assets
+artifacts/
+testsprite_tests/tmp/
+
+# Caches
+.eslintcache
+.turbo/
+playwright/.cache/
+
+# Editors/OS
+.DS_Store
+.vscode/
+
+# TypeScript
+*.tsbuildinfo
+
+# Prisma local DBs
+prisma/*.db
+prisma/*.db-journal

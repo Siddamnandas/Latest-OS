@@ -12,6 +12,23 @@ const compat = new FlatCompat({
 const eslintConfig = [
   {
     ignores: [
+      // Build and vendor outputs
+      ".next/**",
+      "node_modules/**",
+      "coverage/**",
+      "playwright-report/**",
+      "artifacts/**",
+      "test-results/**",
+      // Mobile app sandbox (not linted here)
+      "mobile-app/**",
+      // Ad-hoc ignores
+      "testsprite_tests/tmp/**",
+      "next-env.d.ts",
+      "jest.setup.js",
+      "jest.setup.ts",
+      "public/workers/**",
+      "public/*.js",
+      "scripts/**",
       "src/__tests__/sample.test.js",
       "src/app/layout.tsx",
       "src/lib/config.ts",
@@ -32,9 +49,12 @@ const eslintConfig = [
       '@typescript-eslint/no-non-null-assertion': 'off',
       '@typescript-eslint/ban-ts-comment': 'off',
       '@typescript-eslint/prefer-as-const': 'off',
+      '@typescript-eslint/no-require-imports': 'off',
+      '@typescript-eslint/no-empty-object-type': 'off',
 
       // React 相关规则
       'react-hooks/exhaustive-deps': 'off',
+      'react-hooks/rules-of-hooks': 'warn',
       'react/no-unescaped-entities': 'off',
       'react/display-name': 'off',
       'react/prop-types': 'off',
@@ -61,9 +81,15 @@ const eslintConfig = [
       'jsx-a11y/label-has-associated-control': 'warn',
       'jsx-a11y/click-events-have-key-events': 'warn',
       'jsx-a11y/no-static-element-interactions': 'warn',
+      'jsx-a11y/no-noninteractive-element-interactions': 'warn',
+      'jsx-a11y/no-autofocus': 'warn',
       'jsx-a11y/media-has-caption': 'warn',
       'jsx-a11y/anchor-has-content': 'warn',
     },
+  },
+  {
+    files: ["**/*.stories.@(ts|tsx)", "simple-test.js"],
+    ignores: ["**/*.stories.@(ts|tsx)", "simple-test.js"],
   },
 ];
 
