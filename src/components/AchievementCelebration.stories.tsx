@@ -16,23 +16,25 @@ const meta: Meta<typeof AchievementCelebration> = {
 
 export default meta;
 
+function DemoAchievementCelebration() {
+  const [open, setOpen] = useState(true);
+  return (
+    <AchievementCelebration
+      isOpen={open}
+      onClose={() => setOpen(false)}
+      achievement={{
+        title: 'Milestone Reached',
+        description: 'You completed your first challenge!',
+        icon: '🏆',
+        rarity: 'epic',
+        coins: 100,
+      }}
+    />
+  );
+}
+
 export const Default: StoryObj<typeof AchievementCelebration> = {
-  render: () => {
-    const [open, setOpen] = useState(true);
-    return (
-      <AchievementCelebration
-        isOpen={open}
-        onClose={() => setOpen(false)}
-        achievement={{
-          title: 'Milestone Reached',
-          description: 'You completed your first challenge!',
-          icon: '🏆',
-          rarity: 'epic',
-          coins: 100,
-        }}
-      />
-    );
-  },
+  render: () => <DemoAchievementCelebration />,
   parameters: {
     docs: {
       description: {

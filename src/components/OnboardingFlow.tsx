@@ -93,7 +93,8 @@ export function OnboardingFlow({ isOpen, onComplete, onSkip }: OnboardingFlowPro
     status: string;
   }>>([]);
 
-  if (!isOpen) return null;
+  // Note: do not early-return before hooks;
+  // handle isOpen after hooks to satisfy Rules of Hooks.
 
   const nextStep = () => {
     if (currentStep < steps.length - 1) {
@@ -776,6 +777,8 @@ export function OnboardingFlow({ isOpen, onComplete, onSkip }: OnboardingFlowPro
 
   const currentStepData = steps[currentStep];
   const progressPercent = ((currentStep + 1) / steps.length) * 100;
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { MobileNavigation } from './MobileNavigation';
 import { PWAInstallPrompt } from './PWAInstallPrompt';
 import { OfflineMode } from './OfflineMode';
@@ -100,6 +100,18 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
   const refreshProgress = pullDistance / maxDistance;
   const refreshOpacity = Math.min(refreshProgress, 1);
 
+  // Manage focus for search input without using autoFocus
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
+  useEffect(() => {
+    if (showSearch) {
+      // Slight delay to ensure element is mounted
+      const id = requestAnimationFrame(() => {
+        searchInputRef.current?.focus();
+      });
+      return () => cancelAnimationFrame(id);
+    }
+  }, [showSearch]);
+
   return (
     <div className={`min-h-screen bg-gray-50 ${className}`}>
       {/* Pull to refresh indicator */}
@@ -185,7 +197,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
                 type="text"
                 placeholder="Search memories, tasks, conversations..."
                 className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                autoFocus
+                ref={searchInputRef}
               />
             </div>
             <div className="text-sm text-gray-500">

@@ -6,7 +6,7 @@ import { getServerSession } from 'next-auth';
 import { GET, POST } from '../route';
 import { prisma } from '@/lib/prisma';
 import { monitoring } from '@/lib/monitoring';
-import { kidsCache } from '@/lib/kids-cache';
+import { kidsCache, cacheHelpers } from '@/lib/kids-cache';
 
 // Mock dependencies
 jest.mock('next-auth');
@@ -100,7 +100,6 @@ describe('/api/kids/activities', () => {
       ];
 
       // Mock cache helpers
-      const { cacheHelpers } = require('@/lib/kids-cache');
       cacheHelpers.getCachedActivityList.mockReturnValue(cachedActivities);
 
       const request = new NextRequest('http://localhost:3000/api/kids/activities?childId=child123');
@@ -156,7 +155,6 @@ describe('/api/kids/activities', () => {
       ];
 
       // Mock cache helpers to return null (no cache)
-      const { cacheHelpers } = require('@/lib/kids-cache');
       cacheHelpers.getCachedActivityList.mockReturnValue(null);
 
       mockPrisma.childProfile.findFirst.mockResolvedValue(mockChild);
@@ -184,7 +182,6 @@ describe('/api/kids/activities', () => {
       } as any);
 
       // Mock cache helpers to return null (no cache)
-      const { cacheHelpers } = require('@/lib/kids-cache');
       cacheHelpers.getCachedActivityList.mockReturnValue(null);
 
       mockPrisma.activity.count.mockRejectedValue(new Error('Database connection error'));
@@ -218,7 +215,6 @@ describe('/api/kids/activities', () => {
       } as any);
 
       // Mock cache helpers to return null (no cache)
-      const { cacheHelpers } = require('@/lib/kids-cache');
       cacheHelpers.getCachedActivityList.mockReturnValue(null);
 
       mockPrisma.activity.count.mockResolvedValue(0);
